@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   addMembership,
   createUser,
@@ -40,6 +40,7 @@ export function UserManager({
   currentUserId: string;
 }) {
   const [query, setQuery] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
   const term = query.trim().toLowerCase();
   const filtered = term
     ? users.filter(
@@ -51,20 +52,36 @@ export function UserManager({
 
   return (
     <div className="space-y-6">
-      <CreateUserForm organizations={organizations} />
-
       <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-900">
           Usuarios ({users.length})
         </h2>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por nombre o email…"
-          className={`${inputCls} w-64 max-w-full`}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre o email…"
+            className={`${inputCls} w-64 max-w-full`}
+          />
+          <button
+            type="button"
+            onClick={() => setShowCreate((v) => !v)}
+            className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95"
+          >
+            {showCreate ? "Cerrar" : "Nuevo usuario"}
+          </button>
+        </div>
       </div>
+
+      {showCreate && (
+        <div className="mb-4">
+          <CreateUserForm
+            organizations={organizations}
+            onCreated={() => setShowCreate(false)}
+          />
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <p className="text-sm text-slate-500">No hay usuarios que coincidan.</p>
@@ -85,11 +102,21 @@ export function UserManager({
   );
 }
 
-function CreateUserForm({ organizations }: { organizations: OrgOption[] }) {
+function CreateUserForm({
+  organizations,
+  onCreated,
+}: {
+  organizations: OrgOption[];
+  onCreated?: () => void;
+}) {
   const [state, action, pending] = useActionState(createUser, initial);
 
+  useEffect(() => {
+    if (state.ok) onCreated?.();
+  }, [state.ok, onCreated]);
+
   return (
-    <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
+    <section className="rounded-2xl border border-slate-100 bg-white/60 p-6">
       <h2 className="mb-1 text-lg font-semibold text-slate-900">
         Nuevo usuario
       </h2>
