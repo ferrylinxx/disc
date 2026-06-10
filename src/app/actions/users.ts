@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
@@ -27,6 +28,64 @@ const MembershipSchema = z.object({
 });
 
 const RemoveMembershipSchema = z.object({ membershipId: z.string().min(1) });
+
+const CreateSchema = z.object({
+  email: z.email({ error: "Introduce un email válido." }).trim().toLowerCase(),
+  name: z.string().trim().max(120).optional(),
+  password: z
+    .string()
+    .min(8, { error: "La contraseña debe tener al menos 8 caracteres." }),
+  globalRole: z.enum(["SUPERADMIN", "USER"]),
+  organizationId: z.string().min(1).optional(),
+  membershipRole: z.enum(["ADMIN", "FACILITATOR"]).optional(),
+});
+
+/** Crea un usuario con credenciales y, opcionalmente, una membership inicial. */
+export async function createUser(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole("SUPERADMIN");
+  const parsed = CreateSchema.safeParse({
+    email: formData.get("email"),
+    name: formData.get("name") || undefined,
+    password: formData.get("password"),
+    globalRole: formData.get("globalRole"),
+    organizationId: formData.get("organizationId") || undefined,
+    membershipRole: formData.get("membershipRole") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Revisa los datos." };
+  }
+
+  const { email, name, password, globalRole, organizationId, membershipRole } =
+    parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return { error: "Ya existe un usuario con ese email." };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await prisma.user.create({
+    data: {
+      email,
+      name: name ?? null,
+      passwordHash,
+      globalRole,
+      ...(organizationId && membershipRole
+        ? {
+            memberships: {
+              create: { organizationId, role: membershipRole },
+            },
+          }
+        : {}),
+    },
+  });
+  revalidatePath("/admin");
+  return { ok: true };
+}
 
 /** Edita nombre y rol global de un usuario. */
 export async function updateUser(

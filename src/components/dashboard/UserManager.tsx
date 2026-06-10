@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import {
   addMembership,
+  createUser,
   deleteUser,
   removeMembership,
   updateUser,
@@ -49,7 +50,10 @@ export function UserManager({
     : users;
 
   return (
-    <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
+    <div className="space-y-6">
+      <CreateUserForm organizations={organizations} />
+
+      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-900">
           Usuarios ({users.length})
@@ -76,6 +80,91 @@ export function UserManager({
           ))}
         </ul>
       )}
+      </section>
+    </div>
+  );
+}
+
+function CreateUserForm({ organizations }: { organizations: OrgOption[] }) {
+  const [state, action, pending] = useActionState(createUser, initial);
+
+  return (
+    <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
+      <h2 className="mb-1 text-lg font-semibold text-slate-900">
+        Nuevo usuario
+      </h2>
+      <p className="mb-4 text-sm text-slate-500">
+        Crea una cuenta con acceso por credenciales y, si quieres, asígnala a una
+        organización.
+      </p>
+      <form
+        key={state.ok ? "reset" : "form"}
+        action={action}
+        className="flex flex-wrap items-end gap-2"
+      >
+        <label className="flex-1 min-w-[180px] text-xs font-medium text-slate-500">
+          Nombre
+          <input
+            name="name"
+            placeholder="Nombre completo"
+            className={`${inputCls} mt-1 w-full`}
+          />
+        </label>
+        <label className="flex-1 min-w-[180px] text-xs font-medium text-slate-500">
+          Email
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="persona@empresa.com"
+            className={`${inputCls} mt-1 w-full`}
+          />
+        </label>
+        <label className="flex-1 min-w-[160px] text-xs font-medium text-slate-500">
+          Contraseña
+          <input
+            name="password"
+            type="password"
+            required
+            minLength={8}
+            placeholder="Mínimo 8 caracteres"
+            className={`${inputCls} mt-1 w-full`}
+          />
+        </label>
+        <label className="text-xs font-medium text-slate-500">
+          Rol global
+          <select name="globalRole" defaultValue="USER" className={`${inputCls} mt-1 block`}>
+            <option value="USER">Usuario</option>
+            <option value="SUPERADMIN">Admin GESEM</option>
+          </select>
+        </label>
+        <label className="text-xs font-medium text-slate-500">
+          Organización
+          <select name="organizationId" defaultValue="" className={`${inputCls} mt-1 block`}>
+            <option value="">Sin organización</option>
+            {organizations.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-medium text-slate-500">
+          Rol en organización
+          <select name="membershipRole" defaultValue="ADMIN" className={`${inputCls} mt-1 block`}>
+            <option value="ADMIN">Admin cliente</option>
+            <option value="FACILITATOR">Facilitador</option>
+          </select>
+        </label>
+        <button
+          type="submit"
+          disabled={pending}
+          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95 disabled:opacity-60"
+        >
+          {pending ? "Creando…" : "Crear usuario"}
+        </button>
+        <Feedback state={state} />
+      </form>
     </section>
   );
 }
