@@ -1,0 +1,23 @@
+# PostgreSQL propia para DISC GESEM (desarrollo local).
+# Puerto host 5433 para no colisionar con otras instancias en 5432.
+services:
+  db:
+    image: postgres:16
+    container_name: disc-gesem-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: disc_gesem
+      POSTGRES_PASSWORD: disc_gesem_dev
+      POSTGRES_DB: disc_gesem
+    ports:
+      - "5433:5432"
+    volumes:
+      - disc_gesem_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U disc_gesem -d disc_gesem"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  disc_gesem_pgdata:

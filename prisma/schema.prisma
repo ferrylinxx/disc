@@ -1,0 +1,526 @@
+// Esquema de datos DISC GESEM v1.
+// Multi-tenant (organization_id) + RBAC + motor de evaluaciones configurable.
+// El instrumento DISC NO está en duro: vive como datos en las tablas del motor.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+enum GlobalRole {
+  SUPERADMIN
+  USER
+}
+
+enum MembershipRole {
+  ADMIN // Administrador Cliente
+  FACILITATOR // Facilitador
+}
+
+enum ParticipantStatus {
+  INVITED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum VersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AssessmentStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  OPENED
+  COMPLETED
+  EXPIRED
+}
+
+enum NarrativeScope {
+  DIMENSION
+  PROFILE
+  CONTEXT
+  EQ
+}
+
+enum NarrativeStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ---------------------------------------------------------------------------
+// TENANCY + AUTH
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members      Membership[]
+  projects     Project[]
+  participants Participant[]
+  assessments  Assessment[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  image        String?
+  // Hash bcrypt para login por credenciales (null si solo usa OAuth/magic link).
+  passwordHash String?
+  globalRole   GlobalRole @default(USER)
+  createdAt    DateTime   @default(now())
+
+  memberships  Membership[]
+  participants Participant[]
+  accounts     Account[]
+  sessions     Session[]
+
+  @@map("users")
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  userId         String
+  organizationId String
+  role           MembershipRole
+  createdAt      DateTime       @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("memberships")
+}
+
+// Tablas de Auth.js (NextAuth) para Magic Link + Google + Microsoft.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// ESTRUCTURA DE NEGOCIO: PROYECTOS / EQUIPOS / PARTICIPANTES
+// ---------------------------------------------------------------------------
+
+model Project {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teams        Team[]
+  assessments  Assessment[]
+
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  createdAt DateTime @default(now())
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  participants Participant[]
+
+  @@index([projectId])
+  @@map("teams")
+}
+
+model Participant {
+  id             String            @id @default(cuid())
+  organizationId String
+  teamId         String?
+  userId         String?
+  email          String
+  fullName       String
+  status         ParticipantStatus @default(INVITED)
+  createdAt      DateTime          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  team         Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  invitations  Invitation[]
+  responseSets ResponseSet[]
+  results      Result[]
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@map("participants")
+}
+
+// ---------------------------------------------------------------------------
+// MOTOR DE EVALUACIONES CONFIGURABLE
+// ---------------------------------------------------------------------------
+
+model Instrument {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  versions InstrumentVersion[]
+
+  @@map("instruments")
+}
+
+model InstrumentVersion {
+  id           String        @id @default(cuid())
+  instrumentId String
+  version      String
+  status       VersionStatus @default(DRAFT)
+  description  String?
+  // Configuración de scoring (mostValue, leastValue, umbral, EQ, etc.).
+  scoring      Json
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+
+  instrument  Instrument    @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  dimensions  Dimension[]
+  contexts    Context[]
+  items       Item[]
+  narratives  Narrative[]
+  assessments Assessment[]
+  responseSets ResponseSet[]
+  results     Result[]
+
+  @@unique([instrumentId, version])
+  @@map("instrument_versions")
+}
+
+model Dimension {
+  id        String @id @default(cuid())
+  versionId String
+  code      String
+  name      String
+  color     String
+  order     Int
+
+  version          InstrumentVersion     @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  options          ItemOption[]
+  scores           ResultDimensionScore[]
+  primaryOfResults Result[]              @relation("PrimaryDimension")
+  secondaryOfResults Result[]            @relation("SecondaryDimension")
+
+  @@unique([versionId, code])
+  @@map("dimensions")
+}
+
+model Context {
+  id          String  @id @default(cuid())
+  versionId   String
+  code        String
+  name        String
+  description String?
+  order       Int
+
+  version InstrumentVersion      @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  items   Item[]
+  scores  ResultDimensionScore[]
+
+  @@unique([versionId, code])
+  @@map("contexts")
+}
+
+model Item {
+  id        String @id @default(cuid())
+  versionId String
+  contextId String
+  code      String
+  prompt    String
+  order     Int
+
+  version   InstrumentVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  context   Context           @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  options   ItemOption[]
+  responses ItemResponse[]
+
+  @@unique([versionId, code])
+  @@index([contextId])
+  @@map("items")
+}
+
+model ItemOption {
+  id          String @id @default(cuid())
+  itemId      String
+  dimensionId String
+  code        String
+  text        String
+
+  item              Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  dimension         Dimension      @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  mostResponses     ItemResponse[] @relation("MostOption")
+  leastResponses    ItemResponse[] @relation("LeastOption")
+
+  @@unique([itemId, code])
+  @@index([dimensionId])
+  @@map("item_options")
+}
+
+// ---------------------------------------------------------------------------
+// EVALUACIÓN / INVITACIONES / RESPUESTAS / RESULTADOS
+// ---------------------------------------------------------------------------
+
+model Assessment {
+  id             String           @id @default(cuid())
+  organizationId String
+  projectId      String?
+  versionId      String
+  name           String
+  status         AssessmentStatus @default(DRAFT)
+  createdAt      DateTime         @default(now())
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  version      InstrumentVersion @relation(fields: [versionId], references: [id])
+  invitations  Invitation[]
+  responseSets ResponseSet[]
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("assessments")
+}
+
+model Invitation {
+  id            String           @id @default(cuid())
+  assessmentId  String
+  participantId String
+  token         String           @unique
+  status        InvitationStatus @default(PENDING)
+  expiresAt     DateTime
+  sentAt        DateTime?
+  completedAt   DateTime?
+  // Borrador de progreso para reanudar el cuestionario en cualquier dispositivo.
+  draft         Json?
+  createdAt     DateTime         @default(now())
+
+  assessment  Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@map("invitations")
+}
+
+model ResponseSet {
+  id            String    @id @default(cuid())
+  assessmentId  String
+  participantId String
+  versionId     String
+  // Autoposicionamiento inicial del participante (antes del cuestionario).
+  selfPlacement Json?
+  // Reflexión abierta final del participante (validación cualitativa).
+  reflection    String?
+  startedAt     DateTime  @default(now())
+  submittedAt   DateTime?
+
+  assessment  Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  participant Participant       @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  version     InstrumentVersion @relation(fields: [versionId], references: [id])
+  responses   ItemResponse[]
+  result      Result?
+
+  @@index([assessmentId])
+  @@index([participantId])
+  @@map("response_sets")
+}
+
+model ItemResponse {
+  id            String @id @default(cuid())
+  responseSetId String
+  itemId        String
+  mostOptionId  String
+  leastOptionId String
+  // Trazabilidad para validación: tiempo en el ítem y nº de cambios previos.
+  timeMs        Int?
+  changeCount   Int?
+
+  responseSet ResponseSet @relation(fields: [responseSetId], references: [id], onDelete: Cascade)
+  item        Item        @relation(fields: [itemId], references: [id])
+  mostOption  ItemOption  @relation("MostOption", fields: [mostOptionId], references: [id])
+  leastOption ItemOption  @relation("LeastOption", fields: [leastOptionId], references: [id])
+
+  @@unique([responseSetId, itemId])
+  @@map("item_responses")
+}
+
+model Result {
+  id                  String   @id @default(cuid())
+  responseSetId       String   @unique
+  participantId       String
+  versionId           String
+  profileCode         String
+  primaryDimensionId  String
+  secondaryDimensionId String
+  isPureProfile       Boolean
+  eq                  Int
+  quality             Json
+  computedAt          DateTime @default(now())
+
+  responseSet       ResponseSet            @relation(fields: [responseSetId], references: [id], onDelete: Cascade)
+  participant       Participant            @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  version           InstrumentVersion      @relation(fields: [versionId], references: [id])
+  primaryDimension  Dimension              @relation("PrimaryDimension", fields: [primaryDimensionId], references: [id])
+  secondaryDimension Dimension             @relation("SecondaryDimension", fields: [secondaryDimensionId], references: [id])
+  scores            ResultDimensionScore[]
+  actionPlan        ActionPlan?
+
+  @@index([participantId])
+  @@map("results")
+}
+
+model ResultDimensionScore {
+  id          String  @id @default(cuid())
+  resultId    String
+  dimensionId String
+  // contextId NULL => puntuación global; con valor => por contexto.
+  contextId   String?
+  raw         Int
+  percent     Int
+
+  result    Result    @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  dimension Dimension @relation(fields: [dimensionId], references: [id])
+  context   Context?  @relation(fields: [contextId], references: [id])
+
+  @@index([resultId])
+  @@map("result_dimension_scores")
+}
+
+// ---------------------------------------------------------------------------
+// MOTOR DE NARRATIVAS (versionado) + PLAN DE ACCIÓN
+// ---------------------------------------------------------------------------
+
+model Narrative {
+  id        String         @id @default(cuid())
+  versionId String
+  scope     NarrativeScope
+  // Clave de resolución: "D", "DI", "DECISION:D", "EQ_HIGH", etc.
+  key       String
+  createdAt DateTime       @default(now())
+
+  version  InstrumentVersion  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  contents NarrativeContent[]
+
+  @@unique([versionId, scope, key])
+  @@map("narratives")
+}
+
+model NarrativeContent {
+  id          String          @id @default(cuid())
+  narrativeId String
+  revision    Int
+  locale      String          @default("es")
+  title       String
+  body        String
+  status      NarrativeStatus @default(DRAFT)
+  createdAt   DateTime        @default(now())
+
+  narrative Narrative @relation(fields: [narrativeId], references: [id], onDelete: Cascade)
+
+  @@unique([narrativeId, locale, revision])
+  @@map("narrative_contents")
+}
+
+model ActionPlan {
+  id        String   @id @default(cuid())
+  resultId  String   @unique
+  content   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  result Result @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@map("action_plans")
+}
+
+// ---------------------------------------------------------------------------
+// ANALÍTICA + AUDITORÍA
+// ---------------------------------------------------------------------------
+
+model AnalyticsEvent {
+  id             String   @id @default(cuid())
+  organizationId String?
+  userId         String?
+  type           String
+  payload        Json?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([type])
+  @@map("analytics_events")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}

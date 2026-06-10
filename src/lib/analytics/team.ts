@@ -1,0 +1,246 @@
+/**
+ * Analítica del MAPA DE EQUIPO avanzado. Módulo puro y determinista: a partir
+ * de los resultados individuales calcula la lectura colectiva (distribución,
+ * combinaciones, contextos, fortalezas/riesgos, complementariedad, vacíos,
+ * conversaciones, plan e insights). Redacción en clave de tendencia (no
+ * diagnóstico). El aislamiento multi-tenant se aplica antes, en la capa de datos.
+ */
+import type { DimensionScore, Dimension, EvaluationContext } from "@/lib/engine/types";
+import { proportionalShares } from "@/lib/engine/scoring";
+import { resolveProfile, styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { teamDimensionInsight } from "@/lib/narratives/disc-gesem.team";
+
+/** Resultado individual mínimo que necesita la analítica de equipo. */
+export interface TeamParticipantResult {
+  eq: number;
+  profileCode: string;
+  primary: string;
+  isEq: boolean;
+  global: DimensionScore[];
+  byContext: Record<string, { dimensionCode: string; percent: number }[]>;
+}
+
+/** Umbral (en % de share medio) por debajo del cual un estilo es un "vacío". */
+const GAP_THRESHOLD = 10;
+/** Umbral de presencia para considerar que un estilo aporta complementariedad. */
+const PRESENT_THRESHOLD = 18;
+
+export interface TeamInsights {
+  overview: {
+    total: number;
+    completed: number;
+    participation: number;
+    predominantProfile: { code: string; name: string } | null;
+    predominantStyle: { code: string; share: number } | null;
+    eqAverage: number;
+  };
+  distribution: { dimensionCode: string; share: number }[];
+  distributionText: string;
+  combinations: { code: string; name: string; count: number }[];
+  contexts: { code: string; name: string; scores: { dimensionCode: string; percent: number }[] }[];
+  strengths: string[];
+  risks: string[];
+  complementarity: { dimensionCode: string; share: number; text: string }[];
+  gaps: { dimensionCode: string; share: number; observation: string }[];
+  conversations: string[];
+  actionPlan: string[];
+  insights: string[];
+}
+
+/** Calcula la lectura colectiva del equipo a partir de los resultados. */
+export function computeTeamInsights(
+  dimensions: Dimension[],
+  contexts: EvaluationContext[],
+  participants: { hasResult: boolean; result: TeamParticipantResult | null }[],
+): TeamInsights {
+  const dimCodes = [...dimensions].sort((a, b) => a.order - b.order).map((d) => d.code);
+  const dimName = new Map(dimensions.map((d) => [d.code, d.name]));
+  const withResult = participants
+    .map((p) => p.result)
+    .filter((r): r is TeamParticipantResult => r !== null);
+
+  const total = participants.length;
+  const completed = withResult.length;
+  const participation = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const eqAverage =
+    completed > 0
+      ? Math.round(withResult.reduce((a, r) => a + r.eq, 0) / completed)
+      : 0;
+
+  // Distribución colectiva: media de los repartos proporcionales individuales.
+  const shareSum = new Map<string, number>(dimCodes.map((c) => [c, 0]));
+  for (const r of withResult) {
+    for (const s of proportionalShares(r.global)) {
+      shareSum.set(s.dimensionCode, (shareSum.get(s.dimensionCode) ?? 0) + s.share);
+    }
+  }
+  const distribution = dimCodes
+    .map((code) => ({
+      dimensionCode: code,
+      share: completed > 0 ? Math.round((shareSum.get(code) ?? 0) / completed) : 0,
+    }))
+    .sort((a, b) => b.share - a.share);
+
+  // Distribución de combinaciones (profileCode: "DI", "EQ", ...).
+  const comboCount = new Map<string, number>();
+  for (const r of withResult) {
+    comboCount.set(r.profileCode, (comboCount.get(r.profileCode) ?? 0) + 1);
+  }
+  const combinations = [...comboCount.entries()]
+    .map(([code, count]) => ({ code, name: resolveProfile(code).name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Mapa de contextos colectivo: media del % por dimensión en cada contexto.
+  const ctxList = [...contexts].sort((a, b) => a.order - b.order);
+  const ctxScores = ctxList.map((ctx) => {
+    const sum = new Map<string, { sum: number; n: number }>();
+    for (const r of withResult) {
+      for (const s of r.byContext[ctx.code] ?? []) {
+        const acc = sum.get(s.dimensionCode) ?? { sum: 0, n: 0 };
+        acc.sum += s.percent;
+        acc.n += 1;
+        sum.set(s.dimensionCode, acc);
+      }
+    }
+    return {
+      code: ctx.code,
+      name: ctx.name,
+      scores: dimCodes.map((code) => {
+        const acc = sum.get(code);
+        return {
+          dimensionCode: code,
+          percent: acc && acc.n > 0 ? Math.round(acc.sum / acc.n) : 0,
+        };
+      }),
+    };
+  });
+
+  const predominantStyle = distribution[0] && completed > 0
+    ? { code: distribution[0].dimensionCode, share: distribution[0].share }
+    : null;
+  const predominantProfile = combinations[0]
+    ? { code: combinations[0].code, name: combinations[0].name }
+    : null;
+
+  // Fortalezas / riesgos colectivos a partir de los estilos presentes (máx 5).
+  const present = distribution.filter((d) => d.share >= PRESENT_THRESHOLD);
+  const leading = present.length > 0 ? present : distribution.slice(0, 2);
+  const strengths = leading
+    .map((d) => teamDimensionInsight(d.dimensionCode).strength)
+    .slice(0, 5);
+  const risks = leading
+    .map((d) => teamDimensionInsight(d.dimensionCode).risk)
+    .slice(0, 5);
+
+  const complementarity = distribution
+    .filter((d) => d.share >= PRESENT_THRESHOLD)
+    .map((d) => ({
+      dimensionCode: d.dimensionCode,
+      share: d.share,
+      text: teamDimensionInsight(d.dimensionCode).contributes,
+    }));
+
+  const gaps = distribution
+    .filter((d) => d.share < GAP_THRESHOLD)
+    .map((d) => ({
+      dimensionCode: d.dimensionCode,
+      share: d.share,
+      observation: teamDimensionInsight(d.dimensionCode).gap,
+    }));
+
+  // Conversaciones recomendadas: prioriza los vacíos y el estilo predominante.
+  const conversations = [
+    ...gaps.map((g) => teamDimensionInsight(g.dimensionCode).conversation),
+    ...(predominantStyle
+      ? [teamDimensionInsight(predominantStyle.code).conversation]
+      : []),
+  ]
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .slice(0, 5);
+
+  // Plan de acción de equipo: apoyado en estilo predominante y vacíos.
+  const actionPlan: string[] = [];
+  if (predominantStyle) {
+    actionPlan.push(
+      `Aprovechad la tendencia a ${styleShort(predominantStyle.code)} como motor del equipo, ` +
+        `cuidando que no eclipse otros estilos.`,
+    );
+  }
+  for (const g of gaps.slice(0, 2)) {
+    actionPlan.push(
+      `Reforzad de forma consciente el estilo ${styleShort(g.dimensionCode)} ` +
+        `(${dimName.get(g.dimensionCode) ?? g.dimensionCode}), poco presente hoy.`,
+    );
+  }
+  actionPlan.push(
+    "Revisad estos resultados en equipo como punto de partida para el desarrollo, no como una conclusión cerrada.",
+  );
+
+  // Insights automáticos.
+  const insights: string[] = [];
+  if (completed === 0) {
+    insights.push("Aún no hay resultados suficientes para generar la lectura del equipo.");
+  } else {
+    if (predominantStyle) {
+      insights.push(
+        `El equipo tiende a ${styleShort(predominantStyle.code)} como estilo predominante (${predominantStyle.share}%).`,
+      );
+    }
+    insights.push(
+      eqAverage >= 70
+        ? `El EQ medio (${eqAverage}) sugiere un equipo con buena capacidad de adaptación entre estilos.`
+        : `El EQ medio (${eqAverage}) sugiere estilos marcados; conviene cuidar la flexibilidad mutua.`,
+    );
+    if (gaps.length > 0) {
+      insights.push(
+        `Posibles vacíos en: ${gaps.map((g) => styleShort(g.dimensionCode)).join(", ")}.`,
+      );
+    }
+  }
+
+  return {
+    overview: {
+      total,
+      completed,
+      participation,
+      predominantProfile,
+      predominantStyle,
+      eqAverage,
+    },
+    distribution,
+    distributionText: distributionInterpretation(distribution, dimName, completed),
+    combinations,
+    contexts: ctxScores,
+    strengths,
+    risks,
+    complementarity,
+    gaps,
+    conversations,
+    actionPlan,
+    insights,
+  };
+}
+
+/** Texto interpretativo de la distribución DISC colectiva. */
+function distributionInterpretation(
+  distribution: { dimensionCode: string; share: number }[],
+  dimName: Map<string, string>,
+  completed: number,
+): string {
+  if (completed === 0 || distribution.length === 0) {
+    return "Sin resultados suficientes para interpretar la distribución del equipo.";
+  }
+  const top = distribution[0];
+  const second = distribution[1];
+  const spread = top.share - distribution[distribution.length - 1].share;
+  if (spread <= 8) {
+    return "El equipo muestra un reparto equilibrado entre los cuatro estilos, con tendencia a la adaptabilidad.";
+  }
+  const topName = dimName.get(top.dimensionCode) ?? top.dimensionCode;
+  const secondName = second ? dimName.get(second.dimensionCode) ?? second.dimensionCode : "";
+  return (
+    `El equipo tiende a apoyarse sobre todo en ${styleShort(top.dimensionCode)} ` +
+    `(${topName}, ${top.share}%)` +
+    (second ? `, seguido de ${styleShort(second.dimensionCode)} (${secondName}, ${second.share}%).` : ".")
+  );
+}
