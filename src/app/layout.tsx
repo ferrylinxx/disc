@@ -13,10 +13,32 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.APP_URL ?? "https://disc.fgarola.es";
+
 export const metadata: Metadata = {
-  title: "DISC GESEM · Autoconocimiento conductual",
+  metadataBase: new URL(siteUrl),
+  applicationName: "DISC GESEM",
+  title: {
+    default: "DISC GESEM · Autoconocimiento conductual",
+    template: "%s · DISC GESEM",
+  },
   description:
     "Plataforma de autoconocimiento conductual y desarrollo de equipos GESEM.",
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    url: "/",
+    siteName: "DISC GESEM",
+    title: "DISC GESEM · Autoconocimiento conductual",
+    description:
+      "Cuestionario de estilos conductuales para el desarrollo de personas y equipos.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DISC GESEM · Autoconocimiento conductual",
+    description:
+      "Cuestionario de estilos conductuales para el desarrollo de personas y equipos.",
+  },
 };
 
 export default function RootLayout({
