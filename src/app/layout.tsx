@@ -13,10 +13,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.APP_URL ?? "https://disc.fgarola.es";
+const FALLBACK_SITE_URL = "https://disc.fgarola.es";
+
+/** Resuelve metadataBase tolerando APP_URL ausente o malformada (no rompe el build). */
+function resolveMetadataBase(): URL {
+  const raw = process.env.APP_URL?.trim();
+  if (raw) {
+    try {
+      return new URL(raw);
+    } catch {
+      // APP_URL presente pero invalida (p. ej. placeholder sin sustituir).
+    }
+  }
+  return new URL(FALLBACK_SITE_URL);
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: resolveMetadataBase(),
   applicationName: "DISC GESEM",
   title: {
     default: "DISC GESEM · Autoconocimiento conductual",
