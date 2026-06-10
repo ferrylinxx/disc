@@ -7,7 +7,14 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const connectionString = process.env.DATABASE_URL;
+const needsSsl =
+  !!connectionString && /sslmode=|\.supabase\.com/.test(connectionString);
+const adapter = new PrismaPg(
+  needsSsl
+    ? { connectionString, ssl: { rejectUnauthorized: false } }
+    : { connectionString },
+);
 const prisma = new PrismaClient({ adapter });
 
 const DEMO_PASSWORD = "gesem1234";
