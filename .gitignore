@@ -42,3 +42,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*.local
+
+# material de trabajo extraído de los PDFs de especificación (no publicar)
+scripts/_pdf_text/
