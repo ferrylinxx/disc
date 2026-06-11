@@ -1,13 +1,11 @@
 import type { InstrumentDefinition, ScoringResult } from "@/lib/engine/types";
+import { resolveEqBand } from "@/lib/narratives/disc-gesem.narratives";
+import { intensityLabel, styleShort } from "@/lib/narratives/disc-gesem.catalog";
 import {
-  DIMENSION_NARRATIVES,
-  resolveEqBand,
-} from "@/lib/narratives/disc-gesem.narratives";
-import {
-  intensityLabel,
-  intensityMessage,
-  resolveProfile,
-} from "@/lib/narratives/disc-gesem.catalog";
+  buildProfileNarrative,
+  contextLeaders,
+} from "@/lib/narratives/disc-gesem.profiles";
+import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 
 const BRAND = "#6366f1";
 
@@ -74,58 +72,91 @@ function list(items: string[], mark: string, color: string): string {
     .join("");
 }
 
-/** Email con el informe individual del participante. */
+/** Subapartado de "Cuando coordinas personas" (etiqueta + texto). */
+function coordRow(label: string, text: string): string {
+  return `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#475569;">
+    <strong style="color:#0f172a;">${label}.</strong> ${text}</p>`;
+}
+
+/**
+ * Email con el informe individual "Mapa de Interacción Profesional": tendencia
+ * predominante, mapa de recursos, mapa por contextos, cuando coordinas personas,
+ * fortalezas, a observar, insights, EQ, experimento y pregunta poderosa.
+ */
 export function reportEmail(input: {
   participantName: string;
   result: ScoringResult;
   def: InstrumentDefinition;
 }): { subject: string; html: string; text: string } {
   const { result, def, participantName } = input;
-  const dimName = (c: string) =>
-    def.dimensions.find((d) => d.code === c)?.name ?? c;
   const dimColor = (c: string) =>
     def.dimensions.find((d) => d.code === c)?.color ?? "#64748b";
-  const primary = DIMENSION_NARRATIVES[result.primaryDimension];
-  const secondary = result.isEq
-    ? null
-    : DIMENSION_NARRATIVES[result.secondaryDimension];
+  const narrative = buildProfileNarrative(result);
+  const contexts = contextLeaders(result);
+  const insights = generateInsights(result);
   const eqBand = resolveEqBand(result.eq);
-  const profile = resolveProfile(result.profileCode);
   const first = participantName.split(" ")[0] || "Hola";
 
   const bars = result.global
-    .map((s) => bar(dimName(s.dimensionCode), s.percent, dimColor(s.dimensionCode)))
+    .map((s) => bar(styleShort(s.dimensionCode), s.percent, dimColor(s.dimensionCode)))
     .join("");
-  const actions = [
-    ...(primary?.development ?? []),
-    ...(secondary?.development.slice(0, 1) ?? []),
-  ];
+  const contextRows = contexts
+    .map(
+      (c) =>
+        `<tr><td style="padding:4px 8px 4px 0;font-size:13px;font-weight:600;color:#334155;">${c.label}</td>
+        <td style="padding:4px 0;"><span style="display:inline-block;background:${dimColor(c.dimensionCode)};color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:9999px;">${c.resource}</span></td></tr>`,
+    )
+    .join("");
+  const coordHtml = [
+    coordRow("Cuando das indicaciones", narrative.coordination.instructions),
+    coordRow("Cuando haces seguimiento", narrative.coordination.followup),
+    coordRow("Cuando coordinas personas diferentes", narrative.coordination.coordinating),
+    coordRow("Cuando aparece un desacuerdo", narrative.coordination.conflict),
+    coordRow("Cuando necesitas generar compromiso", narrative.coordination.engagement),
+  ].join("");
+  const insightsHtml = insights
+    .map(
+      (t) =>
+        `<li style="margin:0 0 10px;padding:12px 14px;background:#fff;border:1px solid #e0e7ff;border-radius:10px;color:#475569;font-size:14px;list-style:none;line-height:1.5;">${t}</li>`,
+    )
+    .join("");
 
   const body = `
-    <p style="margin:0 0 16px;">Hola ${first}, este es tu informe DISC GESEM.</p>
+    <p style="margin:0 0 16px;">Hola ${first}, este es tu Mapa de Interacción Profesional.</p>
     <div style="background:linear-gradient(135deg,${dimColor(result.primaryDimension)},${dimColor(result.secondaryDimension)});color:#fff;border-radius:14px;padding:18px 20px;margin:0 0 20px;">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.85;">Tu perfil · ${result.profileCode}</div>
-      <div style="font-size:22px;font-weight:800;margin-top:4px;">${profile.name}</div>
-      <div style="font-size:13px;opacity:.9;margin-top:6px;">Intensidad: ${intensityLabel(result.intensity)}. ${intensityMessage(result.intensity)}</div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.85;">Tu tendencia predominante · ${result.profileCode}</div>
+      <div style="font-size:22px;font-weight:800;margin-top:4px;">${narrative.title}</div>
+      <div style="font-size:13px;opacity:.9;margin-top:6px;">${narrative.intro}</div>
+      <div style="font-size:13px;opacity:.9;margin-top:6px;">Intensidad: ${intensityLabel(result.intensity)}.</div>
     </div>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Perfil global</h3>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tu mapa de recursos</h3>
     <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">${bars}</table>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#15803d;">Fortalezas</h3>
-    <ul style="margin:0 0 18px;padding:0;">${list(primary?.strengths ?? [], "+", "#16a34a")}</ul>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#b45309;">Puntos de atención</h3>
-    <ul style="margin:0 0 18px;padding:0;">${list(primary?.watchouts ?? [], "!", "#d97706")}</ul>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tu mapa por contextos</h3>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">${contextRows}</table>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Cuando coordinas personas</h3>
+    <div style="margin:0 0 18px;">${coordHtml}</div>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#15803d;">Lo que puede estar funcionando bien</h3>
+    <ul style="margin:0 0 18px;padding:0;">${list(narrative.strengths, "+", "#16a34a")}</ul>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#b45309;">Lo que merece la pena observar</h3>
+    <ul style="margin:0 0 8px;padding:0;">${list(narrative.observe, "!", "#d97706")}</ul>
+    <p style="margin:0 0 18px;font-size:13px;color:#94a3b8;line-height:1.5;">${narrative.complement}</p>
+    ${insights.length > 0 ? `<h3 style="margin:0 0 8px;font-size:14px;color:${BRAND};">Insights personalizados</h3><ul style="margin:0 0 18px;padding:0;">${insightsHtml}</ul>` : ""}
     <div style="background:#eef2ff;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
       <strong style="color:#3730a3;">Equilibrio (EQ ${result.eq}): ${eqBand.label}.</strong>
       <span style="color:#475569;">${eqBand.description}</span>
     </div>
-    <h3 style="margin:0 0 8px;font-size:14px;color:${BRAND};">Plan de acción</h3>
-    <ol style="margin:0;padding-left:18px;color:#475569;font-size:14px;">
-      ${actions.map((a) => `<li style="margin:0 0 6px;">${a}</li>`).join("")}
-    </ol>`;
+    <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;font-weight:700;">Tu experimento de esta semana</div>
+      <p style="margin:6px 0 0;color:#475569;font-size:14px;line-height:1.5;">${narrative.experiment}</p>
+    </div>
+    <div style="background:#0f172a;border-radius:12px;padding:16px 18px;">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;">Una pregunta para ti</div>
+      <p style="margin:6px 0 0;color:#fff;font-size:16px;font-weight:600;line-height:1.5;">${narrative.question}</p>
+    </div>`;
 
   return {
     subject: `Tu informe DISC GESEM · ${result.profileCode}`,
-    html: shell("Tu informe personalizado", body),
-    text: `Hola ${first}, tu perfil DISC GESEM es ${result.profileCode} (${dimName(result.primaryDimension)}). EQ ${result.eq}.`,
+    html: shell("Tu Mapa de Interacción Profesional", body),
+    text: `Hola ${first}, tu Mapa de Interacción Profesional DISC GESEM es ${result.profileCode} (${narrative.title}). EQ ${result.eq}.`,
   };
 }
