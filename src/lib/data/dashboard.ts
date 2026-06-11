@@ -159,6 +159,7 @@ export async function adminUsers() {
         name: true,
         globalRole: true,
         createdAt: true,
+        lastSeenAt: true,
         _count: { select: { participants: true } },
         memberships: {
           select: {
@@ -183,6 +184,7 @@ export async function adminUsers() {
       name: u.name,
       globalRole: u.globalRole,
       createdAt: u.createdAt,
+      lastSeenAt: u.lastSeenAt,
       participantCount: u._count.participants,
       memberships: u.memberships.map((m) => ({
         id: m.id,

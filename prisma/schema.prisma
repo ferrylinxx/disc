@@ -91,6 +91,8 @@ model User {
   passwordHash String?
   globalRole   GlobalRole @default(USER)
   createdAt    DateTime   @default(now())
+  // Última actividad detectada (heartbeat). Sirve para el estado en línea/inactivo.
+  lastSeenAt   DateTime?
 
   memberships  Membership[]
   participants Participant[]

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   addMembership,
   createUser,
@@ -30,6 +31,54 @@ interface OrgOption {
   name: string;
 }
 
+/** Ventana para considerar a un usuario "en línea" (margen sobre el heartbeat). */
+const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+/** Cada cuánto se refresca el listado para reflejar la presencia (ms). */
+const REFRESH_MS = 15_000;
+
+/** Texto relativo aproximado de la última actividad. */
+function formatLastSeen(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "hace instantes";
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days} d`;
+}
+
+/** Indicador de presencia (en línea / inactivo) basado en lastSeenAt. */
+function PresenceBadge({ lastSeenAt }: { lastSeenAt: Date | string | null }) {
+  if (!lastSeenAt) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+        <span className="h-2 w-2 rounded-full bg-slate-300" />
+        Sin actividad
+      </span>
+    );
+  }
+  const date = lastSeenAt instanceof Date ? lastSeenAt : new Date(lastSeenAt);
+  const online = Date.now() - date.getTime() < ONLINE_WINDOW_MS;
+  if (online) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        </span>
+        En línea
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+      <span className="h-2 w-2 rounded-full bg-slate-300" />
+      Activo {formatLastSeen(date)}
+    </span>
+  );
+}
+
 export function UserManager({
   users,
   organizations,
@@ -39,6 +88,7 @@ export function UserManager({
   organizations: OrgOption[];
   currentUserId: string;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const term = query.trim().toLowerCase();
@@ -50,13 +100,36 @@ export function UserManager({
       )
     : users;
 
+  const onlineCount = users.filter(
+    (u) =>
+      u.lastSeenAt &&
+      Date.now() - new Date(u.lastSeenAt).getTime() < ONLINE_WINDOW_MS,
+  ).length;
+
+  // Refresco periódico para reflejar la presencia casi en tiempo real.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [router]);
+
   return (
     <div className="space-y-6">
       <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Usuarios ({users.length})
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Usuarios ({users.length})
+          </h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            {onlineCount} en línea
+          </span>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
             value={query}
@@ -220,6 +293,9 @@ function UserRow({
             )}
           </div>
           <div className="text-xs text-slate-400">{user.email}</div>
+          <div className="mt-1">
+            <PresenceBadge lastSeenAt={user.lastSeenAt} />
+          </div>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-500">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
