@@ -200,6 +200,88 @@ export async function adminUsers() {
 export type AdminUsers = Awaited<ReturnType<typeof adminUsers>>;
 export type AdminUser = AdminUsers["users"][number];
 
+/** Listado de organizaciones con métricas (panel admin · Organizaciones). */
+export async function adminOrganizations() {
+  const [organizations, completedByOrg] = await Promise.all([
+    prisma.organization.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        createdAt: true,
+        _count: {
+          select: { projects: true, participants: true, members: true },
+        },
+      },
+    }),
+    prisma.participant.groupBy({
+      by: ["organizationId"],
+      where: { status: "COMPLETED" },
+      _count: { _all: true },
+    }),
+  ]);
+  const completedMap = new Map(
+    completedByOrg.map((g) => [g.organizationId, g._count._all]),
+  );
+  return organizations.map((o) => ({
+    ...o,
+    completed: completedMap.get(o.id) ?? 0,
+  }));
+}
+
+export type AdminOrganization = Awaited<
+  ReturnType<typeof adminOrganizations>
+>[number];
+
+/**
+ * Participantes de toda la plataforma (panel admin · Participantes): incluye
+ * organización, equipo y último resultado, para seguimiento y envío manual del
+ * informe por parte del administrador.
+ */
+export async function adminParticipants() {
+  const rows = await prisma.participant.findMany({
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      status: true,
+      createdAt: true,
+      organization: { select: { name: true } },
+      team: { select: { name: true } },
+      results: {
+        orderBy: { computedAt: "desc" },
+        take: 1,
+        select: {
+          eq: true,
+          profileCode: true,
+          primaryDimension: { select: { code: true } },
+        },
+      },
+    },
+  });
+  return rows.map((p) => ({
+    id: p.id,
+    fullName: p.fullName,
+    email: p.email,
+    status: p.status,
+    orgName: p.organization.name,
+    teamName: p.team?.name ?? null,
+    result: p.results[0]
+      ? {
+          eq: p.results[0].eq,
+          profileCode: p.results[0].profileCode,
+          primary: p.results[0].primaryDimension.code,
+        }
+      : null,
+  }));
+}
+
+export type AdminParticipant = Awaited<
+  ReturnType<typeof adminParticipants>
+>[number];
+
 /** Proyectos, equipos y participantes de las organizaciones del cliente. */
 export async function clientOverview(organizationIds: string[]) {
   if (organizationIds.length === 0) {

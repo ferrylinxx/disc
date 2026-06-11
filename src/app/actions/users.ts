@@ -83,7 +83,7 @@ export async function createUser(
         : {}),
     },
   });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -114,7 +114,7 @@ export async function updateUser(
       globalRole: parsed.data.globalRole,
     },
   });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -132,7 +132,7 @@ export async function deleteUser(
   }
 
   await prisma.user.delete({ where: { id: parsed.data.userId } });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -163,7 +163,7 @@ export async function addMembership(
       role: parsed.data.role,
     },
   });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -179,6 +179,6 @@ export async function removeMembership(
   if (!parsed.success) return { error: "Asignación no válida." };
 
   await prisma.membership.delete({ where: { id: parsed.data.membershipId } });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }

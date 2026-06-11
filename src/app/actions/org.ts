@@ -55,7 +55,7 @@ export async function createOrganization(
   await prisma.organization.create({
     data: { name: parsed.data.name, slug },
   });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 

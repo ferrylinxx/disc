@@ -193,6 +193,6 @@ async function persistResult(
 
   revalidatePath("/facilitador");
   revalidatePath("/cliente");
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return true;
 }
