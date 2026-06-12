@@ -20,6 +20,17 @@ interface CreateSessionInput {
   memberships: SessionMembership[];
 }
 
+/**
+ * La cookie solo se marca `secure` si la app se sirve por HTTPS: con un
+ * despliegue interno por HTTP (p. ej. http://IP:puerto) una cookie `secure`
+ * nunca llegaría al servidor y el login quedaría roto.
+ */
+function isSecureCookie(): boolean {
+  const appUrl = process.env.APP_URL?.trim();
+  if (appUrl) return appUrl.startsWith("https:");
+  return process.env.NODE_ENV === "production";
+}
+
 /** Crea la sesión y fija la cookie HttpOnly firmada. */
 export async function createSession(input: CreateSessionInput): Promise<void> {
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
@@ -28,7 +39,7 @@ export async function createSession(input: CreateSessionInput): Promise<void> {
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecureCookie(),
     sameSite: "lax",
     path: "/",
     expires: expiresAt,
