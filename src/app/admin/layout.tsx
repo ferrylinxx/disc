@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
-import { AdminSidebar } from "@/components/dashboard/AdminSidebar";
+import { AdminSidebar } from "@/components/admin/Sidebar";
 
 export const metadata = { title: "Consola GESEM" };
 
@@ -12,10 +11,7 @@ const dayFmt = new Intl.DateTimeFormat("es-ES", {
   month: "long",
 });
 
-const heroPill =
-  "rounded-full border border-white/30 bg-white/15 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/25";
-
-/** Marco común del panel admin: cabecera + navegación lateral persistente. */
+/** Marco de la consola admin: topbar fina + navegación lateral persistente. */
 export default async function AdminLayout({
   children,
 }: {
@@ -32,36 +28,30 @@ export default async function AdminLayout({
   const today = dayFmt.format(new Date());
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-6 py-8">
-      <section className="bg-brand animate-fade-up relative mb-6 overflow-hidden rounded-3xl p-7 text-white shadow-xl shadow-indigo-500/20">
-        <div
-          className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
-          aria-hidden
-        />
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6">
+      <div className="animate-fade-up mb-5 flex flex-wrap items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-3">
+          <span className="bg-brand flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-lg shadow-indigo-500/30">
+            ⌘
+          </span>
           <div>
-            <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide">
+            <div className="text-sm font-bold tracking-tight text-slate-900">
               Consola GESEM
-            </span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight">
-              Hola, {greetName}
-            </h1>
-            <p className="mt-1 text-sm capitalize text-white/70">{today}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/cliente" className={heroPill}>
-              Panel cliente
-            </Link>
-            <Link href="/facilitador" className={heroPill}>
-              Facilitador
-            </Link>
+            </div>
+            <div className="text-xs capitalize text-slate-400">{today}</div>
           </div>
         </div>
-      </section>
+        <div className="text-xs font-medium text-slate-500">
+          Hola, <span className="font-semibold text-slate-800">{greetName}</span>
+          <span className="ml-2 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-600">
+            Superadmin
+          </span>
+        </div>
+      </div>
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      <div className="flex flex-col gap-5 md:flex-row md:items-start">
         <AdminSidebar counts={{ organizations, users, participants }} />
-        <div className="min-w-0 flex-1 space-y-6">{children}</div>
+        <div className="min-w-0 flex-1 space-y-5 pb-16">{children}</div>
       </div>
     </main>
   );

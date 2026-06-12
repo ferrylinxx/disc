@@ -235,12 +235,13 @@ export type AdminOrganization = Awaited<
 >[number];
 
 /**
- * Participantes de toda la plataforma (panel admin · Participantes): incluye
- * organización, equipo y último resultado, para seguimiento y envío manual del
- * informe por parte del administrador.
+ * Participantes (panel admin · Participantes): incluye organización, equipo,
+ * último resultado y el token de la invitación activa, para seguimiento,
+ * reenvío y envío manual del informe. Acepta filtro por organización.
  */
-export async function adminParticipants() {
+export async function adminParticipants(organizationId?: string) {
   const rows = await prisma.participant.findMany({
+    where: organizationId ? { organizationId } : undefined,
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -248,7 +249,7 @@ export async function adminParticipants() {
       email: true,
       status: true,
       createdAt: true,
-      organization: { select: { name: true } },
+      organization: { select: { id: true, name: true } },
       team: { select: { name: true } },
       results: {
         orderBy: { computedAt: "desc" },
@@ -259,6 +260,12 @@ export async function adminParticipants() {
           primaryDimension: { select: { code: true } },
         },
       },
+      invitations: {
+        where: { status: { in: ["PENDING", "SENT", "OPENED"] } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { token: true },
+      },
     },
   });
   return rows.map((p) => ({
@@ -266,8 +273,11 @@ export async function adminParticipants() {
     fullName: p.fullName,
     email: p.email,
     status: p.status,
+    createdAt: p.createdAt,
+    organizationId: p.organization.id,
     orgName: p.organization.name,
     teamName: p.team?.name ?? null,
+    inviteToken: p.invitations[0]?.token ?? null,
     result: p.results[0]
       ? {
           eq: p.results[0].eq,
@@ -281,6 +291,61 @@ export async function adminParticipants() {
 export type AdminParticipant = Awaited<
   ReturnType<typeof adminParticipants>
 >[number];
+
+/**
+ * Detalle de una organización para la consola admin: proyectos con sus
+ * equipos, gestores (memberships) y métricas. Devuelve null si no existe.
+ */
+export async function adminOrganizationDetail(id: string) {
+  const org = await prisma.organization.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      createdAt: true,
+      projects: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          createdAt: true,
+          teams: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              name: true,
+              _count: { select: { participants: true } },
+            },
+          },
+        },
+      },
+      members: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          role: true,
+          user: {
+            select: { id: true, name: true, email: true, lastSeenAt: true },
+          },
+        },
+      },
+      _count: { select: { participants: true, assessments: true } },
+    },
+  });
+  if (!org) return null;
+
+  const completed = await prisma.participant.count({
+    where: { organizationId: id, status: "COMPLETED" },
+  });
+  return { ...org, completed };
+}
+
+export type AdminOrganizationDetail = NonNullable<
+  Awaited<ReturnType<typeof adminOrganizationDetail>>
+>;
 
 /** Proyectos, equipos y participantes de las organizaciones del cliente. */
 export async function clientOverview(organizationIds: string[]) {

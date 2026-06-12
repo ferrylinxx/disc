@@ -1,9 +1,19 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
 import { adminOrganizations } from "@/lib/data/dashboard";
 import { CreateOrgForm } from "@/components/dashboard/Forms";
 import { Avatar } from "@/components/dashboard/AdminWidgets";
+import {
+  Card,
+  EmptyState,
+  PageHeader,
+  Progress,
+  tableCls,
+} from "@/components/admin/ui";
 
 export const metadata = { title: "Organizaciones · Consola GESEM" };
+
+const dateFmt = new Intl.DateTimeFormat("es-ES", { dateStyle: "medium" });
 
 export default async function AdminOrganizationsPage() {
   await requireRole("SUPERADMIN");
@@ -11,76 +21,102 @@ export default async function AdminOrganizationsPage() {
 
   return (
     <>
-      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
-        <h2 className="mb-1 text-lg font-semibold text-slate-900">
-          Nueva organización
-        </h2>
-        <p className="mb-4 text-sm text-slate-500">
-          Crea un cliente para empezar a estructurar proyectos y equipos.
-        </p>
-        <CreateOrgForm />
-      </section>
+      <PageHeader
+        title="Organizaciones"
+        description="Clientes de la plataforma. Entra en una organización para gestionar sus proyectos, equipos y participantes."
+      />
 
-      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          Organizaciones ({organizations.length})
-        </h2>
+      <Card
+        title="Nueva organización"
+        description="Crea un cliente para empezar a estructurar proyectos y equipos."
+      >
+        <CreateOrgForm />
+      </Card>
+
+      <Card title={`Organizaciones (${organizations.length})`}>
         {organizations.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            Aún no hay organizaciones. Crea la primera arriba.
-          </p>
+          <EmptyState
+            title="Aún no hay organizaciones"
+            hint="Crea la primera con el formulario de arriba."
+          />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {organizations.map((org) => {
-              const pct =
-                org._count.participants > 0
-                  ? Math.round((org.completed / org._count.participants) * 100)
-                  : 0;
-              return (
-                <div
-                  key={org.id}
-                  className="rounded-2xl border border-slate-200 bg-white/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-100"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={org.name} />
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold text-slate-900">
-                        {org.name}
-                      </div>
-                      <div className="truncate text-xs text-slate-400">
-                        /{org.slug}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-500">
-                    <span>{org._count.projects} proyectos</span>
-                    <span>·</span>
-                    <span>{org._count.members} gestores</span>
-                    <span>·</span>
-                    <span>{org._count.participants} participantes</span>
-                  </div>
-                  <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span className="font-medium text-slate-600">
-                        Completados
-                      </span>
-                      <span className="text-slate-400">
-                        {org.completed} · {pct}%
-                      </span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-emerald-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="overflow-x-auto">
+            <table className={tableCls.table}>
+              <thead className={tableCls.thead}>
+                <tr>
+                  <th className={tableCls.th}>Organización</th>
+                  <th className={tableCls.th}>Proyectos</th>
+                  <th className={tableCls.th}>Gestores</th>
+                  <th className={tableCls.th}>Participantes</th>
+                  <th className={`${tableCls.th} w-44`}>Completados</th>
+                  <th className={tableCls.th}>Creada</th>
+                  <th className={tableCls.th} />
+                </tr>
+              </thead>
+              <tbody>
+                {organizations.map((org) => {
+                  const pct =
+                    org._count.participants > 0
+                      ? Math.round(
+                          (org.completed / org._count.participants) * 100,
+                        )
+                      : 0;
+                  return (
+                    <tr key={org.id} className={tableCls.tr}>
+                      <td className={tableCls.td}>
+                        <Link
+                          href={`/admin/organizaciones/${org.id}`}
+                          className="group flex items-center gap-3"
+                        >
+                          <Avatar name={org.name} />
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold text-slate-900 transition group-hover:text-indigo-600">
+                              {org.name}
+                            </span>
+                            <span className="block truncate text-xs text-slate-400">
+                              /{org.slug}
+                            </span>
+                          </span>
+                        </Link>
+                      </td>
+                      <td className={`${tableCls.td} text-slate-600`}>
+                        {org._count.projects}
+                      </td>
+                      <td className={`${tableCls.td} text-slate-600`}>
+                        {org._count.members}
+                      </td>
+                      <td className={`${tableCls.td} text-slate-600`}>
+                        {org._count.participants}
+                      </td>
+                      <td className={tableCls.td}>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <Progress value={pct} />
+                          </div>
+                          <span className="w-12 shrink-0 text-right text-xs font-semibold text-slate-500">
+                            {org.completed} · {pct}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className={`${tableCls.td} text-xs text-slate-400`}>
+                        {dateFmt.format(org.createdAt)}
+                      </td>
+                      <td className={`${tableCls.td} text-right`}>
+                        <Link
+                          href={`/admin/organizaciones/${org.id}`}
+                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600"
+                        >
+                          Gestionar →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-      </section>
+      </Card>
     </>
   );
 }

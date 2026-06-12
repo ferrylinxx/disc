@@ -1,11 +1,17 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
 import { adminOverview } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
 import {
-  Avatar,
-  ProgressRing,
-  StatTile,
-} from "@/components/dashboard/AdminWidgets";
+  Card,
+  PageHeader,
+  Progress,
+  ProfileChip,
+  StatCard,
+  EmptyState,
+  tableCls,
+} from "@/components/admin/ui";
+import { Avatar, ProgressRing } from "@/components/dashboard/AdminWidgets";
 
 export const metadata = { title: "Resumen · Consola GESEM" };
 
@@ -14,7 +20,6 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", {
   timeStyle: "short",
 });
 
-/** Iconos de trazo (20px) usados en los KPIs. */
 const ic = "h-5 w-5";
 const svg = {
   fill: "none",
@@ -45,7 +50,7 @@ const IconReport = () => (
   </svg>
 );
 
-/** Resumen global de la plataforma (KPIs, cumplimentación y actividad). */
+/** Resumen global de la plataforma. */
 export default async function AdminOverviewPage() {
   await requireRole("SUPERADMIN");
   const {
@@ -67,26 +72,39 @@ export default async function AdminOverviewPage() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile
+      <PageHeader
+        title="Resumen"
+        description="Estado global de la plataforma: organizaciones, evaluaciones y actividad."
+      >
+        <Link
+          href="/admin/organizaciones"
+          className="bg-brand rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95"
+        >
+          + Nueva organización
+        </Link>
+      </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
           label="Organizaciones"
           value={orgCount}
           accent="#6366f1"
           icon={<IconOrg />}
         />
-        <StatTile
+        <StatCard
           label="Usuarios"
           value={userCount}
           accent="#0ea5e9"
           icon={<IconUsers />}
         />
-        <StatTile
+        <StatCard
           label="Participantes"
           value={participantCount}
           accent="#10b981"
+          hint={`${participantStatus.completed} completados`}
           icon={<IconUserCheck />}
         />
-        <StatTile
+        <StatCard
           label="Informes"
           value={resultCount}
           accent="#f59e0b"
@@ -95,140 +113,137 @@ export default async function AdminOverviewPage() {
         />
       </div>
 
-      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          Cumplimentación
-        </h2>
-        <div className="flex flex-wrap items-center gap-6">
-          <ProgressRing value={completionRate} label="completado" />
-          <div className="min-w-[220px] flex-1 space-y-3">
-            {[
-              {
-                label: "Invitados",
-                value: participantStatus.invited,
-                color: "#94a3b8",
-              },
-              {
-                label: "En curso",
-                value: participantStatus.inProgress,
-                color: "#f59e0b",
-              },
-              {
-                label: "Completados",
-                value: participantStatus.completed,
-                color: "#10b981",
-              },
-            ].map((row) => {
-              const pct =
-                participantCount > 0
-                  ? Math.round((row.value / participantCount) * 100)
-                  : 0;
-              return (
-                <div key={row.label}>
-                  <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-600">
-                      {row.label}
-                    </span>
-                    <span className="text-slate-400">
-                      {row.value} · {pct}%
-                    </span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, backgroundColor: row.color }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
-          Invitaciones · {invitationStatus.pending} pendientes ·{" "}
-          {invitationStatus.sent} enviadas · {invitationStatus.opened} abiertas ·{" "}
-          {invitationStatus.completed} completadas · {invitationStatus.expired}{" "}
-          expiradas
-        </div>
-      </section>
-
-      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
-        <h2 className="mb-1 text-lg font-semibold text-slate-900">
-          Distribución de perfiles
-        </h2>
-        <p className="mb-4 text-sm text-slate-500">
-          Tendencia primaria de los {resultCount} informes generados (no es un
-          diagnóstico).
-        </p>
-        {resultCount === 0 ? (
-          <p className="text-sm text-slate-400">Aún no hay informes.</p>
-        ) : (
-          <div className="space-y-3">
-            {[...def.dimensions]
-              .sort((a, b) => a.order - b.order)
-              .map((dim) => {
-                const count = distByCode.get(dim.code) ?? 0;
-                const width = Math.round((count / maxDist) * 100);
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card title="Cumplimentación" description="Estado de los participantes invitados">
+          <div className="flex flex-wrap items-center gap-7">
+            <ProgressRing value={completionRate} label="completado" size={120} />
+            <div className="min-w-[200px] flex-1 space-y-3.5">
+              {[
+                { label: "Invitados", value: participantStatus.invited, color: "#94a3b8" },
+                { label: "En curso", value: participantStatus.inProgress, color: "#f59e0b" },
+                { label: "Completados", value: participantStatus.completed, color: "#10b981" },
+              ].map((row) => {
+                const pct =
+                  participantCount > 0
+                    ? Math.round((row.value / participantCount) * 100)
+                    : 0;
                 return (
-                  <div key={dim.code} className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-sm text-slate-600">
-                      {dim.code} · {dim.name}
-                    </span>
-                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${width}%`,
-                          backgroundColor: dim.color,
-                        }}
-                      />
+                  <div key={row.label}>
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-600">{row.label}</span>
+                      <span className="text-slate-400">
+                        {row.value} · {pct}%
+                      </span>
                     </div>
-                    <span className="w-8 shrink-0 text-right text-sm font-semibold text-slate-700">
-                      {count}
-                    </span>
+                    <Progress value={pct} color={row.color} />
                   </div>
                 );
               })}
+            </div>
+          </div>
+          <p className="mt-5 border-t border-slate-100 pt-3 text-xs text-slate-400">
+            Invitaciones · {invitationStatus.pending} pendientes ·{" "}
+            {invitationStatus.sent} enviadas · {invitationStatus.opened} abiertas ·{" "}
+            {invitationStatus.completed} completadas · {invitationStatus.expired}{" "}
+            expiradas
+          </p>
+        </Card>
+
+        <Card
+          title="Distribución de perfiles"
+          description={`Tendencia primaria de los ${resultCount} informes (no es un diagnóstico)`}
+        >
+          {resultCount === 0 ? (
+            <EmptyState title="Aún no hay informes" hint="Aparecerán al completarse evaluaciones." />
+          ) : (
+            <div className="space-y-4">
+              {[...def.dimensions]
+                .sort((a, b) => a.order - b.order)
+                .map((dim) => {
+                  const count = distByCode.get(dim.code) ?? 0;
+                  const width = Math.round((count / maxDist) * 100);
+                  return (
+                    <div key={dim.code} className="flex items-center gap-3">
+                      <span
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white"
+                        style={{ backgroundColor: dim.color }}
+                      >
+                        {dim.code}
+                      </span>
+                      <span className="w-24 shrink-0 text-xs font-medium text-slate-600">
+                        {dim.name}
+                      </span>
+                      <div className="flex-1">
+                        <Progress value={width} color={dim.color} />
+                      </div>
+                      <span className="w-7 shrink-0 text-right text-sm font-bold text-slate-700">
+                        {count}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card
+        title="Actividad reciente"
+        description="Últimas evaluaciones completadas"
+        action={
+          <Link
+            href="/admin/participantes"
+            className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-700"
+          >
+            Ver todos →
+          </Link>
+        }
+      >
+        {recent.length === 0 ? (
+          <EmptyState
+            title="Todavía no se ha completado ninguna evaluación"
+            hint="Invita participantes desde una organización."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={tableCls.table}>
+              <thead className={tableCls.thead}>
+                <tr>
+                  <th className={tableCls.th}>Participante</th>
+                  <th className={tableCls.th}>Organización</th>
+                  <th className={tableCls.th}>Perfil</th>
+                  <th className={tableCls.th}>EQ</th>
+                  <th className={tableCls.th}>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((r) => (
+                  <tr key={r.id} className={tableCls.tr}>
+                    <td className={tableCls.td}>
+                      <div className="flex items-center gap-2.5">
+                        <Avatar name={r.fullName} />
+                        <span className="font-semibold text-slate-800">
+                          {r.fullName}
+                        </span>
+                      </div>
+                    </td>
+                    <td className={`${tableCls.td} text-slate-500`}>{r.orgName}</td>
+                    <td className={tableCls.td}>
+                      <ProfileChip code={r.profileCode} />
+                    </td>
+                    <td className={`${tableCls.td} font-semibold text-slate-700`}>
+                      {r.eq}
+                    </td>
+                    <td className={`${tableCls.td} text-xs text-slate-400`}>
+                      {dateFmt.format(r.computedAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </section>
-
-      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          Actividad reciente
-        </h2>
-        {recent.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            Todavía no se ha completado ninguna evaluación.
-          </p>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {recent.map((r) => (
-              <li
-                key={r.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar name={r.fullName} />
-                  <div>
-                    <div className="font-semibold text-slate-900">
-                      {r.fullName}
-                    </div>
-                    <div className="text-xs text-slate-400">{r.orgName}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-slate-500">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
-                    {r.profileCode}
-                  </span>
-                  <span>EQ {r.eq}</span>
-                  <span>{dateFmt.format(r.computedAt)}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      </Card>
     </>
   );
 }

@@ -48,3 +48,6 @@ next-env.d.ts
 
 # material de trabajo extraído de los PDFs de especificación (no publicar)
 scripts/_pdf_text/
+
+# artefactos de pruebas de navegador
+.playwright-mcp/
