@@ -7,6 +7,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // DIRECT_URL usa el session pooler (puerto 5432) para migraciones DDL.
+    // DATABASE_URL usa el transaction pooler (puerto 6543) para la app.
+    url: process.env.DIRECT_URL ?? env("DATABASE_URL"),
   },
 });
