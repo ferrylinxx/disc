@@ -550,26 +550,6 @@ function Shell({
   const activeIdx = STEPS.findIndex((s) => s.key === step);
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col px-6 py-10 sm:py-14">
-      <ol className="mb-7 flex items-center justify-center">
-        {STEPS.map((s, i) => {
-          const done = i < activeIdx;
-          const active = i === activeIdx;
-          return (
-            <li key={s.key} className="flex items-center">
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition ${active ? "bg-brand text-white shadow-md" : done ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"}`}
-              >
-                {done ? "✓" : i + 1}
-              </span>
-              {i < STEPS.length - 1 && (
-                <span
-                  className={`h-0.5 w-7 rounded-full ${i < activeIdx ? "bg-indigo-300" : "bg-slate-200"}`}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ol>
       <div className="animate-fade-up glass rounded-3xl border border-white/70 p-7 shadow-xl sm:p-9">
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
           {title}
