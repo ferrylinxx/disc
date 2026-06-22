@@ -52,11 +52,13 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
           tendencias, según tus respuestas, que pueden variar con el contexto y el
           momento.
         </p>
+        <ReadingIndex />
       </section>
 
       {/* Tendencia predominante — protagonista: el recurso */}
       <header
-        className="animate-scale-in relative overflow-hidden rounded-3xl p-8 text-white shadow-xl"
+        id="r-tendencia"
+        className="animate-scale-in relative scroll-mt-24 overflow-hidden rounded-3xl p-8 text-white shadow-xl"
         style={{ backgroundImage: `linear-gradient(135deg, ${pColor}, ${sColor})` }}
       >
         <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
@@ -83,11 +85,14 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </header>
 
       {/* Recursos predominantes */}
-      <section className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Recursos predominantes
-        </h3>
-        <p className="mt-1 text-sm text-slate-500">
+      <section id="r-recursos" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="02" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Recursos predominantes
+          </h3>
+        </div>
+        <p className="mt-2 text-sm text-slate-500">
           Todas las personas disponen de los cuatro recursos. La diferencia suele
           estar en cuáles utilizamos con más frecuencia y en qué situaciones.
         </p>
@@ -132,18 +137,24 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
 
       {/* Aportación habitual + Lo que otras personas suelen valorar */}
       <section className="grid gap-5 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Aportación habitual
-          </h3>
+        <div id="r-aportacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+          <div className="flex items-center gap-2">
+            <Num n="03" />
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Aportación habitual
+            </h3>
+          </div>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
             {narrative.contribution}
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Lo que otras personas suelen valorar
-          </h3>
+        <div id="r-valoracion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+          <div className="flex items-center gap-2">
+            <Num n="04" />
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Lo que otras personas suelen valorar
+            </h3>
+          </div>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
             {narrative.valued}
           </p>
@@ -151,10 +162,13 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </section>
 
       {/* Aspectos que merece la pena observar */}
-      <section className="rounded-2xl border border-amber-100 bg-amber-50/50 p-6 shadow-sm">
-        <h3 className="flex items-center gap-2 font-bold text-amber-900">
-          <span className="text-lg">⚑</span> Aspectos que merece la pena observar
-        </h3>
+      <section id="r-observar" className="scroll-mt-24 rounded-2xl border border-amber-100 bg-amber-50/50 p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Num n="05" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+            Aspectos que merece la pena observar
+          </h3>
+        </div>
         <ul className="mt-3 space-y-2 text-sm text-amber-900/80">
           {narrative.observe.map((s) => (
             <li key={s} className="flex gap-2">
@@ -165,10 +179,13 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </section>
 
       {/* Coordinación y colaboración */}
-      <section className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Coordinación y colaboración
-        </h3>
+      <section id="r-coordinacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="06" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Coordinación y colaboración
+          </h3>
+        </div>
         <dl className="mt-4 space-y-4">
           <div>
             <dt className="text-sm font-semibold text-slate-900">
@@ -190,20 +207,26 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </section>
 
       {/* Comunicación */}
-      <section className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Comunicación
-        </h3>
+      <section id="r-comunicacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="07" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Comunicación
+          </h3>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           {narrative.communication}
         </p>
       </section>
 
       {/* Contextos de mejor desempeño + mapa por contextos */}
-      <section className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Contextos de mejor desempeño
-        </h3>
+      <section id="r-contextos" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="08" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Contextos de mejor desempeño
+          </h3>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           {narrative.contexts}
         </p>
@@ -234,10 +257,13 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </section>
 
       {/* Ampliación de repertorio */}
-      <section className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
-          Ampliación de repertorio
-        </h3>
+      <section id="r-repertorio" className="scroll-mt-24 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Num n="09" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
+            Ampliación de repertorio
+          </h3>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-700">
           {narrative.repertoire}
         </p>
@@ -270,10 +296,15 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </section>
 
       {/* Preguntas para la reflexión */}
-      <section className="rounded-2xl border border-slate-200 bg-slate-900 p-6 text-white shadow-sm">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-white/60">
-          Preguntas para la reflexión
-        </h3>
+      <section id="r-reflexion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-slate-900 p-6 text-white shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold tabular-nums text-white">
+            10
+          </span>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-white/60">
+            Preguntas para la reflexión
+          </h3>
+        </div>
         <ol className="mt-3 space-y-3">
           {narrative.reflection.map((q, i) => (
             <li key={q} className="flex gap-3 text-base font-medium leading-relaxed">
@@ -298,6 +329,55 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
         </p>
       </section>
     </div>
+  );
+}
+
+/** Apartados navegables del informe (índice de lectura). */
+const INDEX_ITEMS: { n: string; label: string; href: string }[] = [
+  { n: "01", label: "Tu tendencia predominante", href: "#r-tendencia" },
+  { n: "02", label: "Recursos predominantes", href: "#r-recursos" },
+  { n: "03", label: "Aportación habitual", href: "#r-aportacion" },
+  { n: "04", label: "Lo que otras personas suelen valorar", href: "#r-valoracion" },
+  { n: "05", label: "Aspectos que merece la pena observar", href: "#r-observar" },
+  { n: "06", label: "Coordinación y colaboración", href: "#r-coordinacion" },
+  { n: "07", label: "Comunicación", href: "#r-comunicacion" },
+  { n: "08", label: "Contextos de mejor desempeño", href: "#r-contextos" },
+  { n: "09", label: "Ampliación de repertorio", href: "#r-repertorio" },
+  { n: "10", label: "Preguntas para la reflexión", href: "#r-reflexion" },
+];
+
+/** Índice de lectura del informe (orientación; oculto en la versión impresa). */
+function ReadingIndex() {
+  return (
+    <nav className="no-print mt-4 border-t border-slate-100 pt-4">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        En este informe · 5-8 min de lectura
+      </p>
+      <ol className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+        {INDEX_ITEMS.map((it) => (
+          <li key={it.href}>
+            <a
+              href={it.href}
+              className="group flex items-baseline gap-2 py-0.5 text-sm text-slate-600 transition hover:text-indigo-600"
+            >
+              <span className="text-[11px] font-bold tabular-nums text-slate-300 group-hover:text-indigo-400">
+                {it.n}
+              </span>
+              <span className="truncate">{it.label}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+/** Chip numerado del apartado (cabecera editorial consistente). */
+function Num({ n }: { n: string }) {
+  return (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold tabular-nums text-white">
+      {n}
+    </span>
   );
 }
 
