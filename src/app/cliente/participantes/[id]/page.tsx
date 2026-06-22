@@ -6,7 +6,6 @@ import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Report } from "@/components/Report";
-import { ActionPlan } from "@/components/ActionPlan";
 import { ReportActions } from "@/components/dashboard/ReportActions";
 
 export const metadata = { title: "Informe del participante · DISC GESEM" };
@@ -60,7 +59,6 @@ export default async function ParticipantReportPage({
           />
           <div className="print-area space-y-6">
             <Report result={result} def={def} />
-            <ActionPlan result={result} def={def} />
           </div>
         </>
       )}

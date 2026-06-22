@@ -85,6 +85,13 @@ function buildCsv(
     "Combinación predominante",
     insights.overview.predominantProfile?.name ?? "—",
   );
+  add(
+    "Visión general",
+    "Diversidad del equipo",
+    insights.overview.diversity
+      ? `${insights.overview.diversity.level} (${insights.overview.diversity.distinct} perfiles)`
+      : "—",
+  );
 
   for (const d of insights.distribution) {
     add(

@@ -59,13 +59,21 @@ export function TeamMap({ insights, dimensions }: Props) {
           <Tile label="Participación" value={`${insights.overview.participation}%`} accent="#0ea5e9" />
           <Tile label="EQ medio" value={empty ? "—" : insights.overview.eqAverage} accent="#f59e0b" />
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Fact label="Combinación predominante" value={insights.overview.predominantProfile?.name ?? "—"} />
           <Fact
             label="Estilo predominante"
             value={
               insights.overview.predominantStyle
                 ? `${styleShort(insights.overview.predominantStyle.code)} · ${insights.overview.predominantStyle.share}%`
+                : "—"
+            }
+          />
+          <Fact
+            label="Diversidad del equipo"
+            value={
+              insights.overview.diversity
+                ? `${insights.overview.diversity.level} · ${insights.overview.diversity.distinct} ${insights.overview.diversity.distinct === 1 ? "perfil" : "perfiles"}`
                 : "—"
             }
           />

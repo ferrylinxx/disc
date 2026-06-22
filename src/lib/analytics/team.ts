@@ -33,6 +33,8 @@ export interface TeamInsights {
     predominantProfile: { code: string; name: string } | null;
     predominantStyle: { code: string; share: number } | null;
     eqAverage: number;
+    /** Índice de diversidad: nº de perfiles distintos y su nivel. */
+    diversity: { distinct: number; level: "Baja" | "Media" | "Alta" } | null;
   };
   distribution: { dimensionCode: string; share: number }[];
   distributionText: string;
@@ -122,6 +124,20 @@ export function computeTeamInsights(
     ? { code: combinations[0].code, name: combinations[0].name }
     : null;
 
+  // Índice de diversidad: nº de perfiles (combinaciones) distintos presentes.
+  // Criterio oficial GESEM: Baja 1-3 · Media 4-6 · Alta 7+.
+  const diversity =
+    completed > 0
+      ? {
+          distinct: combinations.length,
+          level: (combinations.length >= 7
+            ? "Alta"
+            : combinations.length >= 4
+              ? "Media"
+              : "Baja") as "Baja" | "Media" | "Alta",
+        }
+      : null;
+
   // Fortalezas / riesgos colectivos a partir de los estilos presentes (máx 5).
   const present = distribution.filter((d) => d.share >= PRESENT_THRESHOLD);
   const leading = present.length > 0 ? present : distribution.slice(0, 2);
@@ -206,6 +222,7 @@ export function computeTeamInsights(
       predominantProfile,
       predominantStyle,
       eqAverage,
+      diversity,
     },
     distribution,
     distributionText: distributionInterpretation(distribution, dimName, completed),

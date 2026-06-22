@@ -108,12 +108,21 @@ export function reportEmail(input: {
     )
     .join("");
   const coordHtml = [
-    coordRow("Cuando das indicaciones", narrative.coordination.instructions),
-    coordRow("Cuando haces seguimiento", narrative.coordination.followup),
-    coordRow("Cuando coordinas personas diferentes", narrative.coordination.coordinating),
-    coordRow("Cuando aparece un desacuerdo", narrative.coordination.conflict),
-    coordRow("Cuando necesitas generar compromiso", narrative.coordination.engagement),
+    coordRow("Cuando coordinas personas o proyectos", narrative.coordination.coordinating),
+    coordRow("Cuando colaboras con otras personas", narrative.coordination.collaborating),
   ].join("");
+  const resourcesHtml = narrative.resources
+    .map(
+      (r) =>
+        `<li style="margin:0 0 10px;list-style:none;"><strong style="color:#0f172a;font-size:14px;">${r.name}.</strong> <span style="color:#475569;font-size:14px;">${r.description}</span></li>`,
+    )
+    .join("");
+  const reflectionHtml = narrative.reflection
+    .map(
+      (q, i) =>
+        `<li style="margin:0 0 10px;color:#fff;font-size:15px;font-weight:600;list-style:none;line-height:1.5;"><span style="color:#94a3b8;">${i + 1}.</span> ${q}</li>`,
+    )
+    .join("");
   const insightsHtml = insights
     .map(
       (t) =>
@@ -122,41 +131,46 @@ export function reportEmail(input: {
     .join("");
 
   const body = `
-    <p style="margin:0 0 16px;">Hola ${first}, este es tu Mapa de Interacción Profesional.</p>
+    <p style="margin:0 0 12px;font-size:13px;color:#64748b;line-height:1.5;">Hola ${first}. Este informe describe los recursos que sueles utilizar con más frecuencia y cómo pueden influir en tu forma de comunicarte, coordinarte y colaborar. Describe tendencias, según tus respuestas, no una clasificación.</p>
     <div style="background:linear-gradient(135deg,${dimColor(result.primaryDimension)},${dimColor(result.secondaryDimension)});color:#fff;border-radius:14px;padding:18px 20px;margin:0 0 20px;">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.85;">Tu tendencia predominante · ${result.profileCode}</div>
-      <div style="font-size:22px;font-weight:800;margin-top:4px;">${narrative.title}</div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.85;">Tu tendencia predominante</div>
+      <div style="font-size:24px;font-weight:800;margin-top:4px;">${narrative.resourceHeadline}</div>
+      <div style="font-size:14px;font-weight:600;opacity:.95;margin-top:2px;">${narrative.title}</div>
       <div style="font-size:13px;opacity:.9;margin-top:6px;">${narrative.intro}</div>
-      <div style="font-size:13px;opacity:.9;margin-top:6px;">Intensidad: ${intensityLabel(result.intensity)}.</div>
+      <div style="font-size:12px;opacity:.8;margin-top:6px;">Intensidad: ${intensityLabel(result.intensity)} · Código interno: ${narrative.internalCode}</div>
     </div>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tu mapa de recursos</h3>
-    <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">${bars}</table>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tu mapa por contextos</h3>
-    <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">${contextRows}</table>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Cuando coordinas personas</h3>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Recursos predominantes</h3>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 14px;">${bars}</table>
+    <ul style="margin:0 0 20px;padding:0;">${resourcesHtml}</ul>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Aportación habitual</h3>
+    <p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.contribution}</p>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Lo que otras personas suelen valorar</h3>
+    <p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.valued}</p>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#b45309;">Aspectos que merece la pena observar</h3>
+    <ul style="margin:0 0 18px;padding:0;">${list(narrative.observe, "•", "#d97706")}</ul>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Coordinación y colaboración</h3>
     <div style="margin:0 0 18px;">${coordHtml}</div>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#15803d;">Lo que puede estar funcionando bien</h3>
-    <ul style="margin:0 0 18px;padding:0;">${list(narrative.strengths, "+", "#16a34a")}</ul>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#b45309;">Lo que merece la pena observar</h3>
-    <ul style="margin:0 0 8px;padding:0;">${list(narrative.observe, "!", "#d97706")}</ul>
-    <p style="margin:0 0 18px;font-size:13px;color:#94a3b8;line-height:1.5;">${narrative.complement}</p>
-    ${insights.length > 0 ? `<h3 style="margin:0 0 8px;font-size:14px;color:${BRAND};">Insights personalizados</h3><ul style="margin:0 0 18px;padding:0;">${insightsHtml}</ul>` : ""}
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Comunicación</h3>
+    <p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.communication}</p>
+    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Contextos de mejor desempeño</h3>
+    <p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.contexts}</p>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">${contextRows}</table>
+    <h3 style="margin:0 0 8px;font-size:14px;color:${BRAND};">Ampliación de repertorio</h3>
+    <p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.repertoire}</p>
+    ${insights.length > 0 ? `<ul style="margin:0 0 18px;padding:0;">${insightsHtml}</ul>` : ""}
     <div style="background:#eef2ff;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
-      <strong style="color:#3730a3;">Equilibrio (EQ ${result.eq}): ${eqBand.label}.</strong>
+      <strong style="color:#3730a3;">Equilibrio entre recursos (EQ ${result.eq}): ${eqBand.label}.</strong>
       <span style="color:#475569;">${eqBand.description}</span>
     </div>
-    <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;font-weight:700;">Tu experimento de esta semana</div>
-      <p style="margin:6px 0 0;color:#475569;font-size:14px;line-height:1.5;">${narrative.experiment}</p>
+    <div style="background:#0f172a;border-radius:12px;padding:16px 18px;margin:0 0 18px;">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;">Preguntas para la reflexión</div>
+      <ul style="margin:10px 0 0;padding:0;">${reflectionHtml}</ul>
     </div>
-    <div style="background:#0f172a;border-radius:12px;padding:16px 18px;">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;">Una pregunta para ti</div>
-      <p style="margin:6px 0 0;color:#fff;font-size:16px;font-weight:600;line-height:1.5;">${narrative.question}</p>
-    </div>`;
+    <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;text-align:center;">El autoconocimiento es el punto de partida. La comprensión mutua es el puente. La adaptación consciente es la competencia. La colaboración eficaz es el resultado.</p>`;
 
   return {
-    subject: `Tu informe DISC GESEM · ${result.profileCode}`,
-    html: shell("Tu Mapa de Interacción Profesional", body),
-    text: `Hola ${first}, tu Mapa de Interacción Profesional DISC GESEM es ${result.profileCode} (${narrative.title}). EQ ${result.eq}.`,
+    subject: `Tu informe DISC GESEM · ${narrative.resourceHeadline}`,
+    html: shell("Tu informe DISC GESEM", body),
+    text: `Hola ${first}, tu informe DISC GESEM destaca recursos orientados a ${narrative.resourceHeadline} (${narrative.title}). EQ ${result.eq}.`,
   };
 }

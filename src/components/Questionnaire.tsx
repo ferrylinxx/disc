@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import type { InstrumentDefinition } from "@/lib/engine/types";
+import type { InstrumentDefinition, ScoringResult } from "@/lib/engine/types";
 import { evaluate } from "@/app/actions/evaluate";
 import { clearDraft, saveDraft } from "@/app/actions/drafts";
+import { Report } from "./Report";
 
 type Step = "intro" | "self" | "quiz" | "reflect" | "result";
 type Picks = Record<string, { most?: string; least?: string }>;
@@ -40,6 +41,7 @@ export function Questionnaire({
   const [error, setError] = useState<string | null>(null);
   const [reflect, setReflect] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
+  const [result, setResult] = useState<ScoringResult | null>(null);
   const [pending, start] = useTransition();
 
   // Trazabilidad para validación: ms acumulados y nº de cambios por ítem.
@@ -82,6 +84,7 @@ export function Questionnaire({
         reflection: reflect.trim() || undefined,
       });
       if (res.ok) {
+        setResult(res.result ?? null);
         setStep("result");
       } else {
         setError(res.error ?? "Error al calcular el resultado.");
@@ -504,27 +507,46 @@ export function Questionnaire({
   }
 
   return (
-    <Shell
-      step="result"
-      title="¡Gracias por completar el cuestionario!"
-      subtitle="Hemos recibido tus respuestas correctamente."
-    >
-      <div className="flex flex-col items-center py-4 text-center">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl text-emerald-600">
+    <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+      <div className="animate-fade-up mb-6 flex flex-col items-center text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
           ✓
         </span>
-        <p className="mt-6 max-w-md leading-relaxed text-slate-600">
-          Tu facilitador revisará tus resultados y te hará llegar tu informe
-          personalizado. No es necesario que hagas nada más.
+        <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+          ¡Gracias por completar el cuestionario!
+        </h1>
+        <p className="mt-2 max-w-md leading-relaxed text-slate-600">
+          Este es tu informe. Describe los recursos que sueles utilizar con más
+          frecuencia. Puedes leerlo ahora; también lo tendrá tu facilitador.
         </p>
+      </div>
+
+      {result ? (
+        <div className="print-area">
+          <Report result={result} def={def} />
+        </div>
+      ) : (
+        <p className="rounded-2xl border border-slate-200 bg-white/80 p-6 text-center text-sm text-slate-600">
+          Hemos recibido tus respuestas correctamente. Tu facilitador te hará
+          llegar tu informe personalizado.
+        </p>
+      )}
+
+      <div className="no-print mt-8 flex flex-wrap items-center justify-center gap-3">
+        <button
+          onClick={() => window.print()}
+          className="bg-brand rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+        >
+          ↓ Descargar informe (PDF)
+        </button>
         <Link
           href="/"
-          className="mt-8 rounded-full border border-slate-200 bg-white/80 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+          className="rounded-full border border-slate-200 bg-white/80 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
         >
           ← Volver al inicio
         </Link>
       </div>
-    </Shell>
+    </main>
   );
 }
 

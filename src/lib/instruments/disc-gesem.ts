@@ -30,7 +30,8 @@ const SCORING: ScoringConfig = {
   // Rango global (máx − mín) ≤ 4 ⇒ perfil EQ (adaptable), según catálogo oficial.
   eqRangeThreshold: 4,
   // Umbrales de intensidad sobre la diferencia cruda primaria-secundaria.
-  intensity: { moderada: 5, definida: 12, muyDefinida: 22 },
+  // Tabla oficial GESEM: Flexible 0-4 · Moderada 5-9 · Definida 10-14 · Muy definida 15+.
+  intensity: { moderada: 5, definida: 10, muyDefinida: 15 },
   eq: { enabled: true, min: 0, max: 100 },
 };
 
