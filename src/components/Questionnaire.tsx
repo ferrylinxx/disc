@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { InstrumentDefinition, ScoringResult } from "@/lib/engine/types";
+import type { ProfileNarrative } from "@/lib/narratives/disc-gesem.profiles";
 import { evaluate } from "@/app/actions/evaluate";
 import { clearDraft, saveDraft } from "@/app/actions/drafts";
 import { Report } from "./Report";
@@ -42,6 +43,7 @@ export function Questionnaire({
   const [reflect, setReflect] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
   const [result, setResult] = useState<ScoringResult | null>(null);
+  const [narrative, setNarrative] = useState<ProfileNarrative | null>(null);
   const [pending, start] = useTransition();
 
   // Trazabilidad para validación: ms acumulados y nº de cambios por ítem.
@@ -85,6 +87,7 @@ export function Questionnaire({
       });
       if (res.ok) {
         setResult(res.result ?? null);
+        setNarrative(res.narrative ?? null);
         setStep("result");
       } else {
         setError(res.error ?? "Error al calcular el resultado.");
@@ -523,7 +526,7 @@ export function Questionnaire({
 
       {result ? (
         <div className="print-area">
-          <Report result={result} def={def} />
+          <Report result={result} def={def} narrative={narrative ?? undefined} />
         </div>
       ) : (
         <p className="rounded-2xl border border-slate-200 bg-white/80 p-6 text-center text-sm text-slate-600">

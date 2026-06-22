@@ -1,0 +1,69 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import { requireRole } from "@/lib/auth/dal";
+import type { ActionState } from "./org";
+
+const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"] as const;
+type NarrativeStatus = (typeof STATUSES)[number];
+
+/**
+ * Guarda (upsert) una entrada de narrativa editable desde administración.
+ * Incrementa la versión, registra el autor y revalida el editor. SUPERADMIN.
+ */
+export async function saveNarrative(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireRole("SUPERADMIN");
+  const scope = String(formData.get("scope") ?? "");
+  const key = String(formData.get("key") ?? "");
+  const statusRaw = String(formData.get("status") ?? "PUBLISHED");
+  const contentRaw = String(formData.get("content") ?? "");
+
+  if (scope !== "RESOURCE" && scope !== "PROFILE") {
+    return { error: "Ámbito no válido." };
+  }
+  if (!key) return { error: "Falta la clave de la narrativa." };
+
+  let content: unknown;
+  try {
+    content = JSON.parse(contentRaw);
+  } catch {
+    return { error: "El contenido no es un JSON válido." };
+  }
+
+  const status: NarrativeStatus = STATUSES.includes(statusRaw as NarrativeStatus)
+    ? (statusRaw as NarrativeStatus)
+    : "PUBLISHED";
+  const author = session.name ?? session.email ?? "admin";
+
+  const existing = await prisma.narrativeEntry.findUnique({
+    where: { scope_key_locale: { scope, key, locale: "es" } },
+    select: { version: true },
+  });
+
+  await prisma.narrativeEntry.upsert({
+    where: { scope_key_locale: { scope, key, locale: "es" } },
+    update: {
+      content: content as Prisma.InputJsonValue,
+      status,
+      author,
+      version: (existing?.version ?? 0) + 1,
+    },
+    create: {
+      scope,
+      key,
+      locale: "es",
+      content: content as Prisma.InputJsonValue,
+      status,
+      author,
+      version: 1,
+    },
+  });
+
+  revalidatePath("/admin/catalogo");
+  return { ok: true, message: `Guardado (v${(existing?.version ?? 0) + 1}).` };
+}

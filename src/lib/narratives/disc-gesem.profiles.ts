@@ -12,7 +12,16 @@
  * compuesto por recurso; en producción vivirá en BD versionada y editable.
  */
 import type { ScoringResult } from "@/lib/engine/types";
-import { resolveProfile, styleShort } from "./disc-gesem.catalog";
+import { resolveProfile, styleShort, type ProfileEntry } from "./disc-gesem.catalog";
+
+/**
+ * Biblioteca de narrativas (recursos + perfiles). Puede provenir de BD (editable
+ * desde administración) o de los valores por defecto de este módulo.
+ */
+export interface NarrativeLibrary {
+  resources: Record<string, ResourceNarrative>;
+  profiles: Record<string, ProfileEntry>;
+}
 
 /** Un recurso del Diccionario de Recursos con su definición breve. */
 export interface ResourceItem {
@@ -220,12 +229,16 @@ function pickDistinct(primary: ResourceItem[], secondary: ResourceItem[], n: num
  * secundario para enriquecer recursos y observaciones). El recurso primario
  * gobierna coordinación, comunicación, contextos y ampliación de repertorio.
  */
-export function buildProfileNarrative(result: ScoringResult): ProfileNarrative {
-  const profile = resolveProfile(result.profileCode);
-  const primary = RESOURCE_NARRATIVES[result.primaryDimension] ?? RESOURCE_NARRATIVES.D;
+export function buildProfileNarrative(
+  result: ScoringResult,
+  library?: NarrativeLibrary,
+): ProfileNarrative {
+  const resources = library?.resources ?? RESOURCE_NARRATIVES;
+  const profile = library?.profiles?.[result.profileCode] ?? resolveProfile(result.profileCode);
+  const primary = resources[result.primaryDimension] ?? RESOURCE_NARRATIVES.D;
   const secondary = result.isEq
     ? null
-    : RESOURCE_NARRATIVES[result.secondaryDimension] ?? null;
+    : resources[result.secondaryDimension] ?? null;
 
   const resourceHeadline = result.isEq
     ? "Recursos equilibrados"

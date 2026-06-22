@@ -4,6 +4,7 @@ import { intensityLabel, styleShort } from "@/lib/narratives/disc-gesem.catalog"
 import {
   buildProfileNarrative,
   contextLeaders,
+  type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 import { ScoreBars } from "./ScoreBars";
@@ -11,6 +12,8 @@ import { ScoreBars } from "./ScoreBars";
 interface Props {
   result: ScoringResult;
   def: InstrumentDefinition;
+  /** Narrativa precompuesta desde BD; si falta, se compone con valores base. */
+  narrative?: ProfileNarrative;
 }
 
 /**
@@ -23,11 +26,11 @@ interface Props {
  * No incluye retos, experimentos, tareas ni planes de acción individuales. El
  * protagonista es el RECURSO; el código de perfil es solo referencia interna.
  */
-export function Report({ result, def }: Props) {
+export function Report({ result, def, narrative: narrativeProp }: Props) {
   const dimColor = (code: string) =>
     def.dimensions.find((d) => d.code === code)?.color ?? "#0f172a";
   const eqBand = resolveEqBand(result.eq);
-  const narrative = buildProfileNarrative(result);
+  const narrative = narrativeProp ?? buildProfileNarrative(result);
   const contexts = contextLeaders(result);
   const insights = generateInsights(result);
   const shareOf = (code: string) =>

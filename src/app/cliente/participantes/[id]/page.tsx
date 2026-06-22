@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/dal";
 import { effectiveRoles, adminOrganizationIds } from "@/lib/auth/rbac";
 import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
+import { buildProfileNarrativeDb } from "@/lib/narratives/library";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Report } from "@/components/Report";
 import { ReportActions } from "@/components/dashboard/ReportActions";
@@ -31,6 +32,7 @@ export default async function ParticipantReportPage({
 
   const { participant, result } = data;
   const def = getActiveInstrument();
+  const narrative = result ? await buildProfileNarrativeDb(result) : undefined;
 
   return (
     <DashboardShell
@@ -58,7 +60,7 @@ export default async function ParticipantReportPage({
             email={participant.email}
           />
           <div className="print-area space-y-6">
-            <Report result={result} def={def} />
+            <Report result={result} def={def} narrative={narrative} />
           </div>
         </>
       )}

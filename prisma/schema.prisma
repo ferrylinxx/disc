@@ -485,6 +485,29 @@ model NarrativeContent {
   @@map("narrative_contents")
 }
 
+/**
+ * Biblioteca de narrativas editable desde administración (motor de narrativas
+ * GESEM). Cada entrada guarda el contenido de un RECURSO (D/I/S/C) o de un
+ * PERFIL (DI..EQ) como JSON estructurado, con estado, versión y autor. La app
+ * lee las entradas PUBLISHED y cae a los valores por defecto si faltan.
+ */
+model NarrativeEntry {
+  id        String          @id @default(cuid())
+  // "RESOURCE" (D/I/S/C) o "PROFILE" (DI, ID, …, EQ).
+  scope     String
+  key       String
+  locale    String          @default("es")
+  content   Json
+  status    NarrativeStatus @default(PUBLISHED)
+  version   Int             @default(1)
+  author    String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([scope, key, locale])
+  @@map("narrative_entries")
+}
+
 model ActionPlan {
   id        String   @id @default(cuid())
   resultId  String   @unique

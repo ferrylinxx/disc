@@ -7,6 +7,8 @@ import { prisma } from "@/lib/db";
 import { getActiveInstrument } from "@/lib/instruments";
 import { score } from "@/lib/engine/scoring";
 import type { ScoringResult } from "@/lib/engine/types";
+import { buildProfileNarrativeDb } from "@/lib/narratives/library";
+import type { ProfileNarrative } from "@/lib/narratives/disc-gesem.profiles";
 
 const responseSchema = z.object({
   itemCode: z.string(),
@@ -33,6 +35,8 @@ export interface EvaluateResponse {
   ok: boolean;
   error?: string;
   result?: ScoringResult;
+  /** Narrativa del informe compuesta desde la biblioteca (BD + valores base). */
+  narrative?: ProfileNarrative;
   /** true si el resultado quedó guardado en base de datos. */
   saved?: boolean;
 }
@@ -66,6 +70,8 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
     return { ok: false, error: "Debes responder todos los ítems." };
   }
 
+  const narrative = await buildProfileNarrativeDb(result);
+
   if (parsed.data.token) {
     try {
       const saved = await persistResult(
@@ -75,14 +81,14 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
         parsed.data.selfPlacement,
         parsed.data.reflection,
       );
-      return { ok: true, result, saved };
+      return { ok: true, result, narrative, saved };
     } catch (e) {
       console.error("[evaluate] persistencia fallida:", e);
       return { ok: false, error: "No se pudo guardar el resultado." };
     }
   }
 
-  return { ok: true, result };
+  return { ok: true, result, narrative };
 }
 
 /**

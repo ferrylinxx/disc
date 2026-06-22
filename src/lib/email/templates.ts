@@ -4,6 +4,7 @@ import { intensityLabel, styleShort } from "@/lib/narratives/disc-gesem.catalog"
 import {
   buildProfileNarrative,
   contextLeaders,
+  type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 
@@ -87,11 +88,13 @@ export function reportEmail(input: {
   participantName: string;
   result: ScoringResult;
   def: InstrumentDefinition;
+  /** Narrativa precompuesta desde BD; si falta, se compone con valores base. */
+  narrative?: ProfileNarrative;
 }): { subject: string; html: string; text: string } {
   const { result, def, participantName } = input;
   const dimColor = (c: string) =>
     def.dimensions.find((d) => d.code === c)?.color ?? "#64748b";
-  const narrative = buildProfileNarrative(result);
+  const narrative = input.narrative ?? buildProfileNarrative(result);
   const contexts = contextLeaders(result);
   const insights = generateInsights(result);
   const eqBand = resolveEqBand(result.eq);
