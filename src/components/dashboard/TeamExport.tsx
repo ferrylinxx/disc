@@ -27,6 +27,22 @@ export function TeamExport({ insights, dimensions, teamName }: Props) {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Imprime en modo "ejecutivo" (lectura breve para dirección/RRHH: oculta las
+   * pantallas ampliadas) o "facilitador" (versión completa). El modo se marca en
+   * el contenedor .print-area y lo aplica el CSS de impresión.
+   */
+  function printAs(mode: "ejecutivo" | "facilitador") {
+    const area = document.querySelector(".print-area");
+    area?.setAttribute("data-export", mode);
+    const cleanup = () => {
+      area?.removeAttribute("data-export");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  }
+
   return (
     <div className="no-print flex flex-wrap items-center justify-end gap-2">
       <button
@@ -38,10 +54,17 @@ export function TeamExport({ insights, dimensions, teamName }: Props) {
       </button>
       <button
         type="button"
-        onClick={() => window.print()}
+        onClick={() => printAs("ejecutivo")}
+        className="rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+      >
+        ↓ PDF ejecutivo
+      </button>
+      <button
+        type="button"
+        onClick={() => printAs("facilitador")}
         className="bg-brand rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
       >
-        ↓ Descargar PDF
+        ↓ PDF facilitador
       </button>
     </div>
   );

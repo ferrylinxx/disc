@@ -58,7 +58,17 @@ export default async function TeamMapPage({
         teamName={data.team.name}
       />
       <div className="print-area">
-        <TeamMap insights={data.insights} dimensions={dims} />
+        <TeamMap
+          insights={data.insights}
+          dimensions={dims}
+          header={{
+            name: data.team.name,
+            organizationName: data.team.organizationName,
+            projectName: data.team.projectName,
+            createdAt: data.team.createdAt,
+            total: data.totals.total,
+          }}
+        />
       </div>
 
       <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">

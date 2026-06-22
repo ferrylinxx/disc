@@ -502,7 +502,14 @@ export async function teamMap(teamId: string, organizationIds: string[]) {
     select: {
       id: true,
       name: true,
-      project: { select: { id: true, name: true } },
+      createdAt: true,
+      project: {
+        select: {
+          id: true,
+          name: true,
+          organization: { select: { name: true } },
+        },
+      },
       participants: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -604,7 +611,13 @@ export async function teamMap(teamId: string, organizationIds: string[]) {
     .sort((a, b) => b.count - a.count);
 
   return {
-    team: { id: team.id, name: team.name, projectName: team.project.name },
+    team: {
+      id: team.id,
+      name: team.name,
+      projectName: team.project.name,
+      organizationName: team.project.organization.name,
+      createdAt: team.createdAt.toISOString(),
+    },
     totals: { total: participants.length, completed: insights.overview.completed },
     participants,
     averages,

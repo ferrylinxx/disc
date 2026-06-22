@@ -200,6 +200,8 @@ body {
   /* Evita cortar tarjetas y secciones a mitad de página. */
   .print-area section,
   .print-area header { break-inside: avoid; }
+  /* PDF ejecutivo: oculta las pantallas ampliadas (solo facilitador). */
+  .print-area[data-export="ejecutivo"] [data-detail] { display: none !important; }
   .animate-fade-up,
   .animate-fade-in,
   .animate-scale-in { animation: none !important; }

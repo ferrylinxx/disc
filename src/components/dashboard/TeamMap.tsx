@@ -5,6 +5,14 @@ import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
 interface Props {
   insights: TeamInsights;
   dimensions: Dimension[];
+  /** Cabecera del equipo (nombre, organización, unidad, fecha, nº participantes). */
+  header?: {
+    name: string;
+    organizationName: string;
+    projectName: string;
+    createdAt: string;
+    total: number;
+  };
 }
 
 /** Las 10 pantallas del mapa de equipo, con su ancla de navegación. */
@@ -25,11 +33,18 @@ const SCREENS = [
  * Mapa de equipo avanzado: lectura colectiva en 10 pantallas a partir de la
  * analítica del equipo. Redacción en clave de tendencia/hipótesis (AGENTS.md).
  */
-export function TeamMap({ insights, dimensions }: Props) {
+export function TeamMap({ insights, dimensions, header }: Props) {
   const color = new Map(dimensions.map((d) => [d.code, d.color]));
   const name = new Map(dimensions.map((d) => [d.code, d.name]));
   const dye = (code: string) => color.get(code) ?? "#64748b";
   const empty = insights.overview.completed === 0;
+  const teamDate = header
+    ? new Date(header.createdAt).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className="space-y-6">
@@ -53,6 +68,14 @@ export function TeamMap({ insights, dimensions }: Props) {
       )}
 
       <Screen id="vision" n={1} title="Visión general">
+        {header && (
+          <div className="mb-4 grid gap-3 rounded-2xl border border-slate-100 bg-white/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Fact label="Organización" value={header.organizationName} />
+            <Fact label="Unidad / proyecto" value={header.projectName} />
+            <Fact label="Equipo" value={header.name} />
+            <Fact label="Fecha" value={teamDate ?? "—"} />
+          </div>
+        )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Tile label="Participantes" value={insights.overview.total} accent="#6366f1" />
           <Tile label="Completados" value={insights.overview.completed} accent="#10b981" />
@@ -80,21 +103,31 @@ export function TeamMap({ insights, dimensions }: Props) {
         </div>
       </Screen>
 
-      <Screen id="distribucion" n={2} title="Distribución DISC del equipo">
+      <Screen id="distribucion" n={2} title="Mapa de recursos colectivos">
         <p className="mb-4 text-sm text-slate-600">{insights.distributionText}</p>
-        <div className="space-y-2.5">
-          {insights.distribution.map((d) => (
-            <BarRow
-              key={d.dimensionCode}
-              label={`${styleShort(d.dimensionCode)} · ${name.get(d.dimensionCode) ?? d.dimensionCode}`}
-              value={d.share}
-              color={dye(d.dimensionCode)}
-            />
-          ))}
+        <div className="grid items-center gap-6 lg:grid-cols-2">
+          <Radar
+            data={insights.distribution.map((d) => ({
+              code: d.dimensionCode,
+              label: styleShort(d.dimensionCode),
+              value: d.share,
+              color: dye(d.dimensionCode),
+            }))}
+          />
+          <div className="space-y-2.5">
+            {insights.distribution.map((d) => (
+              <BarRow
+                key={d.dimensionCode}
+                label={`${styleShort(d.dimensionCode)} · ${name.get(d.dimensionCode) ?? d.dimensionCode}`}
+                value={d.share}
+                color={dye(d.dimensionCode)}
+              />
+            ))}
+          </div>
         </div>
       </Screen>
 
-      <Screen id="combinaciones" n={3} title="Distribución de combinaciones">
+      <Screen id="combinaciones" n={3} title="Distribución de combinaciones" detail>
         {insights.combinations.length === 0 ? (
           <Muted />
         ) : (
@@ -116,7 +149,7 @@ export function TeamMap({ insights, dimensions }: Props) {
         )}
       </Screen>
 
-      <Screen id="contextos" n={4} title="Mapa de contextos">
+      <Screen id="contextos" n={4} title="Mapa de contextos" detail>
         {empty ? (
           <Muted />
         ) : (
@@ -132,7 +165,7 @@ export function TeamMap({ insights, dimensions }: Props) {
         <Bullets items={insights.risks} tone="amber" />
       </Screen>
 
-      <Screen id="complementariedad" n={7} title="Complementariedad">
+      <Screen id="complementariedad" n={7} title="Complementariedad" detail>
         {insights.complementarity.length === 0 ? (
           <Muted />
         ) : (
@@ -219,15 +252,19 @@ function Screen({
   n,
   title,
   children,
+  detail = false,
 }: {
   id: string;
   n: number;
   title: string;
   children: React.ReactNode;
+  /** Pantalla ampliada (solo PDF facilitador): se oculta en el PDF ejecutivo. */
+  detail?: boolean;
 }) {
   return (
     <section
       id={id}
+      data-detail={detail ? "" : undefined}
       className="glass animate-fade-up scroll-mt-20 rounded-2xl border border-white/60 p-6"
     >
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
@@ -260,6 +297,80 @@ function Fact({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl bg-white/60 p-3">
       <div className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</div>
       <div className="text-sm font-semibold text-slate-800">{value}</div>
+    </div>
+  );
+}
+
+/**
+ * Radar (SVG) de los recursos colectivos. Polígono de 4 ejes (D/I/S/C) con el
+ * % de share del equipo. Sin dependencias externas.
+ */
+function Radar({
+  data,
+}: {
+  data: { code: string; label: string; value: number; color: string }[];
+}) {
+  const size = 240;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = 88;
+  const n = data.length;
+  // Eje i en ángulo (empezando arriba, sentido horario).
+  const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2;
+  const point = (i: number, radius: number) => ({
+    x: cx + radius * Math.cos(angle(i)),
+    y: cy + radius * Math.sin(angle(i)),
+  });
+  const valuePoints = data
+    .map((d, i) => {
+      const p = point(i, (Math.min(100, Math.max(0, d.value)) / 100) * r);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    })
+    .join(" ");
+  const rings = [0.25, 0.5, 0.75, 1];
+
+  return (
+    <div className="flex justify-center">
+      <svg viewBox={`0 0 ${size} ${size}`} className="h-56 w-56" role="img" aria-label="Radar de recursos del equipo">
+        {rings.map((f) => (
+          <polygon
+            key={f}
+            points={data
+              .map((_, i) => {
+                const p = point(i, r * f);
+                return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+              })
+              .join(" ")}
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth="1"
+          />
+        ))}
+        {data.map((_, i) => {
+          const p = point(i, r);
+          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />;
+        })}
+        <polygon points={valuePoints} fill="rgba(99,102,241,0.18)" stroke="#6366f1" strokeWidth="2" />
+        {data.map((d, i) => {
+          const p = point(i, (Math.min(100, Math.max(0, d.value)) / 100) * r);
+          return <circle key={d.code} cx={p.x} cy={p.y} r="3.5" fill={d.color} />;
+        })}
+        {data.map((d, i) => {
+          const p = point(i, r + 16);
+          return (
+            <text
+              key={d.code}
+              x={p.x}
+              y={p.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="fill-slate-600 text-[10px] font-semibold"
+            >
+              {d.label} {d.value}%
+            </text>
+          );
+        })}
+      </svg>
     </div>
   );
 }
