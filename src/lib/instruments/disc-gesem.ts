@@ -15,11 +15,12 @@ import type {
 } from "@/lib/engine/types";
 import { DISC_CONTEXTS, DISC_ITEM_ROWS } from "./disc-gesem.data";
 
+// Colores base DISC (color sólido representativo de cada degradado GESEM).
 export const DISC_DIMENSIONS: Dimension[] = [
-  { code: "D", name: "Dominancia", color: "#E2483D", order: 1 },
-  { code: "I", name: "Influencia", color: "#F2B705", order: 2 },
-  { code: "S", name: "Estabilidad", color: "#1FA774", order: 3 },
-  { code: "C", name: "Cumplimiento", color: "#2D6CDF", order: 4 },
+  { code: "D", name: "Dominancia", color: "#D1133A", order: 1 },
+  { code: "I", name: "Influencia", color: "#FFAE00", order: 2 },
+  { code: "S", name: "Estabilidad", color: "#30C67C", order: 3 },
+  { code: "C", name: "Cumplimiento", color: "#6F7BF7", order: 4 },
 ];
 
 const SCORING: ScoringConfig = {

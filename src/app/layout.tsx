@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Poppins, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import { PresenceHeartbeat } from "@/components/PresenceHeartbeat";
 import "./globals.css";
 
-const geistSans = Geist({
+// Tipografía corporativa GESEM (Poppins). Conserva el nombre de variable CSS
+// para no tocar el resto de referencias.
+const geistSans = Poppins({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({

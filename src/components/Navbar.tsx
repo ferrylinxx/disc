@@ -14,12 +14,12 @@ export default async function Navbar() {
     <header className="sticky top-0 z-30">
       <div className="glass border-b border-white/60">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3.5">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="bg-brand flex h-8 w-8 items-center justify-center rounded-xl text-sm font-black text-white shadow-lg shadow-indigo-500/30">
-              G
-            </span>
-            <span className="text-sm font-bold tracking-tight text-slate-900">
-              DISC <span className="text-gradient">GESEM</span>
+          <Link href="/" className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-7 w-auto" />
+            <span className="hidden h-5 w-px bg-slate-300 sm:block" />
+            <span className="hidden text-sm font-bold tracking-tight text-slate-900 sm:inline">
+              DISC
             </span>
           </Link>
 
@@ -49,7 +49,7 @@ export default async function Navbar() {
                 </Link>
                 <Link
                   href="/evaluacion"
-                  className="bg-brand rounded-full px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:opacity-90"
+                  className="bg-brand rounded-full px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:opacity-90"
                 >
                   Comenzar
                 </Link>
