@@ -13,7 +13,7 @@ import { EmptyState, ProfileChip, StatusBadge, tableCls } from "./ui";
 const initial: ActionState = {};
 
 const inputCls =
-  "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100";
+  "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 type Filter = "ALL" | "INVITED" | "IN_PROGRESS" | "COMPLETED";
 
@@ -55,7 +55,7 @@ function ResendButton({ id }: { id: string }) {
         type="submit"
         disabled={pending}
         title="Reenviar invitación por email"
-        className={`${btn} bg-indigo-50 text-indigo-600 hover:bg-indigo-100`}
+        className={`${btn} bg-sky-50 text-sky-600 hover:bg-sky-100`}
       >
         {pending ? "Enviando…" : "✉ Reenviar"}
       </button>
@@ -258,7 +258,7 @@ export function ParticipantsTable({
                         <>
                           <Link
                             href={`/cliente/participantes/${p.id}`}
-                            className={`${btn} border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:text-indigo-600`}
+                            className={`${btn} border border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:text-sky-600`}
                           >
                             Ver informe
                           </Link>

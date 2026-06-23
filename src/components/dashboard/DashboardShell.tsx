@@ -44,7 +44,7 @@ interface StatCardProps {
 }
 
 /** Tarjeta de métrica para la fila de KPIs. */
-export function StatCard({ label, value, accent = "#6366f1" }: StatCardProps) {
+export function StatCard({ label, value, accent = "#00a1e0" }: StatCardProps) {
   return (
     <div className="glass animate-scale-in rounded-2xl border border-white/60 p-5">
       <div

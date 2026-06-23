@@ -14,7 +14,7 @@ export function IntakeForm() {
       <div className="w-full max-w-md">
         {/* Encabezado */}
         <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-lg shadow-indigo-200">
+          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-lg shadow-sky-200">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -55,7 +55,7 @@ export function IntakeForm() {
                 required
                 autoComplete="name"
                 placeholder="Ej. Ana García López"
-                className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
             </div>
 
@@ -74,7 +74,7 @@ export function IntakeForm() {
                 required
                 autoComplete="email"
                 placeholder="Ej. ana@empresa.com"
-                className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
               <p className="text-[11px] text-slate-400">
                 Solo se usará para enviarte tu informe si lo solicitas.
@@ -92,7 +92,7 @@ export function IntakeForm() {
             <button
               type="submit"
               disabled={pending}
-              className="bg-brand w-full rounded-xl py-3.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:opacity-90 disabled:opacity-60"
+              className="bg-brand w-full rounded-xl py-3.5 text-sm font-semibold text-white shadow-md shadow-sky-200 transition hover:opacity-90 disabled:opacity-60"
             >
               {pending ? "Preparando cuestionario…" : "Comenzar evaluación →"}
             </button>

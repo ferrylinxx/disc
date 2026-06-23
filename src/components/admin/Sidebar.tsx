@@ -133,7 +133,7 @@ export function AdminSidebar({
                 href={item.href}
                 className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition md:mb-0.5 ${
                   active
-                    ? "bg-brand text-white shadow-lg shadow-indigo-900/40"
+                    ? "bg-brand text-white shadow-lg shadow-sky-900/40"
                     : "hover:bg-white/[0.07] hover:text-white"
                 }`}
               >

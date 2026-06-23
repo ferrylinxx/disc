@@ -24,7 +24,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-slate-500">
         ¿Eres participante con una invitación?{" "}
-        <Link href="/" className="font-semibold text-indigo-600 hover:text-indigo-700">
+        <Link href="/" className="font-semibold text-sky-600 hover:text-sky-700">
           Empieza aquí
         </Link>
       </p>

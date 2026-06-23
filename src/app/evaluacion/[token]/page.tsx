@@ -74,7 +74,7 @@ function Notice({ title, body }: { title: string; body: string }) {
         <p className="mt-3 leading-relaxed text-slate-600">{body}</p>
         <Link
           href="/"
-          className="bg-brand mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02]"
+          className="bg-brand mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:scale-[1.02]"
         >
           Ir al inicio
         </Link>

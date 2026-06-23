@@ -7,7 +7,7 @@ export function StatTile({
   label,
   value,
   hint,
-  accent = "#6366f1",
+  accent = "#00a1e0",
   icon,
 }: {
   label: string;
@@ -17,7 +17,7 @@ export function StatTile({
   icon?: ReactNode;
 }) {
   return (
-    <div className="glass animate-scale-in rounded-2xl border border-white/60 p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-100">
+    <div className="glass animate-scale-in rounded-2xl border border-white/60 p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sky-100">
       <div className="flex items-start justify-between gap-2">
         <span
           className="flex h-10 w-10 items-center justify-center rounded-xl"
@@ -61,8 +61,8 @@ export function ProgressRing({
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
         <defs>
           <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#00a1e0" />
+            <stop offset="100%" stopColor="#5ac3dd" />
           </linearGradient>
         </defs>
         <circle
@@ -98,12 +98,12 @@ export function ProgressRing({
 }
 
 const AVATAR_COLORS = [
-  "#6366f1",
+  "#00a1e0",
   "#0ea5e9",
   "#10b981",
   "#f59e0b",
   "#ec4899",
-  "#8b5cf6",
+  "#5ac3dd",
 ];
 
 function initialsOf(name: string): string {

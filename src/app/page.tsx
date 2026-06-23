@@ -125,7 +125,7 @@ export default function Home() {
               {def.instrumentName} · v{def.version} · basado en el modelo DISC
             </span>
 
-            <h1 className="mt-7 text-[2.75rem] font-black leading-[0.98] tracking-tighter text-slate-900 sm:text-7xl">
+            <h1 className="mt-7 text-[2.75rem] font-semibold leading-[1.02] tracking-tight text-slate-900 sm:text-7xl">
               Descubre cómo
               <br />
               trabaja{" "}
@@ -163,9 +163,10 @@ export default function Home() {
 
             {/* Señal de credibilidad: producto de GESEM + enfoque metodológico */}
             <div className="mt-7 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-slate-500">
-              <span>Una herramienta de</span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-5 w-auto" />
+              <span>
+                Una herramienta de{" "}
+                <strong className="font-semibold text-slate-700">GESEM</strong>
+              </span>
               <span className="hidden text-slate-300 sm:inline">·</span>
               <span className="hidden text-slate-400 sm:inline">
                 comunicación, coordinación y colaboración
@@ -726,9 +727,8 @@ export default function Home() {
         <div className="mx-auto w-full max-w-6xl px-6 py-10">
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="max-w-xs">
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-7 w-auto" />
+              <div className="flex items-center gap-2.5">
+                <span className="font-black tracking-tight text-slate-800">GESEM</span>
                 <span className="h-5 w-px bg-slate-300" />
                 <span className="font-black tracking-tight text-slate-800">DISC</span>
               </div>

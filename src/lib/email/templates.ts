@@ -8,12 +8,12 @@ import {
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 
-const BRAND = "#6366f1";
+const BRAND = "#00a1e0";
 
 function shell(title: string, body: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f6f7fb;padding:24px;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0f172a;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-    <div style="background:linear-gradient(120deg,#6366f1,#8b5cf6);padding:24px 28px;color:#ffffff;">
+    <div style="background:linear-gradient(120deg,#00a1e0,#5ac3dd);padding:24px 28px;color:#ffffff;">
       <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85;">DISC GESEM</div>
       <div style="font-size:20px;font-weight:800;margin-top:4px;">${title}</div>
     </div>
@@ -129,7 +129,7 @@ export function reportEmail(input: {
   const insightsHtml = insights
     .map(
       (t) =>
-        `<li style="margin:0 0 10px;padding:12px 14px;background:#fff;border:1px solid #e0e7ff;border-radius:10px;color:#475569;font-size:14px;list-style:none;line-height:1.5;">${t}</li>`,
+        `<li style="margin:0 0 10px;padding:12px 14px;background:#fff;border:1px solid #bae6fd;border-radius:10px;color:#475569;font-size:14px;list-style:none;line-height:1.5;">${t}</li>`,
     )
     .join("");
 
@@ -161,8 +161,8 @@ export function reportEmail(input: {
     <h3 style="margin:0 0 8px;font-size:14px;color:${BRAND};">Ampliación de repertorio</h3>
     <p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.repertoire}</p>
     ${insights.length > 0 ? `<ul style="margin:0 0 18px;padding:0;">${insightsHtml}</ul>` : ""}
-    <div style="background:#eef2ff;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
-      <strong style="color:#3730a3;">Equilibrio entre recursos (EQ ${result.eq}): ${eqBand.label}.</strong>
+    <div style="background:#e0f2fe;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
+      <strong style="color:#075985;">Equilibrio entre recursos (EQ ${result.eq}): ${eqBand.label}.</strong>
       <span style="color:#475569;">${eqBand.description}</span>
     </div>
     <div style="background:#0f172a;border-radius:12px;padding:16px 18px;margin:0 0 18px;">

@@ -86,7 +86,7 @@ export function CatalogView({ dimensions }: { dimensions: Dimension[] }) {
             </div>
           ))}
         </div>
-        <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+        <div className="mt-4 rounded-xl border border-sky-100 bg-sky-50/60 p-4">
           <div className="mb-1 flex items-center gap-2">
             <span className="bg-brand rounded-lg px-2 py-0.5 text-xs font-bold text-white">
               EQ
@@ -119,7 +119,7 @@ export function CatalogView({ dimensions }: { dimensions: Dimension[] }) {
               </p>
             </li>
           ))}
-          <li className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+          <li className="rounded-xl border border-sky-100 bg-sky-50/60 p-3">
             <div className="text-sm font-semibold text-slate-800">
               Adaptable (EQ)
             </div>

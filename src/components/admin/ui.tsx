@@ -71,7 +71,7 @@ export function StatCard({
   label,
   value,
   hint,
-  accent = "#6366f1",
+  accent = "#00a1e0",
   icon,
 }: {
   label: string;

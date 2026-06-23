@@ -40,7 +40,7 @@ export function InviteLink({
       <button
         type="button"
         onClick={copy}
-        className="shrink-0 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100"
+        className="shrink-0 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-600 transition hover:bg-sky-100"
       >
         {copied ? "¡Copiado!" : "Copiar"}
       </button>

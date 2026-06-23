@@ -15,7 +15,7 @@ import type { AdminUser } from "@/lib/data/dashboard";
 const initial: ActionState = {};
 
 const inputCls =
-  "rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100";
+  "rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 const globalRoleLabel: Record<string, string> = {
   SUPERADMIN: "Admin GESEM",
@@ -140,7 +140,7 @@ export function UserManager({
           <button
             type="button"
             onClick={() => setShowCreate((v) => !v)}
-            className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95"
+            className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95"
           >
             {showCreate ? "Cerrar" : "Nuevo usuario"}
           </button>
@@ -259,7 +259,7 @@ function CreateUserForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95 disabled:opacity-60"
+          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:opacity-60"
         >
           {pending ? "Creando…" : "Crear usuario"}
         </button>
@@ -287,7 +287,7 @@ function UserRow({
           <div className="flex items-center gap-2 font-semibold text-slate-900">
             {user.name || "—"}
             {isSelf && (
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-600">
+              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-600">
                 tú
               </span>
             )}
@@ -377,7 +377,7 @@ function UserEditor({
         <button
           type="submit"
           disabled={editing}
-          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95 disabled:opacity-60"
+          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:opacity-60"
         >
           {editing ? "Guardando…" : "Guardar"}
         </button>

@@ -70,7 +70,7 @@ export default async function AdminOrganizationsPage() {
                         >
                           <Avatar name={org.name} />
                           <span className="min-w-0">
-                            <span className="block truncate font-semibold text-slate-900 transition group-hover:text-indigo-600">
+                            <span className="block truncate font-semibold text-slate-900 transition group-hover:text-sky-600">
                               {org.name}
                             </span>
                             <span className="block truncate text-xs text-slate-400">
@@ -104,7 +104,7 @@ export default async function AdminOrganizationsPage() {
                       <td className={`${tableCls.td} text-right`}>
                         <Link
                           href={`/admin/organizaciones/${org.id}`}
-                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600"
+                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-600"
                         >
                           Gestionar →
                         </Link>

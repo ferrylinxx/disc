@@ -77,16 +77,17 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
               solid ? "px-4 py-2.5" : "px-2 py-4"
             }`}
           >
-            {/* Logo */}
-            <Link href="/" onClick={close} className="flex shrink-0 items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/brand/gesem-logo.svg"
-                alt="GESEM"
-                className={`w-auto transition-all duration-300 ${solid ? "h-6" : "h-7"}`}
-              />
-              <span className="hidden h-5 w-px bg-slate-300 sm:block" />
-              <span className="hidden text-sm font-bold tracking-tight text-slate-900 sm:inline">
+            {/* Marca (texto) */}
+            <Link href="/" onClick={close} className="flex shrink-0 items-center gap-2.5">
+              <span
+                className={`font-bold tracking-tight text-slate-900 transition-all duration-300 ${
+                  solid ? "text-base" : "text-lg"
+                }`}
+              >
+                GESEM
+              </span>
+              <span className="h-5 w-px bg-slate-300" />
+              <span className="text-sm font-bold tracking-tight text-slate-900">
                 DISC
               </span>
             </Link>

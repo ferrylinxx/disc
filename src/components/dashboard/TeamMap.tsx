@@ -77,7 +77,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
           </div>
         )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Tile label="Participantes" value={insights.overview.total} accent="#6366f1" />
+          <Tile label="Participantes" value={insights.overview.total} accent="#00a1e0" />
           <Tile label="Completados" value={insights.overview.completed} accent="#10b981" />
           <Tile label="Participación" value={`${insights.overview.participation}%`} accent="#0ea5e9" />
           <Tile label="EQ medio" value={empty ? "—" : insights.overview.eqAverage} accent="#f59e0b" />
@@ -350,7 +350,7 @@ function Radar({
           const p = point(i, r);
           return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />;
         })}
-        <polygon points={valuePoints} fill="rgba(99,102,241,0.18)" stroke="#6366f1" strokeWidth="2" />
+        <polygon points={valuePoints} fill="rgba(0,161,224,0.18)" stroke="#00a1e0" strokeWidth="2" />
         {data.map((d, i) => {
           const p = point(i, (Math.min(100, Math.max(0, d.value)) / 100) * r);
           return <circle key={d.code} cx={p.x} cy={p.y} r="3.5" fill={d.color} />;
@@ -397,7 +397,7 @@ const TONES: Record<string, string> = {
   emerald: "before:bg-emerald-400",
   amber: "before:bg-amber-400",
   sky: "before:bg-sky-400",
-  indigo: "before:bg-indigo-400",
+  indigo: "before:bg-sky-400",
 };
 
 /** Lista con viñetas de color (fortalezas, riesgos, conversaciones, insights). */

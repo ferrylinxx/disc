@@ -48,7 +48,7 @@ export default async function ClientePage() {
       subtitle="Organiza proyectos, equipos e invita a participantes."
     >
       <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Proyectos" value={totals.projects} accent="#6366f1" />
+        <StatCard label="Proyectos" value={totals.projects} accent="#00a1e0" />
         <StatCard label="Participantes" value={totals.participants} accent="#0ea5e9" />
         <StatCard label="Completados" value={totals.completed} accent="#10b981" />
       </div>
@@ -144,7 +144,7 @@ export default async function ClientePage() {
                           <div className="mt-2 flex justify-end">
                             <Link
                               href={`/cliente/participantes/${p.id}`}
-                              className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100"
+                              className="rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-600 transition hover:bg-sky-100"
                             >
                               Ver informe →
                             </Link>
@@ -206,14 +206,14 @@ export default async function ClientePage() {
                       <li key={team.id}>
                         <Link
                           href={`/cliente/equipos/${team.id}`}
-                          className="group flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-indigo-50"
+                          className="group flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-sky-50"
                         >
-                          <span className="font-medium group-hover:text-indigo-700">
+                          <span className="font-medium group-hover:text-sky-700">
                             {team.name}
                           </span>
                           <span className="flex items-center gap-2 text-xs text-slate-400">
                             {team._count.participants} participantes
-                            <span className="text-indigo-400 opacity-0 transition group-hover:opacity-100">
+                            <span className="text-sky-400 opacity-0 transition group-hover:opacity-100">
                               Ver mapa →
                             </span>
                           </span>

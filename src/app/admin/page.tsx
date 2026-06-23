@@ -78,7 +78,7 @@ export default async function AdminOverviewPage() {
       >
         <Link
           href="/admin/organizaciones"
-          className="bg-brand rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-200 transition hover:opacity-95"
+          className="bg-brand rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95"
         >
           + Nueva organización
         </Link>
@@ -88,7 +88,7 @@ export default async function AdminOverviewPage() {
         <StatCard
           label="Organizaciones"
           value={orgCount}
-          accent="#6366f1"
+          accent="#00a1e0"
           icon={<IconOrg />}
         />
         <StatCard
@@ -193,7 +193,7 @@ export default async function AdminOverviewPage() {
         action={
           <Link
             href="/admin/participantes"
-            className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-700"
+            className="text-xs font-semibold text-sky-600 transition hover:text-sky-700"
           >
             Ver todos →
           </Link>

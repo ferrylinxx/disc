@@ -264,11 +264,11 @@ export function Questionnaire({
         subtitle="Antes de empezar, dedica un momento a entender cómo funciona."
       >
         {hasDraft && (
-          <div className="mb-5 rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4">
-            <p className="text-sm font-semibold text-indigo-900">
+          <div className="mb-5 rounded-2xl border-2 border-sky-200 bg-sky-50 p-4">
+            <p className="text-sm font-semibold text-sky-900">
               Tienes un cuestionario a medias
             </p>
-            <p className="mt-1 text-sm text-indigo-700/90">
+            <p className="mt-1 text-sm text-sky-700/90">
               Guardamos tu progreso ({savedDraft.current?.answered ?? 0}{" "}
               {savedDraft.current?.answered === 1 ? "bloque" : "bloques"}{" "}
               completados). ¿Quieres continuar donde lo dejaste?
@@ -450,7 +450,7 @@ export function Questionnaire({
             </button>
           )}
           {pending && (
-            <span className="text-sm font-semibold text-indigo-600">
+            <span className="text-sm font-semibold text-sky-600">
               Calculando…
             </span>
           )}
@@ -475,7 +475,7 @@ export function Questionnaire({
           onChange={(e) => setReflect(e.target.value)}
           rows={5}
           placeholder="Escribe aquí tu reflexión (opcional)…"
-          className="mt-3 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm text-slate-700 outline-none transition focus:border-indigo-300"
+          className="mt-3 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
         />
         {error && (
           <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
@@ -584,7 +584,7 @@ function Primary({ children, onClick, disabled }: { children: React.ReactNode; o
     <button
       onClick={onClick}
       disabled={disabled}
-      className="bg-brand mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
+      className="bg-brand mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
     >
       {children}
     </button>

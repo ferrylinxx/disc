@@ -29,7 +29,7 @@ export default async function FacilitadorPage() {
       subtitle={`${progress}% completado · ${counts.total} participantes`}
     >
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Total" value={counts.total} accent="#6366f1" />
+        <StatCard label="Total" value={counts.total} accent="#00a1e0" />
         <StatCard label="Invitados" value={counts.invited} accent="#94a3b8" />
         <StatCard label="En curso" value={counts.inProgress} accent="#f59e0b" />
         <StatCard label="Completados" value={counts.completed} accent="#10b981" />

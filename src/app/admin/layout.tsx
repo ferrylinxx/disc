@@ -31,7 +31,7 @@ export default async function AdminLayout({
     <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6">
       <div className="animate-fade-up mb-5 flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-3">
-          <span className="bg-brand flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-lg shadow-indigo-500/30">
+          <span className="bg-brand flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-lg shadow-sky-500/30">
             ⌘
           </span>
           <div>
@@ -43,7 +43,7 @@ export default async function AdminLayout({
         </div>
         <div className="text-xs font-medium text-slate-500">
           Hola, <span className="font-semibold text-slate-800">{greetName}</span>
-          <span className="ml-2 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-600">
+          <span className="ml-2 rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
             Superadmin
           </span>
         </div>

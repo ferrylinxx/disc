@@ -12,7 +12,7 @@ import type { ActionState } from "@/app/actions/org";
 const initial: ActionState = {};
 
 const inputCls =
-  "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100";
+  "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 /** Renombrado inline de la organización. */
 export function RenameOrgForm({ id, name }: { id: string; name: string }) {

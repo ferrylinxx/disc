@@ -64,7 +64,7 @@ export default async function AdminOrgDetailPage({
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Proyectos" value={org.projects.length} accent="#6366f1" />
+        <StatCard label="Proyectos" value={org.projects.length} accent="#00a1e0" />
         <StatCard label="Equipos" value={teamCount} accent="#0ea5e9" />
         <StatCard
           label="Participantes"
@@ -118,7 +118,7 @@ export default async function AdminOrgDetailPage({
                         >
                           <Link
                             href={`/cliente/equipos/${team.id}`}
-                            className="min-w-0 truncate font-medium text-slate-700 transition hover:text-indigo-600"
+                            className="min-w-0 truncate font-medium text-slate-700 transition hover:text-sky-600"
                           >
                             {team.name}
                             <span className="ml-2 text-xs text-slate-400">
@@ -156,7 +156,7 @@ export default async function AdminOrgDetailPage({
             action={
               <Link
                 href="/admin/usuarios"
-                className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-700"
+                className="text-xs font-semibold text-sky-600 transition hover:text-sky-700"
               >
                 Gestionar usuarios →
               </Link>
@@ -182,7 +182,7 @@ export default async function AdminOrgDetailPage({
                         </div>
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-600">
+                    <span className="shrink-0 rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-600">
                       {roleLabel[m.role] ?? m.role}
                     </span>
                   </li>

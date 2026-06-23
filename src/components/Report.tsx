@@ -257,10 +257,10 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       </section>
 
       {/* Ampliación de repertorio */}
-      <section id="r-repertorio" className="scroll-mt-24 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm">
+      <section id="r-repertorio" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/50 p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <Num n="09" />
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-400">
             Ampliación de repertorio
           </h3>
         </div>
@@ -272,7 +272,7 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
             {insights.map((text) => (
               <li
                 key={text}
-                className="rounded-xl border border-indigo-100 bg-white/70 p-4 text-sm leading-relaxed text-slate-700"
+                className="rounded-xl border border-sky-100 bg-white/70 p-4 text-sm leading-relaxed text-slate-700"
               >
                 {text}
               </li>
@@ -358,9 +358,9 @@ function ReadingIndex() {
           <li key={it.href}>
             <a
               href={it.href}
-              className="group flex items-baseline gap-2 py-0.5 text-sm text-slate-600 transition hover:text-indigo-600"
+              className="group flex items-baseline gap-2 py-0.5 text-sm text-slate-600 transition hover:text-sky-600"
             >
-              <span className="text-[11px] font-bold tabular-nums text-slate-300 group-hover:text-indigo-400">
+              <span className="text-[11px] font-bold tabular-nums text-slate-300 group-hover:text-sky-400">
                 {it.n}
               </span>
               <span className="truncate">{it.label}</span>
@@ -403,8 +403,8 @@ function EqGauge({ value }: { value: number }) {
         />
         <defs>
           <linearGradient id="eqgrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#00a1e0" />
+            <stop offset="100%" stopColor="#5ac3dd" />
           </linearGradient>
         </defs>
       </svg>
