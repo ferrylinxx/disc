@@ -161,7 +161,18 @@ export default function Home() {
               </Link>
             </div>
 
-            <dl className="mt-14 flex max-w-lg divide-x divide-slate-200">
+            {/* Señal de credibilidad: producto de GESEM + enfoque metodológico */}
+            <div className="mt-7 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-slate-500">
+              <span>Una herramienta de</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-5 w-auto" />
+              <span className="hidden text-slate-300 sm:inline">·</span>
+              <span className="hidden text-slate-400 sm:inline">
+                comunicación, coordinación y colaboración
+              </span>
+            </div>
+
+            <dl className="mt-12 flex max-w-lg divide-x divide-slate-200">
               {[
                 [String(dims.length), "dimensiones"],
                 [String(contexts.length), "contextos"],
@@ -315,6 +326,62 @@ export default function Home() {
                 <div className="text-base font-black leading-none text-slate-900">65</div>
                 <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
                   Equilibrio
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mock simplificado del informe — visible en móvil/tablet */}
+          <div className="animate-fade-up lg:hidden [animation-delay:120ms]">
+            <div className="relative mx-auto max-w-md rounded-[1.5rem] border border-slate-200/80 bg-white/95 p-5 shadow-xl shadow-sky-500/15 backdrop-blur">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                    Informe individual
+                  </div>
+                  <div className="mt-1 text-lg font-extrabold tracking-tight text-slate-900">
+                    Impulsar + Conectar
+                  </div>
+                  <div className="mt-0.5 text-[11px] font-medium text-slate-400">
+                    Impulsar y movilizar · según tus respuestas
+                  </div>
+                </div>
+                <span className="bg-brand-animated shrink-0 rounded-xl px-3 py-1.5 text-sm font-black text-white shadow-sm">
+                  DI
+                </span>
+              </div>
+
+              <div className="mt-5 space-y-2.5">
+                {HERO_BARS.map((b) => (
+                  <div key={b.code} className="flex items-center gap-2.5">
+                    <span
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black text-white"
+                      style={{ backgroundImage: discGrad(b.code) }}
+                    >
+                      {b.code}
+                    </span>
+                    <span className="w-16 shrink-0 text-[11px] font-semibold text-slate-500">
+                      {styleShort(b.code)}
+                    </span>
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${b.percent}%`, backgroundImage: discGrad(b.code, 90) }}
+                      />
+                    </div>
+                    <span className="w-8 text-right text-[11px] font-bold text-slate-600">
+                      {b.percent}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2.5 text-[11px]">
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-2.5 font-medium leading-snug text-emerald-800">
+                  ✦ Decisión y empuje en momentos de avance
+                </div>
+                <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-2.5 font-medium leading-snug text-amber-800">
+                  ⚑ Reservar espacio para escuchar al equipo
                 </div>
               </div>
             </div>
