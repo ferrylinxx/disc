@@ -78,24 +78,16 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
             }`}
           >
             {/* Marca (texto) */}
-            <Link href="/" onClick={close} className="flex shrink-0 items-center gap-3">
+            <Link href="/" onClick={close} className="flex shrink-0 items-center gap-2.5">
               <span
-                className={`font-extrabold tracking-tight text-slate-900 transition-all duration-300 ${
-                  solid ? "text-2xl" : "text-3xl"
+                className={`font-bold tracking-tight text-slate-900 transition-all duration-300 ${
+                  solid ? "text-base" : "text-lg"
                 }`}
               >
                 GESEM
               </span>
-              <span
-                className={`w-px bg-slate-300 transition-all duration-300 ${
-                  solid ? "h-6" : "h-7"
-                }`}
-              />
-              <span
-                className={`font-bold tracking-tight text-slate-700 transition-all duration-300 ${
-                  solid ? "text-lg" : "text-xl"
-                }`}
-              >
+              <span className="h-5 w-px bg-slate-300" />
+              <span className="text-sm font-bold tracking-tight text-slate-900">
                 DISC
               </span>
             </Link>
