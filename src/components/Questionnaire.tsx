@@ -385,9 +385,6 @@ export function Questionnaire({
           {item.options.map((opt, i) => {
             const isMost = current.most === opt.code;
             const isLeast = current.least === opt.code;
-            const color =
-              def.dimensions.find((d) => d.code === opt.dimensionCode)?.color ??
-              "#64748b";
             return (
               <button
                 key={opt.code}
@@ -411,10 +408,6 @@ export function Questionnaire({
                 >
                   {isMost ? "✓" : isLeast ? "✕" : i + 1}
                 </span>
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
                 <span className="flex-1 text-sm font-medium text-slate-700">
                   {opt.text}
                 </span>
