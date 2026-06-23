@@ -101,6 +101,18 @@ body {
   }
 }
 
+/* ── Soft UI / Neumorphism para la isla flotante del menú ────────────────
+   Elemento opaco del color del fondo con doble sombra (luz arriba-izquierda,
+   sombra abajo-derecha) para un efecto "extruido" suave y monocromático. */
+.soft-ui {
+  background: #eef1f6;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    7px 7px 18px rgba(174, 185, 205, 0.55),
+    -7px -7px 18px rgba(255, 255, 255, 0.95),
+    inset 0 0 0 transparent;
+}
+
 .ring-brand {
   box-shadow: 0 0 0 1px rgba(0, 161, 224, 0.35), 0 18px 40px -18px rgba(0, 161, 224, 0.45);
 }
