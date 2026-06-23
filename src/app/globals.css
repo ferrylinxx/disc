@@ -61,6 +61,46 @@ body {
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
+/* ── Liquid Glass (estilo Apple) para la isla flotante del menú ──────────
+   Material: vidrio translúcido + saturación + brillo especular (rim light).
+   En navegadores compatibles (Chromium) se añade refracción "líquida" del
+   fondo mediante un filtro SVG de desplazamiento. */
+.liquid-glass {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.62),
+    rgba(255, 255, 255, 0.34)
+  );
+  backdrop-filter: blur(14px) saturate(185%);
+  -webkit-backdrop-filter: blur(14px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 1px 1px 1px rgba(255, 255, 255, 0.9),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.45),
+    inset 0 0 16px rgba(255, 255, 255, 0.25),
+    0 14px 36px -12px rgba(15, 23, 42, 0.24);
+}
+/* Brillo especular superior (sheen), por detrás del contenido. */
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(140% 90% at 50% -30%, rgba(255, 255, 255, 0.4), transparent 60%);
+}
+/* Refracción líquida del fondo (Chrome/Edge: soportan filtro SVG en backdrop). */
+@supports (backdrop-filter: url("#x")) {
+  .liquid-glass {
+    backdrop-filter: blur(8px) saturate(185%) url("#liquid-glass-distortion");
+    -webkit-backdrop-filter: blur(8px) saturate(185%) url("#liquid-glass-distortion");
+  }
+}
+
 .ring-brand {
   box-shadow: 0 0 0 1px rgba(0, 161, 224, 0.35), 0 18px 40px -18px rgba(0, 161, 224, 0.45);
 }

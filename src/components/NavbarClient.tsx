@@ -59,7 +59,35 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
   const solid = scrolled || open;
 
   return (
-    <header className="sticky top-0 z-40">
+    <>
+      {/* Filtro de refracción "liquid glass" (lo usa .liquid-glass vía CSS). */}
+      <svg aria-hidden className="pointer-events-none absolute h-0 w-0">
+        <filter
+          id="liquid-glass-distortion"
+          x="-20%"
+          y="-20%"
+          width="140%"
+          height="140%"
+        >
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.013 0.013"
+            numOctaves={2}
+            seed={42}
+            result="noise"
+          />
+          <feGaussianBlur in="noise" stdDeviation="1.5" result="blurred" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="blurred"
+            scale={22}
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </svg>
+
+      <header className="sticky top-0 z-40">
       <div
         className={`mx-auto px-4 transition-all duration-300 ${
           solid ? "mt-3 max-w-5xl" : "max-w-6xl"
@@ -67,9 +95,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
       >
         <div
           className={`transition-all duration-300 ${
-            solid
-              ? "glass rounded-2xl border border-white/70 shadow-lg shadow-slate-900/5"
-              : "border-b border-transparent"
+            solid ? "liquid-glass rounded-2xl" : "border-b border-transparent"
           }`}
         >
           <div
@@ -267,6 +293,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
           )}
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 }
