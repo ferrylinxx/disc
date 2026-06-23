@@ -415,7 +415,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════ CÓMO FUNCIONA ═══════════════════════ */}
-      <section className="reveal mx-auto w-full max-w-6xl px-6 py-24">
+      <section id="como-funciona" className="reveal mx-auto w-full max-w-6xl scroll-mt-20 px-6 py-24">
         <h2 className="text-center text-xs font-bold uppercase tracking-[0.3em] text-sky-500">
           Cómo funciona
         </h2>
@@ -637,7 +637,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════ CARACTERÍSTICAS ═══════════════════════ */}
-      <section className="reveal relative">
+      <section id="plataforma" className="reveal relative scroll-mt-20">
         <div className="bg-dots pointer-events-none absolute inset-0" aria-hidden />
         <div className="relative mx-auto w-full max-w-6xl px-6 py-24">
           <h2 className="text-center text-xs font-bold uppercase tracking-[0.3em] text-sky-500">
@@ -774,10 +774,18 @@ export default function Home() {
               </div>
             </nav>
           </div>
-          <p className="mt-10 border-t border-slate-100 pt-5 text-center text-xs text-slate-400">
-            Los resultados describen tendencias conductuales y no constituyen un
-            diagnóstico.
-          </p>
+          <div className="mt-10 flex flex-col items-center gap-3 border-t border-slate-100 pt-5 text-center text-xs text-slate-400 sm:flex-row sm:justify-between sm:text-left">
+            <p>
+              Los resultados describen tendencias conductuales y no constituyen un
+              diagnóstico.
+            </p>
+            <Link
+              href="/privacidad"
+              className="font-semibold text-slate-500 transition hover:text-sky-600"
+            >
+              Política de privacidad
+            </Link>
+          </div>
         </div>
       </footer>
     </main>
