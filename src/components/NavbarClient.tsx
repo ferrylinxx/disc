@@ -67,12 +67,14 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
       >
         <div
           className={`transition-all duration-300 ${
-            solid ? "soft-ui rounded-2xl" : "border-b border-transparent"
+            solid
+              ? `soft-ui ${open ? "rounded-3xl" : "rounded-full"}`
+              : "border-b border-transparent"
           }`}
         >
           <div
             className={`flex items-center justify-between gap-4 transition-all duration-300 ${
-              solid ? "px-4 py-2.5" : "px-2 py-4"
+              solid ? "px-6 py-2.5" : "px-2 py-4"
             }`}
           >
             {/* Marca (texto) */}
