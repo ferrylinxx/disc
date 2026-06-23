@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
@@ -23,16 +23,42 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const close = () => setOpen(false);
+
+  // Al hacer scroll, la barra deja de ser transparente y se compacta.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Fondo sólido si se ha hecho scroll o si el menú móvil está abierto.
+  const solid = scrolled || open;
 
   return (
     <header className="sticky top-0 z-40">
-      <div className="glass border-b border-white/60">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3.5">
+      <div
+        className={`transition-all duration-300 ${
+          solid
+            ? "glass border-b border-white/60 shadow-sm shadow-slate-900/5"
+            : "border-b border-transparent bg-transparent"
+        }`}
+      >
+        <div
+          className={`mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 transition-all duration-300 ${
+            solid ? "py-2.5" : "py-4"
+          }`}
+        >
           {/* Logo */}
           <Link href="/" onClick={close} className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-7 w-auto" />
+            <img
+              src="/brand/gesem-logo.svg"
+              alt="GESEM"
+              className={`w-auto transition-all duration-300 ${solid ? "h-6" : "h-7"}`}
+            />
             <span className="hidden h-5 w-px bg-slate-300 sm:block" />
             <span className="hidden text-sm font-bold tracking-tight text-slate-900 sm:inline">
               DISC
