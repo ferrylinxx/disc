@@ -81,13 +81,17 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
             <Link href="/" onClick={close} className="flex shrink-0 items-center gap-2.5">
               <span
                 className={`font-bold tracking-tight text-slate-900 transition-all duration-300 ${
-                  solid ? "text-base" : "text-lg"
+                  solid ? "text-lg" : "text-xl"
                 }`}
               >
                 GESEM
               </span>
-              <span className="h-5 w-px bg-slate-300" />
-              <span className="text-sm font-bold tracking-tight text-slate-900">
+              <span
+                className={`w-px bg-slate-300 transition-all duration-300 ${
+                  solid ? "h-5" : "h-6"
+                }`}
+              />
+              <span className="text-base font-bold tracking-tight text-slate-900">
                 DISC
               </span>
             </Link>
