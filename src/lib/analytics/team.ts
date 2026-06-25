@@ -36,6 +36,12 @@ export interface TeamInsights {
     /** Índice de diversidad: nº de perfiles distintos y su nivel. */
     diversity: { distinct: number; level: "Baja" | "Media" | "Alta" } | null;
   };
+  /** Resumen ejecutivo narrativo del equipo (120-180 palabras). */
+  executiveSummary: string;
+  /** Puntos del scatter sobre la cuadrícula DISC (uno por participante). */
+  discPoints: { x: number; y: number; code: string }[];
+  /** Claves de lectura de la distribución de recursos (3-4 ideas). */
+  readingKeys: string[];
   distribution: { dimensionCode: string; share: number }[];
   distributionText: string;
   combinations: { code: string; name: string; count: number }[];
@@ -214,6 +220,64 @@ export function computeTeamInsights(
     }
   }
 
+  // Mapa DISC del equipo: un punto por participante en el cuadrante.
+  const discPoints = withResult.map((r) => {
+    const sh: Record<string, number> = {};
+    for (const s of proportionalShares(r.global)) sh[s.dimensionCode] = s.share;
+    const dd = sh.D ?? 0, ii = sh.I ?? 0, ss = sh.S ?? 0, cc = sh.C ?? 0;
+    const x = (ii + ss - (dd + cc)) / 100;
+    const y = (dd + ii - (ss + cc)) / 100;
+    return {
+      x: Math.max(22, Math.min(178, 100 + x * 74)),
+      y: Math.max(22, Math.min(178, 100 - y * 74)),
+      code: r.primary,
+    };
+  });
+
+  // Resumen ejecutivo (radiografía): párrafo narrativo de la composición.
+  const topNames = leading.map((d) => styleShort(d.dimensionCode)).join(" y ");
+  const lowList = gaps.length > 0 ? gaps.map((g) => g.dimensionCode) : [];
+  const lowNames = lowList.map((c) => styleShort(c)).join(" y ");
+  const eqClause =
+    eqAverage >= 70
+      ? "una buena capacidad de adaptación entre estilos"
+      : "estilos marcados que conviene cuidar con flexibilidad mutua";
+  const executiveSummary =
+    completed === 0
+      ? "Aún no hay resultados suficientes para generar la radiografía del equipo. La lectura se completará a medida que las personas finalicen su evaluación."
+      : `Este equipo muestra una mayor presencia de recursos orientados a ${topNames}, ` +
+        `una combinación que suele favorecer formas de trabajo coherentes con esas tendencias. ` +
+        (lowNames
+          ? `Los recursos vinculados a ${lowNames} aparecen con menor presencia relativa, por lo que en determinadas situaciones puede resultar útil reforzarlos de forma consciente. `
+          : "El reparto entre los cuatro recursos es relativamente equilibrado. ") +
+        `La diversidad del equipo es ${(diversity?.level ?? "media").toLowerCase()} ` +
+        `(${diversity?.distinct ?? 0} perfiles distintos) y el equilibrio medio (EQ ${eqAverage}) sugiere ${eqClause}. ` +
+        `Esta composición es un punto de partida para la conversación: describe tendencias colectivas del sistema, ` +
+        `no conclusiones sobre personas concretas, y su utilidad depende de los retos y del momento del equipo.`;
+
+  // Claves de lectura de la distribución de recursos (3-4 ideas).
+  const readingKeys: string[] = [];
+  if (completed > 0) {
+    if (leading[0])
+      readingKeys.push(
+        `Apoyaos en ${styleShort(leading[0].dimensionCode)} como recurso más presente del equipo.`,
+      );
+    if (gaps[0])
+      readingKeys.push(
+        `Reforzad de forma consciente ${styleShort(gaps[0].dimensionCode)}, hoy menos representado.`,
+      );
+    readingKeys.push(
+      diversity?.level === "Alta"
+        ? "La diversidad es alta: aprovechadla cuidando la coordinación y la comunicación."
+        : diversity?.level === "Baja"
+          ? "La diversidad es baja: incorporad perspectivas diferentes en las decisiones clave."
+          : "Una diversidad media facilita combinar foco y complementariedad.",
+    );
+    readingKeys.push(
+      "Leed estos recursos como tendencias del sistema, no como etiquetas de personas.",
+    );
+  }
+
   return {
     overview: {
       total,
@@ -224,6 +288,9 @@ export function computeTeamInsights(
       eqAverage,
       diversity,
     },
+    executiveSummary,
+    discPoints,
+    readingKeys,
     distribution,
     distributionText: distributionInterpretation(distribution, dimName, completed),
     combinations,

@@ -15,14 +15,15 @@ interface Props {
   };
 }
 
-/** Las 10 pantallas del mapa de equipo, con su ancla de navegación. */
+/** Pantallas del mapa de equipo (informe ejecutivo), con su ancla. */
 const SCREENS = [
-  { id: "vision", label: "Visión general" },
-  { id: "distribucion", label: "Distribución DISC" },
+  { id: "vision", label: "Radiografía" },
+  { id: "mapa-disc", label: "Mapa DISC" },
+  { id: "distribucion", label: "Recursos" },
   { id: "combinaciones", label: "Combinaciones" },
-  { id: "contextos", label: "Mapa de contextos" },
+  { id: "contextos", label: "Contextos" },
   { id: "fortalezas", label: "Fortalezas" },
-  { id: "riesgos", label: "Riesgos" },
+  { id: "riesgos", label: "A observar" },
   { id: "complementariedad", label: "Complementariedad" },
   { id: "vacios", label: "Vacíos" },
   { id: "conversaciones", label: "Conversaciones" },
@@ -67,7 +68,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         </p>
       )}
 
-      <Screen id="vision" n={1} title="Visión general">
+      <Screen id="vision" n={1} title="Radiografía del equipo">
         {header && (
           <div className="mb-4 grid gap-3 rounded-2xl border border-slate-100 bg-white/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <Fact label="Organización" value={header.organizationName} />
@@ -75,6 +76,11 @@ export function TeamMap({ insights, dimensions, header }: Props) {
             <Fact label="Equipo" value={header.name} />
             <Fact label="Fecha" value={teamDate ?? "—"} />
           </div>
+        )}
+        {!empty && (
+          <p className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-sm leading-relaxed text-slate-600">
+            {insights.executiveSummary}
+          </p>
         )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Tile label="Participantes" value={insights.overview.total} accent="#00a1e0" />
@@ -85,10 +91,10 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Fact label="Combinación predominante" value={insights.overview.predominantProfile?.name ?? "—"} />
           <Fact
-            label="Estilo predominante"
+            label="Recurso predominante"
             value={
               insights.overview.predominantStyle
-                ? `${styleShort(insights.overview.predominantStyle.code)} · ${insights.overview.predominantStyle.share}%`
+                ? styleShort(insights.overview.predominantStyle.code)
                 : "—"
             }
           />
@@ -103,7 +109,35 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         </div>
       </Screen>
 
-      <Screen id="distribucion" n={2} title="Mapa de recursos colectivos">
+      <Screen id="mapa-disc" n={2} title="Mapa DISC del equipo">
+        {empty ? (
+          <Muted />
+        ) : (
+          <div className="grid items-center gap-6 lg:grid-cols-[auto_1fr]">
+            <TeamDiscGrid points={insights.discPoints} dye={dye} />
+            <div>
+              <p className="text-sm leading-relaxed text-slate-600">
+                Cada punto representa a una persona del equipo, situada según los
+                recursos que utiliza con más frecuencia. Las agrupaciones muestran
+                dónde se concentra el equipo y qué zonas aparecen menos presentes.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {insights.combinations.map((c) => (
+                  <span
+                    key={c.code}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
+                  >
+                    <span className="font-bold text-slate-900">{c.code}</span>
+                    {c.count}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Screen>
+
+      <Screen id="distribucion" n={3} title="Distribución de recursos predominantes">
         <p className="mb-4 text-sm text-slate-600">{insights.distributionText}</p>
         <div className="grid items-center gap-6 lg:grid-cols-2">
           <Radar
@@ -125,9 +159,26 @@ export function TeamMap({ insights, dimensions, header }: Props) {
             ))}
           </div>
         </div>
+        {insights.readingKeys.length > 0 && (
+          <div className="mt-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Claves de lectura
+            </p>
+            <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+              {insights.readingKeys.map((k) => (
+                <li
+                  key={k}
+                  className="rounded-xl border border-slate-100 bg-white px-3 py-2 text-sm text-slate-600"
+                >
+                  {k}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Screen>
 
-      <Screen id="combinaciones" n={3} title="Distribución de combinaciones" detail>
+      <Screen id="combinaciones" n={4} title="Distribución de combinaciones" detail>
         {insights.combinations.length === 0 ? (
           <Muted />
         ) : (
@@ -149,7 +200,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="contextos" n={4} title="Mapa de contextos" detail>
+      <Screen id="contextos" n={5} title="Mapa de contextos" detail>
         {empty ? (
           <Muted />
         ) : (
@@ -157,15 +208,15 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="fortalezas" n={5} title="Fortalezas colectivas">
+      <Screen id="fortalezas" n={6} title="Recursos que caracterizan al equipo">
         <Bullets items={insights.strengths} tone="emerald" />
       </Screen>
 
-      <Screen id="riesgos" n={6} title="Riesgos colectivos">
-        <Bullets items={insights.risks} tone="amber" />
+      <Screen id="riesgos" n={7} title="Aspectos que merece la pena observar">
+        <Bullets items={insights.risks} tone="sky" />
       </Screen>
 
-      <Screen id="complementariedad" n={7} title="Complementariedad" detail>
+      <Screen id="complementariedad" n={8} title="Cómo interactúan los recursos predominantes" detail>
         {insights.complementarity.length === 0 ? (
           <Muted />
         ) : (
@@ -176,7 +227,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                   className="mt-0.5 shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-white"
                   style={{ backgroundColor: dye(c.dimensionCode) }}
                 >
-                  {styleShort(c.dimensionCode)} {c.share}%
+                  {styleShort(c.dimensionCode)}
                 </span>
                 <p className="text-sm text-slate-600">{c.text}</p>
               </li>
@@ -185,7 +236,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="vacios" n={8} title="Vacíos del equipo (estilos poco presentes)">
+      <Screen id="vacios" n={9} title="Vacíos del equipo (estilos poco presentes)">
         {insights.gaps.length === 0 ? (
           <p className="text-sm text-slate-500">
             No se detectan estilos por debajo del umbral: el equipo cubre las
@@ -206,7 +257,6 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                   <span className="text-sm font-semibold text-slate-800">
                     {styleShort(g.dimensionCode)}
                   </span>
-                  <span className="text-xs text-slate-400">{g.share}%</span>
                 </div>
                 <p className="text-sm text-slate-600">{g.observation}</p>
               </li>
@@ -215,11 +265,11 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="conversaciones" n={9} title="Conversaciones recomendadas">
+      <Screen id="conversaciones" n={10} title="Conversaciones recomendadas">
         <Bullets items={insights.conversations} tone="sky" />
       </Screen>
 
-      <Screen id="plan" n={10} title="Plan de acción de equipo">
+      <Screen id="plan" n={11} title="Conclusiones y plan de equipo">
         <ol className="space-y-2.5">
           {insights.actionPlan.map((p, i) => (
             <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
@@ -302,8 +352,54 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Radar (SVG) de los recursos colectivos. Polígono de 4 ejes (D/I/S/C) con el
- * % de share del equipo. Sin dependencias externas.
+ * Mapa DISC del equipo: cuadrícula clásica 2×2 con un punto por participante.
+ * D arriba-izq, I arriba-der, C abajo-izq, S abajo-der.
+ */
+function TeamDiscGrid({
+  points,
+  dye,
+}: {
+  points: { x: number; y: number; code: string }[];
+  dye: (c: string) => string;
+}) {
+  const quad = (code: string, qx: number, qy: number) => (
+    <g key={code}>
+      <rect x={qx} y={qy} width={90} height={90} fill={dye(code)} opacity={0.08} />
+      <text x={qx + 10} y={qy + 28} fontSize="24" fontWeight="800" fill={dye(code)} opacity={0.4}>
+        {code}
+      </text>
+    </g>
+  );
+  return (
+    <div className="flex justify-center">
+      <svg viewBox="0 0 200 200" className="h-64 w-64" role="img" aria-label="Mapa DISC del equipo">
+        <rect x="10" y="10" width="180" height="180" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+        {quad("D", 10, 10)}
+        {quad("I", 100, 10)}
+        {quad("C", 10, 100)}
+        {quad("S", 100, 100)}
+        <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
+        <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
+        {points.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r="6"
+            fill={dye(p.code)}
+            fillOpacity="0.75"
+            stroke="#ffffff"
+            strokeWidth="1.5"
+          />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Radar (SVG) de los recursos colectivos. Polígono de 4 ejes (D/I/S/C) con la
+ * intensidad relativa del equipo. Sin dependencias externas.
  */
 function Radar({
   data,
@@ -366,7 +462,7 @@ function Radar({
               dominantBaseline="middle"
               className="fill-slate-600 text-[10px] font-semibold"
             >
-              {d.label} {d.value}%
+              {d.label}
             </text>
           );
         })}
@@ -375,13 +471,12 @@ function Radar({
   );
 }
 
-/** Barra horizontal con etiqueta y porcentaje. */
+/** Barra horizontal con etiqueta (intensidad relativa, sin porcentaje). */
 function BarRow({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
         <span className="font-semibold text-slate-700">{label}</span>
-        <span className="text-slate-400">{value}%</span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
