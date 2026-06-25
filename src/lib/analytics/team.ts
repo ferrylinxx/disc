@@ -42,6 +42,8 @@ export interface TeamInsights {
   discPoints: { x: number; y: number; code: string }[];
   /** Claves de lectura de la distribución de recursos (3-4 ideas). */
   readingKeys: string[];
+  /** Claves para el liderazgo del equipo (implicaciones para el responsable). */
+  leadershipKeys: string[];
   distribution: { dimensionCode: string; share: number }[];
   distributionText: string;
   combinations: { code: string; name: string; count: number }[];
@@ -278,6 +280,36 @@ export function computeTeamInsights(
     );
   }
 
+  // Claves para el liderazgo del equipo (implicaciones para el responsable).
+  const leadershipKeys: string[] = [];
+  if (completed > 0) {
+    if (predominantStyle) {
+      leadershipKeys.push(
+        `Apóyate en ${styleShort(predominantStyle.code)} como motor del equipo: da dirección clara y reconócelo, cuidando que no eclipse otros recursos.`,
+      );
+    }
+    for (const g of gaps.slice(0, 2)) {
+      leadershipKeys.push(
+        `Asegura de forma consciente ${styleShort(g.dimensionCode)}, hoy poco presente: incorpóralo tú o define quién lo cubre en las decisiones clave.`,
+      );
+    }
+    leadershipKeys.push(
+      diversity?.level === "Alta"
+        ? "Con alta diversidad, dedica tiempo a alinear criterios y a traducir entre estilos: tu papel es facilitar la coordinación."
+        : diversity?.level === "Baja"
+          ? "Con baja diversidad, busca deliberadamente perspectivas diferentes antes de decidir para evitar puntos ciegos."
+          : "Una diversidad media te permite combinar foco y complementariedad: reparte roles según los recursos de cada persona.",
+    );
+    leadershipKeys.push(
+      eqAverage >= 70
+        ? `El equipo se adapta bien entre estilos (EQ ${eqAverage}); puedes delegar y dar autonomía manteniendo objetivos comunes.`
+        : `Con estilos marcados (EQ ${eqAverage}), explicita las reglas de juego y media en las diferencias de ritmo y prioridades.`,
+    );
+    leadershipKeys.push(
+      "Usa estas claves como punto de partida para una conversación con el equipo, no como una receta cerrada.",
+    );
+  }
+
   return {
     overview: {
       total,
@@ -291,6 +323,7 @@ export function computeTeamInsights(
     executiveSummary,
     discPoints,
     readingKeys,
+    leadershipKeys,
     distribution,
     distributionText: distributionInterpretation(distribution, dimName, completed),
     combinations,

@@ -27,6 +27,7 @@ const SCREENS = [
   { id: "complementariedad", label: "Complementariedad" },
   { id: "vacios", label: "Vacíos" },
   { id: "conversaciones", label: "Conversaciones" },
+  { id: "liderazgo", label: "Liderazgo" },
   { id: "plan", label: "Plan de equipo" },
 ];
 
@@ -269,7 +270,31 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         <Bullets items={insights.conversations} tone="sky" />
       </Screen>
 
-      <Screen id="plan" n={11} title="Conclusiones y plan de equipo">
+      <Screen id="liderazgo" n={11} title="Claves para el liderazgo del equipo">
+        {empty ? (
+          <Muted />
+        ) : (
+          <>
+            <p className="mb-3 text-sm text-slate-600">
+              Implicaciones de esta composición para quien coordina el equipo.
+              No describen a ninguna persona: orientan cómo facilitar la
+              coordinación y la colaboración.
+            </p>
+            <ol className="space-y-2.5">
+              {insights.leadershipKeys.map((k, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
+                  <span className="bg-brand-soft text-brand mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                    {i + 1}
+                  </span>
+                  <span>{k}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+      </Screen>
+
+      <Screen id="plan" n={12} title="Conclusiones y plan de equipo">
         <ol className="space-y-2.5">
           {insights.actionPlan.map((p, i) => (
             <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
