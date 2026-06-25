@@ -14,6 +14,13 @@ interface Props {
   def: InstrumentDefinition;
   /** Narrativa precompuesta desde BD; si falta, se compone con valores base. */
   narrative?: ProfileNarrative;
+  /** Datos de portada (nombre, cliente, proyecto, fecha). */
+  meta?: {
+    participantName?: string | null;
+    clientName?: string | null;
+    projectName?: string | null;
+    date?: string | null;
+  };
 }
 
 /**
@@ -26,7 +33,7 @@ interface Props {
  * No incluye retos, experimentos, tareas ni planes de acción individuales. El
  * protagonista es el RECURSO; el código de perfil es solo referencia interna.
  */
-export function Report({ result, def, narrative: narrativeProp }: Props) {
+export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
   const dimColor = (code: string) =>
     def.dimensions.find((d) => d.code === code)?.color ?? "#0f172a";
   const eqBand = resolveEqBand(result.eq);
@@ -38,18 +45,76 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Antes de empezar */}
-      <section className="rounded-2xl border border-slate-200 bg-white/70 p-5 text-sm leading-relaxed text-slate-600 shadow-sm backdrop-blur">
+      {/* Página 1 — Portada */}
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-10">
+        {/* Ilustración abstracta basada en los 4 colores DISC */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.13]">
+          <div className="absolute -left-10 -top-10 h-44 w-44 rounded-full blur-2xl disc-grad-d" />
+          <div className="absolute -right-10 -top-8 h-44 w-44 rounded-full blur-2xl disc-grad-i" />
+          <div className="absolute -bottom-12 -left-8 h-44 w-44 rounded-full blur-2xl disc-grad-s" />
+          <div className="absolute -bottom-10 -right-10 h-44 w-44 rounded-full blur-2xl disc-grad-c" />
+        </div>
+        <div className="relative">
+          <div className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+            GESEM · DISC
+          </div>
+          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+            Informe individual
+          </p>
+          {meta?.participantName && (
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
+              {meta.participantName}
+            </h1>
+          )}
+          {(meta?.clientName || meta?.projectName || meta?.date) && (
+            <p className="mt-2 text-sm text-slate-500">
+              {[meta?.clientName, meta?.projectName, meta?.date]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-1.5 text-sm font-bold text-white">
+            <span>{narrative.resourceHeadline}</span>
+            <span className="text-[11px] font-medium text-white/60">
+              {narrative.internalCode}
+            </span>
+          </div>
+          <p className="mx-auto mt-5 max-w-xl text-base font-medium leading-relaxed text-slate-600">
+            {narrative.synthesis}
+          </p>
+        </div>
+      </section>
+
+      {/* Página 2 — Cómo interpretar este informe */}
+      <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Antes de empezar
+          Cómo interpretar este informe
         </h3>
-        <p className="mt-2">
-          Este informe describe los <strong>recursos</strong> que sueles utilizar con
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          DISC GESEM describe los <strong>recursos</strong> que sueles utilizar con
           más frecuencia y cómo pueden influir en tu forma de comunicarte,
-          coordinarte y colaborar. No clasifica ni define quién eres: describe
-          tendencias, según tus respuestas, que pueden variar con el contexto y el
-          momento.
+          coordinarte y colaborar. <strong>No</strong> es un test de personalidad ni
+          un diagnóstico: describe tendencias, según tus respuestas, que pueden
+          variar con el contexto y el momento.
         </p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            "Ningún perfil es mejor que otro.",
+            "El resultado muestra tendencias predominantes.",
+            "Todos los recursos pueden desarrollarse.",
+            "El verdadero valor aparece al comprender las diferencias.",
+          ].map((p, i) => (
+            <div
+              key={p}
+              className="rounded-xl border border-slate-100 bg-white px-4 py-3"
+            >
+              <div className="text-xs font-black text-sky-400">{i + 1}</div>
+              <p className="mt-1 text-sm font-medium leading-snug text-slate-700">
+                {p}
+              </p>
+            </div>
+          ))}
+        </div>
         <ReadingIndex />
       </section>
 

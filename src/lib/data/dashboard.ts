@@ -649,6 +649,8 @@ export async function participantReport(
       fullName: true,
       email: true,
       status: true,
+      organization: { select: { name: true } },
+      team: { select: { name: true, project: { select: { name: true } } } },
       results: {
         orderBy: { computedAt: "desc" },
         take: 1,
@@ -679,6 +681,8 @@ export async function participantReport(
     fullName: participant.fullName,
     email: participant.email,
     status: participant.status,
+    organizationName: participant.organization?.name ?? null,
+    projectName: participant.team?.project?.name ?? participant.team?.name ?? null,
   };
   const r = participant.results[0];
   if (!r) return { participant: meta, result: null };

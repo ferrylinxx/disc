@@ -33,6 +33,11 @@ export default async function ParticipantReportPage({
   const { participant, result } = data;
   const def = getActiveInstrument();
   const narrative = result ? await buildProfileNarrativeDb(result) : undefined;
+  const reportDate = new Date().toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <DashboardShell
@@ -60,7 +65,17 @@ export default async function ParticipantReportPage({
             email={participant.email}
           />
           <div className="print-area space-y-6">
-            <Report result={result} def={def} narrative={narrative} />
+            <Report
+              result={result}
+              def={def}
+              narrative={narrative}
+              meta={{
+                participantName: participant.fullName,
+                clientName: participant.organizationName,
+                projectName: participant.projectName,
+                date: reportDate,
+              }}
+            />
           </div>
         </>
       )}

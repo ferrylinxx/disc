@@ -258,6 +258,8 @@ export interface ProfileNarrative {
   resourceHeadline: string;
   /** Código interno de interpretación (DI, ID, …). No protagonista. */
   internalCode: string;
+  /** Frase síntesis (una sola frase para la portada). */
+  synthesis: string;
   /** Texto introductorio breve (Tendencia predominante). */
   intro: string;
   /** Recursos predominantes con su definición (Bloque "Recursos predominantes"). */
@@ -337,6 +339,7 @@ export function buildProfileNarrative(
     title: profile.name,
     resourceHeadline,
     internalCode: result.profileCode,
+    synthesis: profile.summary,
     intro: `${profile.summary} ${combo}`,
     resources: secondary
       ? pickDistinct(primary.resources.slice(0, 2), secondary.resources, 4)

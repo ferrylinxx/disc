@@ -519,7 +519,19 @@ export function Questionnaire({
 
       {result ? (
         <div className="print-area">
-          <Report result={result} def={def} narrative={narrative ?? undefined} />
+          <Report
+            result={result}
+            def={def}
+            narrative={narrative ?? undefined}
+            meta={{
+              participantName: invite?.participantName,
+              date: new Date().toLocaleDateString("es-ES", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              }),
+            }}
+          />
         </div>
       ) : (
         <p className="rounded-2xl border border-slate-200 bg-white/80 p-6 text-center text-sm text-slate-600">
