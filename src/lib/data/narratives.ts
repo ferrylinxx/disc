@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { RESOURCE_NARRATIVES } from "@/lib/narratives/disc-gesem.profiles";
 import { PROFILE_CATALOG, styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { BLOCKS, PROFILE_CODES } from "@/lib/narratives/blocks";
 
 /** Entrada de narrativa para el editor de administración (BD + valor base). */
 export interface AdminNarrativeEntry {
@@ -74,4 +75,64 @@ export async function adminNarrativeEntries(): Promise<AdminNarrativeEntry[]> {
     });
   }
   return out;
+}
+
+/** Un bloque de la Biblioteca Narrativa (perfil × bloque) para el editor. */
+export interface AdminBlockEntry {
+  profile: string;
+  profileName: string;
+  blockId: string;
+  blockLabel: string;
+  lengthHint: string;
+  text: string;
+  status: string;
+  version: number;
+  author: string | null;
+  updatedAt: string | null;
+  inDb: boolean;
+}
+
+/** Perfiles con sus 9 bloques (117 entradas) para el editor de administración. */
+export async function adminBlockEntries(): Promise<
+  { profile: string; profileName: string; blocks: AdminBlockEntry[] }[]
+> {
+  let rows: {
+    key: string;
+    content: unknown;
+    status: string;
+    version: number;
+    author: string | null;
+    updatedAt: Date;
+  }[] = [];
+  try {
+    rows = await prisma.narrativeEntry.findMany({ where: { scope: "BLOCK", locale: "es" } });
+  } catch (e) {
+    console.error("[blocks] tabla no disponible:", e);
+  }
+  const byKey = new Map(rows.map((r) => [r.key, r]));
+
+  return PROFILE_CODES.map((profile) => ({
+    profile,
+    profileName: PROFILE_CATALOG[profile]?.name ?? profile,
+    blocks: BLOCKS.map((b) => {
+      const r = byKey.get(`${profile}:${b.id}`);
+      const text =
+        r && typeof r.content === "object" && r.content !== null
+          ? String((r.content as { text?: unknown }).text ?? "")
+          : "";
+      return {
+        profile,
+        profileName: PROFILE_CATALOG[profile]?.name ?? profile,
+        blockId: b.id,
+        blockLabel: b.label,
+        lengthHint: b.length,
+        text,
+        status: r?.status ?? "—",
+        version: r?.version ?? 0,
+        author: r?.author ?? null,
+        updatedAt: r?.updatedAt?.toISOString() ?? null,
+        inDb: !!r,
+      };
+    }),
+  }));
 }

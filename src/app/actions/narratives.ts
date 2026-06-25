@@ -67,3 +67,51 @@ export async function saveNarrative(
   revalidatePath("/admin/catalogo");
   return { ok: true, message: `Guardado (v${(existing?.version ?? 0) + 1}).` };
 }
+
+/**
+ * Guarda (upsert) un bloque de la Biblioteca Narrativa (perfil × bloque).
+ * scope "BLOCK", key `${perfil}:${bloque}`, contenido { text }. SUPERADMIN.
+ */
+export async function saveBlock(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireRole("SUPERADMIN");
+  const profile = String(formData.get("profile") ?? "").toUpperCase();
+  const blockId = String(formData.get("blockId") ?? "");
+  const statusRaw = String(formData.get("status") ?? "DRAFT");
+  const text = String(formData.get("text") ?? "");
+  if (!profile || !blockId) return { error: "Faltan datos del bloque." };
+
+  const status: NarrativeStatus = STATUSES.includes(statusRaw as NarrativeStatus)
+    ? (statusRaw as NarrativeStatus)
+    : "DRAFT";
+  const author = session.name ?? session.email ?? "admin";
+  const key = `${profile}:${blockId}`;
+
+  const existing = await prisma.narrativeEntry.findUnique({
+    where: { scope_key_locale: { scope: "BLOCK", key, locale: "es" } },
+    select: { version: true },
+  });
+  await prisma.narrativeEntry.upsert({
+    where: { scope_key_locale: { scope: "BLOCK", key, locale: "es" } },
+    update: {
+      content: { text } as Prisma.InputJsonValue,
+      status,
+      author,
+      version: (existing?.version ?? 0) + 1,
+    },
+    create: {
+      scope: "BLOCK",
+      key,
+      locale: "es",
+      content: { text } as Prisma.InputJsonValue,
+      status,
+      author,
+      version: 1,
+    },
+  });
+
+  revalidatePath("/admin/catalogo/bloques");
+  return { ok: true, message: `Guardado (v${(existing?.version ?? 0) + 1}).` };
+}

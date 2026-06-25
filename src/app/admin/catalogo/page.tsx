@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
 import { getActiveInstrument } from "@/lib/instruments";
 import { adminNarrativeEntries } from "@/lib/data/narratives";
@@ -18,6 +19,21 @@ export default async function AdminCatalogPage() {
         title="Narrativas y catálogo"
         description="Edita los textos del informe (recursos y perfiles). Los cambios se aplican sin necesidad de desplegar."
       />
+
+      <Link
+        href="/admin/catalogo/bloques"
+        className="mb-6 flex items-center justify-between rounded-2xl border border-sky-100 bg-sky-50/50 px-5 py-4 transition hover:border-sky-200"
+      >
+        <div>
+          <div className="text-sm font-bold text-slate-900">
+            Biblioteca narrativa (117 bloques)
+          </div>
+          <div className="text-xs text-slate-500">
+            13 perfiles × 9 bloques. Edita el contenido definitivo por perfil.
+          </div>
+        </div>
+        <span className="text-sky-600">→</span>
+      </Link>
 
       <Card className="mb-6">
         <NarrativeEditor entries={entries} />
