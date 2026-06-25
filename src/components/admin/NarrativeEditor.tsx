@@ -15,6 +15,7 @@ interface ResourceContent {
   communication: string;
   contexts: string;
   observe: string[];
+  valuedItems?: string[];
   repertoire: string;
   reflection: string[];
   teamContributions?: string[];
@@ -105,15 +106,22 @@ function ResourceFields({
         }
       />
       <Field label="Aportación habitual" value={content.contribution} onChange={(v) => set({ ...content, contribution: v })} />
-      <Field label="Lo que otras personas suelen valorar" value={content.valued} onChange={(v) => set({ ...content, valued: v })} />
+      <Field label="Lo que otras personas suelen valorar (intro)" value={content.valued} onChange={(v) => set({ ...content, valued: v })} />
+      <Field
+        label="Lo que otras personas valoran · tarjetas"
+        hint="una por línea (4-6)"
+        rows={5}
+        value={(content.valuedItems ?? []).join("\n")}
+        onChange={(v) => set({ ...content, valuedItems: lines(v) })}
+      />
       <Field label="Cuando coordina" value={content.coordinating} onChange={(v) => set({ ...content, coordinating: v })} />
       <Field label="Cuando colabora" value={content.collaborating} onChange={(v) => set({ ...content, collaborating: v })} />
       <Field label="Comunicación" value={content.communication} onChange={(v) => set({ ...content, communication: v })} />
       <Field label="Contextos de mejor desempeño" value={content.contexts} onChange={(v) => set({ ...content, contexts: v })} />
       <Field
         label="Aspectos que merece la pena observar"
-        hint="uno por línea (3)"
-        rows={3}
+        hint="uno por línea (4-6)"
+        rows={5}
         value={content.observe.join("\n")}
         onChange={(v) => set({ ...content, observe: lines(v) })}
       />

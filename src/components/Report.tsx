@@ -198,47 +198,72 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
         </div>
       </section>
 
-      {/* Aportación habitual + Lo que otras personas suelen valorar */}
-      <section className="grid gap-5 sm:grid-cols-2">
-        <div id="r-aportacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <div className="flex items-center gap-2">
-            <Num n="03" />
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-              Aportación habitual
-            </h3>
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {narrative.contribution}
-          </p>
+      {/* Aportación habitual */}
+      <section id="r-aportacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="03" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Aportación habitual
+          </h3>
         </div>
-        <div id="r-valoracion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <div className="flex items-center gap-2">
-            <Num n="04" />
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-              Lo que otras personas suelen valorar
-            </h3>
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {narrative.valued}
-          </p>
-        </div>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          {narrative.contribution}
+        </p>
       </section>
 
-      {/* Aspectos que merece la pena observar */}
-      <section id="r-observar" className="scroll-mt-24 rounded-2xl border border-amber-100 bg-amber-50/50 p-6 shadow-sm">
+      {/* Lo que otras personas suelen valorar (tarjetas) */}
+      <section id="r-valoracion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="04" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Lo que otras personas suelen valorar
+          </h3>
+        </div>
+        <p className="mt-2 text-sm text-slate-500">
+          Las personas de tu entorno suelen valorar especialmente:
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {narrative.valuedItems.map((t) => (
+            <div
+              key={t}
+              className="flex items-start gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-900/80"
+            >
+              <span className="text-emerald-500">✦</span> {t}
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-slate-400">
+          Estas aportaciones pueden variar según el contexto, el momento y las
+          personas con las que interactúas.
+        </p>
+      </section>
+
+      {/* Aspectos que merece la pena observar (diseño positivo, sin colores de error) */}
+      <section id="r-observar" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
           <Num n="05" />
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Aspectos que merece la pena observar
           </h3>
         </div>
-        <ul className="mt-3 space-y-2 text-sm text-amber-900/80">
+        <p className="mt-2 text-sm text-slate-500">
+          Como cualquier recurso, aquello que suele ayudarte en muchas situaciones
+          también puede requerir ajustes en determinados contextos.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {narrative.observe.map((s) => (
-            <li key={s} className="flex gap-2">
-              <span className="text-amber-500">•</span> {s}
-            </li>
+            <div
+              key={s}
+              className="flex items-start gap-2.5 rounded-xl border border-sky-100 bg-sky-50/40 px-4 py-3 text-sm text-slate-600"
+            >
+              <span className="text-sky-400">◇</span> {s}
+            </div>
           ))}
-        </ul>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-400">
+          El objetivo no consiste en cambiar quién eres, sino en ampliar tu
+          repertorio para responder con mayor flexibilidad a cada situación.
+        </p>
       </section>
 
       {/* Cómo puedes aportar mejor a un equipo (elemento diferencial DISC GESEM) */}

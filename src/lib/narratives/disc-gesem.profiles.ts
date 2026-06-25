@@ -35,8 +35,10 @@ export interface ResourceNarrative {
   resources: ResourceItem[];
   /** Aportación habitual en equipos y proyectos. */
   contribution: string;
-  /** Lo que otras personas suelen valorar. */
+  /** Lo que otras personas suelen valorar (texto introductorio). */
   valued: string;
+  /** Lo que otras personas suelen valorar (4-6 aportaciones en tarjetas). */
+  valuedItems: string[];
   /** Cuando coordina personas o proyectos. */
   coordinating: string;
   /** Cuando colabora con otras personas. */
@@ -45,8 +47,8 @@ export interface ResourceNarrative {
   communication: string;
   /** Contextos de mejor desempeño. */
   contexts: string;
-  /** Aspectos que merece la pena observar (3 elementos). */
-  observe: [string, string, string];
+  /** Aspectos que merece la pena observar (4-6 elementos). */
+  observe: string[];
   /** Ampliación de repertorio (no es corrección: amplía posibilidades). */
   repertoire: string;
   /** Preguntas para la reflexión (3, abiertas, no evalúan ni sugieren). */
@@ -79,10 +81,19 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "Su comunicación suele ser directa y orientada a la acción. En determinados contextos, puede resultar útil comprobar que el mensaje se ha comprendido y no únicamente escuchado.",
     contexts:
       "Sus recursos suelen desplegarse con mayor facilidad en entornos dinámicos, con margen para decidir, influir y convertir las ideas en acciones.",
+    valuedItems: [
+      "Tu capacidad para impulsar la acción.",
+      "La claridad de tus decisiones.",
+      "La energía que transmites.",
+      "Tu orientación a los resultados.",
+      "Tu disposición a asumir iniciativas.",
+    ],
     observe: [
-      "Cómo equilibra velocidad y participación cuando otras personas necesitan más tiempo.",
+      "Cómo equilibras velocidad y participación cuando otras personas necesitan más tiempo.",
       "Cuándo conviene escuchar y contrastar antes de cerrar una decisión.",
       "El impacto que un ritmo muy alto puede tener en el resto del equipo.",
+      "Cómo sostienes el seguimiento de los detalles.",
+      "Cuándo conviene revisar plazos y expectativas con calma.",
     ],
     repertoire:
       "Ampliar el repertorio puede consistir en incorporar espacios de análisis antes de cerrar decisiones y en dar más atención al seguimiento cuando el contexto lo requiere.",
@@ -126,10 +137,19 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "Su comunicación suele ser expresiva y cercana, y favorece la conexión. En contextos que requieren concreción, puede resultar útil acompañarla de claridad y priorización.",
     contexts:
       "Sus recursos suelen desplegarse con mayor facilidad en entornos relacionales, participativos y con espacio para la interacción y la creatividad.",
+    valuedItems: [
+      "Tu cercanía y tu facilidad para comunicar.",
+      "Tu capacidad para conectar a las personas.",
+      "El entusiasmo que generas.",
+      "Tu mirada optimista ante los retos.",
+      "Tu facilidad para implicar a otras personas.",
+    ],
     observe: [
-      "Cómo convierte las conversaciones en acuerdos concretos y acciones sostenidas.",
+      "Cómo conviertes las conversaciones en acuerdos concretos y acciones sostenidas.",
       "Cuándo conviene priorizar el foco frente a la amplitud de perspectivas.",
-      "Cómo mantiene la claridad cuando hay muchas conversaciones abiertas.",
+      "Cómo mantienes la claridad cuando hay muchas conversaciones abiertas.",
+      "Cómo equilibras la cercanía con la concreción.",
+      "Cuándo conviene aterrizar las ideas en compromisos.",
     ],
     repertoire:
       "Ampliar el repertorio puede consistir en apoyarse en estructura y seguimiento para dar continuidad a lo que se pone en marcha.",
@@ -173,10 +193,19 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "Su comunicación suele generar seguridad y cercanía. En determinados contextos, puede resultar útil ganar concreción y posicionarse de forma explícita.",
     contexts:
       "Sus recursos suelen desplegarse con mayor facilidad en entornos estables, colaborativos y con relaciones de confianza mantenidas en el tiempo.",
+    valuedItems: [
+      "La confianza y serenidad que transmites.",
+      "Tu fiabilidad y constancia.",
+      "Tu disposición para escuchar.",
+      "El apoyo que ofreces al equipo.",
+      "Tu capacidad para sostener acuerdos.",
+    ],
     observe: [
       "Cuándo la búsqueda de armonía aplaza conversaciones necesarias.",
-      "Cuándo conviene posicionarse de forma explícita.",
-      "Cómo afronta los cambios de ritmo cuando el contexto los exige.",
+      "Cuándo conviene posicionarte de forma explícita.",
+      "Cómo afrontas los cambios de ritmo cuando el contexto los exige.",
+      "Cuándo conviene impulsar una decisión con más claridad.",
+      "Cómo expresas tus necesidades dentro del equipo.",
     ],
     repertoire:
       "Ampliar el repertorio puede consistir en expresar antes la propia posición y en introducir cambios de ritmo cuando la situación lo requiere.",
@@ -220,10 +249,19 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "Su comunicación suele aportar rigor y comprensión. En determinados contextos, puede resultar útil revisar si el nivel de detalle facilita o dificulta la acción.",
     contexts:
       "Sus recursos suelen desplegarse con mayor facilidad en entornos que valoran el análisis, la calidad y el trabajo bien estructurado.",
+    valuedItems: [
+      "Tu rigor y atención al detalle.",
+      "La calidad de tu análisis.",
+      "Tu preparación y método.",
+      "La fiabilidad de tu seguimiento.",
+      "Tu criterio para tomar decisiones.",
+    ],
     observe: [
       "Cuándo ya existe información suficiente para avanzar.",
       "Cómo simplificar los mensajes cuando el equipo necesita acción.",
       "El equilibrio entre rigor y ritmo de respuesta.",
+      "Cuándo conviene decidir con la información disponible.",
+      "Cómo compartes el criterio sin saturar de detalle.",
     ],
     repertoire:
       "Ampliar el repertorio puede consistir en definir un punto de decisión cuando el análisis ya es suficiente para avanzar.",
@@ -266,8 +304,10 @@ export interface ProfileNarrative {
   resources: ResourceItem[];
   /** Aportación habitual. */
   contribution: string;
-  /** Lo que otras personas suelen valorar. */
+  /** Lo que otras personas suelen valorar (texto introductorio). */
   valued: string;
+  /** Lo que otras personas suelen valorar (4-6 aportaciones en tarjetas). */
+  valuedItems: string[];
   /** Coordinación y colaboración (cuando coordina / cuando colabora). */
   coordination: { coordinating: string; collaborating: string };
   /** Comunicación. */
@@ -346,6 +386,9 @@ export function buildProfileNarrative(
       : primary.resources.slice(0, 4),
     contribution: primary.contribution,
     valued: primary.valued,
+    valuedItems: secondary
+      ? pickStrings(primary.valuedItems?.slice(0, 4), secondary.valuedItems, 6)
+      : (primary.valuedItems ?? []).slice(0, 6),
     coordination: {
       coordinating: primary.coordinating,
       collaborating: primary.collaborating,
@@ -353,8 +396,8 @@ export function buildProfileNarrative(
     communication: primary.communication,
     contexts: primary.contexts,
     observe: secondary
-      ? Array.from(new Set([...primary.observe.slice(0, 2), ...secondary.observe])).slice(0, 3)
-      : primary.observe.slice(0, 3),
+      ? pickStrings(primary.observe?.slice(0, 4), secondary.observe, 6)
+      : (primary.observe ?? []).slice(0, 6),
     repertoire: primary.repertoire,
     reflection: primary.reflection.slice(0, 3),
     team: {
