@@ -147,6 +147,13 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
         </div>
       </header>
 
+      {/* Cierre común del bloque "Tendencia predominante" (Entregable 10) */}
+      <p className="px-1 text-xs leading-relaxed text-slate-400">
+        Como cualquier tendencia, esta puede variar según las circunstancias y
+        ampliarse con la experiencia. Ningún estilo es mejor que otro: todos
+        aportan valor y todos pueden desarrollar nuevas formas de actuar.
+      </p>
+
       {/* Tu posición dentro del modelo DISC (cuadrícula clásica + intensidad) */}
       <section id="r-posicion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
@@ -266,12 +273,13 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
         </p>
       </section>
 
-      {/* Cómo puedes aportar mejor a un equipo (elemento diferencial DISC GESEM) */}
-      <section id="r-equipo" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/40 p-6 shadow-sm">
+      {/* Coordinación y colaboración (bloque diferencial DISC GESEM: incluye
+          qué aportas y qué necesitas de los demás) */}
+      <section id="r-coordinacion" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/40 p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <Num n="06" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-500">
-            Cómo puedes aportar mejor a un equipo
+            Coordinación y colaboración
           </h3>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -280,6 +288,24 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
           diferentes: el valor aparece al reconocer qué aportas y qué necesitas de
           los demás.
         </p>
+        <dl className="mt-4 space-y-4">
+          <div>
+            <dt className="text-sm font-semibold text-slate-900">
+              Cuando coordinas personas o proyectos
+            </dt>
+            <dd className="mt-1 text-sm leading-relaxed text-slate-600">
+              {narrative.coordination.coordinating}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-semibold text-slate-900">
+              Cuando colaboras con otras personas
+            </dt>
+            <dd className="mt-1 text-sm leading-relaxed text-slate-600">
+              {narrative.coordination.collaborating}
+            </dd>
+          </div>
+        </dl>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
             <h4 className="text-sm font-bold text-emerald-900">
@@ -295,7 +321,7 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
           </div>
           <div className="rounded-xl border border-sky-100 bg-white/70 p-4">
             <h4 className="text-sm font-bold text-sky-900">
-              Lo que probablemente agradeces de otras personas
+              Lo que probablemente necesitas de otras personas
             </h4>
             <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
               {narrative.team.appreciates.map((t) => (
@@ -318,51 +344,10 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
         )}
       </section>
 
-      {/* Coordinación y colaboración */}
-      <section id="r-coordinacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <div className="flex items-center gap-2">
-          <Num n="07" />
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Coordinación y colaboración
-          </h3>
-        </div>
-        <dl className="mt-4 space-y-4">
-          <div>
-            <dt className="text-sm font-semibold text-slate-900">
-              Cuando coordinas personas o proyectos
-            </dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-600">
-              {narrative.coordination.coordinating}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm font-semibold text-slate-900">
-              Cuando colaboras con otras personas
-            </dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-600">
-              {narrative.coordination.collaborating}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      {/* Comunicación */}
-      <section id="r-comunicacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <div className="flex items-center gap-2">
-          <Num n="08" />
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Comunicación
-          </h3>
-        </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          {narrative.communication}
-        </p>
-      </section>
-
       {/* Contextos de mejor desempeño + mapa por contextos */}
       <section id="r-contextos" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
-          <Num n="09" />
+          <Num n="07" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Contextos de mejor desempeño
           </h3>
@@ -399,7 +384,7 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
       {/* Ampliación de repertorio */}
       <section id="r-repertorio" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/50 p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <Num n="10" />
+          <Num n="08" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-400">
             Ampliación de repertorio
           </h3>
@@ -439,7 +424,7 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
       <section id="r-reflexion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-slate-900 p-6 text-white shadow-sm">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold tabular-nums text-white">
-            11
+            09
           </span>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-white/60">
             Preguntas para la reflexión
@@ -479,12 +464,10 @@ const INDEX_ITEMS: { n: string; label: string; href: string }[] = [
   { n: "03", label: "Aportación habitual", href: "#r-aportacion" },
   { n: "04", label: "Lo que otras personas suelen valorar", href: "#r-valoracion" },
   { n: "05", label: "Aspectos que merece la pena observar", href: "#r-observar" },
-  { n: "06", label: "Cómo puedes aportar mejor a un equipo", href: "#r-equipo" },
-  { n: "07", label: "Coordinación y colaboración", href: "#r-coordinacion" },
-  { n: "08", label: "Comunicación", href: "#r-comunicacion" },
-  { n: "09", label: "Contextos de mejor desempeño", href: "#r-contextos" },
-  { n: "10", label: "Ampliación de repertorio", href: "#r-repertorio" },
-  { n: "11", label: "Preguntas para la reflexión", href: "#r-reflexion" },
+  { n: "06", label: "Coordinación y colaboración", href: "#r-coordinacion" },
+  { n: "07", label: "Contextos de mejor desempeño", href: "#r-contextos" },
+  { n: "08", label: "Ampliación de repertorio", href: "#r-repertorio" },
+  { n: "09", label: "Preguntas para la reflexión", href: "#r-reflexion" },
 ];
 
 /** Índice de lectura del informe (orientación; oculto en la versión impresa). */

@@ -51,8 +51,8 @@ export interface ResourceNarrative {
   observe: string[];
   /** Ampliación de repertorio (no es corrección: amplía posibilidades). */
   repertoire: string;
-  /** Preguntas para la reflexión (3, abiertas, no evalúan ni sugieren). */
-  reflection: [string, string, string];
+  /** Preguntas para la reflexión (5, abiertas, no evalúan ni sugieren). */
+  reflection: string[];
   /** (Pág. 8) Lo que probablemente aportas a un equipo (4-6). */
   teamContributions: string[];
   /** (Pág. 8) Lo que probablemente agradeces de otras personas (3-5). */
@@ -101,6 +101,8 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿Qué recursos reconoces con más claridad en tu forma habitual de trabajar y relacionarte?",
       "¿En qué situaciones esos recursos te han ayudado especialmente a generar resultados o a movilizar a otras personas?",
       "¿Qué otras formas de actuar podrían complementar tus recursos cuando el contexto o las personas lo requieren?",
+      "¿Qué necesitas habitualmente de las personas con las que trabajas para coordinarte mejor?",
+      "¿Qué pueden necesitar de ti las personas con un estilo diferente al tuyo?",
     ],
     teamContributions: [
       "Impulsar la acción y el avance.",
@@ -157,6 +159,8 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿Qué recursos reconoces con más claridad en tu forma de comunicar y relacionarte?",
       "¿En qué situaciones tu capacidad para conectar ha favorecido especialmente la colaboración?",
       "¿Qué formas de actuar podrían complementar tus recursos cuando una situación necesita más concreción?",
+      "¿Qué necesitas habitualmente de las personas con las que trabajas para coordinarte mejor?",
+      "¿Qué pueden necesitar de ti las personas con un estilo diferente al tuyo?",
     ],
     teamContributions: [
       "Conectar a las personas del equipo.",
@@ -213,6 +217,8 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿Qué recursos reconoces con más claridad en tu forma de sostener relaciones y procesos?",
       "¿En qué situaciones tu estabilidad ha aportado especialmente valor al equipo?",
       "¿Qué formas de actuar podrían complementar tus recursos cuando una situación necesita más rapidez o decisión?",
+      "¿Qué necesitas habitualmente de las personas con las que trabajas para coordinarte mejor?",
+      "¿Qué pueden necesitar de ti las personas con un estilo diferente al tuyo?",
     ],
     teamContributions: [
       "Aportar estabilidad y continuidad.",
@@ -269,6 +275,8 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿Qué recursos reconoces con más claridad en tu forma de analizar y organizar?",
       "¿En qué situaciones tu rigor ha mejorado especialmente la calidad de una decisión?",
       "¿Qué formas de actuar podrían complementar tus recursos cuando una situación necesita más velocidad?",
+      "¿Qué necesitas habitualmente de las personas con las que trabajas para coordinarte mejor?",
+      "¿Qué pueden necesitar de ti las personas con un estilo diferente al tuyo?",
     ],
     teamContributions: [
       "Aportar análisis y rigor.",
@@ -399,7 +407,7 @@ export function buildProfileNarrative(
       ? pickStrings(primary.observe?.slice(0, 4), secondary.observe, 6)
       : (primary.observe ?? []).slice(0, 6),
     repertoire: primary.repertoire,
-    reflection: primary.reflection.slice(0, 3),
+    reflection: primary.reflection.slice(0, 5),
     team: {
       contributions: secondary
         ? pickStrings(primary.teamContributions?.slice(0, 4), secondary.teamContributions, 6)
