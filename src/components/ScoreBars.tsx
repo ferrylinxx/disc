@@ -6,7 +6,11 @@ interface Props {
   compact?: boolean;
 }
 
-/** Barras horizontales por dimensión (porcentaje ipsativo 0-100). */
+/**
+ * Barras horizontales por dimensión que muestran la INTENSIDAD RELATIVA
+ * (el ancho refleja la puntuación). Sin porcentajes (Especificación del
+ * Informe Individual: "no utilizar porcentajes, mostrar intensidad relativa").
+ */
 export function ScoreBars({ scores, dimensions, compact }: Props) {
   const meta = new Map(dimensions.map((d) => [d.code, d]));
   return (
@@ -34,9 +38,6 @@ export function ScoreBars({ scores, dimensions, compact }: Props) {
                 }}
               />
             </div>
-            <span className="w-9 shrink-0 text-right text-xs font-semibold tabular-nums text-slate-500">
-              {s.percent}%
-            </span>
           </div>
         );
       })}

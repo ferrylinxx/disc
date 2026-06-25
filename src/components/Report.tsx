@@ -33,8 +33,6 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
   const narrative = narrativeProp ?? buildProfileNarrative(result);
   const contexts = contextLeaders(result);
   const insights = generateInsights(result);
-  const shareOf = (code: string) =>
-    result.percentages.find((p) => p.dimensionCode === code)?.share ?? 0;
   const pColor = dimColor(result.primaryDimension);
   const sColor = result.isEq ? pColor : dimColor(result.secondaryDimension);
 
@@ -84,6 +82,30 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
         </div>
       </header>
 
+      {/* Tu posición dentro del modelo DISC (cuadrícula clásica + intensidad) */}
+      <section id="r-posicion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-2">
+          <Num n="01" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Tu posición dentro del modelo DISC
+          </h3>
+        </div>
+        <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
+          <DiscGrid result={result} dimColor={dimColor} />
+          <div>
+            <p className="mb-3 text-xs font-medium text-slate-400">
+              Intensidad relativa de cada recurso, según tus respuestas:
+            </p>
+            <ScoreBars scores={result.global} dimensions={def.dimensions} />
+          </div>
+        </div>
+        <p className="mt-5 text-xs leading-relaxed text-slate-400">
+          Los recursos predominantes muestran las tendencias que aparecen con
+          mayor frecuencia en tu manera de actuar y relacionarte. No representan
+          capacidades fijas ni limitan tu forma de responder en otros contextos.
+        </p>
+      </section>
+
       {/* Recursos predominantes */}
       <section id="r-recursos" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
@@ -96,9 +118,6 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
           Todas las personas disponen de los cuatro recursos. La diferencia suele
           estar en cuáles utilizamos con más frecuencia y en qué situaciones.
         </p>
-        <div className="mt-4">
-          <ScoreBars scores={result.global} dimensions={def.dimensions} />
-        </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {narrative.resources.map((r) => (
             <div
@@ -108,27 +127,6 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
               <p className="text-sm font-semibold text-slate-800">{r.name}</p>
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
                 {r.description}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {def.dimensions.map((d) => (
-            <div
-              key={d.code}
-              className="rounded-xl border border-slate-100 bg-white px-3 py-2.5"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: d.color }}
-                />
-                <span className="text-sm font-semibold text-slate-800">
-                  {styleShort(d.code)}
-                </span>
-              </div>
-              <p className="mt-1 text-xs font-medium tabular-nums text-slate-400">
-                {shareOf(d.code)}% del reparto
               </p>
             </div>
           ))}
@@ -178,10 +176,62 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
         </ul>
       </section>
 
+      {/* Cómo puedes aportar mejor a un equipo (elemento diferencial DISC GESEM) */}
+      <section id="r-equipo" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/40 p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Num n="06" />
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-500">
+            Cómo puedes aportar mejor a un equipo
+          </h3>
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          Comprender tus recursos resulta especialmente útil cuando los utilizas de
+          forma consciente con otras personas. Cada equipo necesita recursos
+          diferentes: el valor aparece al reconocer qué aportas y qué necesitas de
+          los demás.
+        </p>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+            <h4 className="text-sm font-bold text-emerald-900">
+              Lo que probablemente aportas
+            </h4>
+            <ul className="mt-2 space-y-1.5 text-sm text-emerald-900/80">
+              {narrative.team.contributions.map((t) => (
+                <li key={t} className="flex gap-2">
+                  <span className="text-emerald-500">+</span> {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-sky-100 bg-white/70 p-4">
+            <h4 className="text-sm font-bold text-sky-900">
+              Lo que probablemente agradeces de otras personas
+            </h4>
+            <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
+              {narrative.team.appreciates.map((t) => (
+                <li key={t} className="flex gap-2">
+                  <span className="text-sky-500">◆</span> {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {narrative.team.differences && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-4">
+            <h4 className="text-sm font-bold text-slate-800">
+              Cuando aparecen diferencias
+            </h4>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              {narrative.team.differences}
+            </p>
+          </div>
+        )}
+      </section>
+
       {/* Coordinación y colaboración */}
       <section id="r-coordinacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
-          <Num n="06" />
+          <Num n="07" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Coordinación y colaboración
           </h3>
@@ -209,7 +259,7 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       {/* Comunicación */}
       <section id="r-comunicacion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
-          <Num n="07" />
+          <Num n="08" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Comunicación
           </h3>
@@ -222,7 +272,7 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       {/* Contextos de mejor desempeño + mapa por contextos */}
       <section id="r-contextos" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
-          <Num n="08" />
+          <Num n="09" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Contextos de mejor desempeño
           </h3>
@@ -259,7 +309,7 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       {/* Ampliación de repertorio */}
       <section id="r-repertorio" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/50 p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <Num n="09" />
+          <Num n="10" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-400">
             Ampliación de repertorio
           </h3>
@@ -299,7 +349,7 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
       <section id="r-reflexion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-slate-900 p-6 text-white shadow-sm">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold tabular-nums text-white">
-            10
+            11
           </span>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-white/60">
             Preguntas para la reflexión
@@ -334,16 +384,17 @@ export function Report({ result, def, narrative: narrativeProp }: Props) {
 
 /** Apartados navegables del informe (índice de lectura). */
 const INDEX_ITEMS: { n: string; label: string; href: string }[] = [
-  { n: "01", label: "Tu tendencia predominante", href: "#r-tendencia" },
+  { n: "01", label: "Tu posición dentro del modelo DISC", href: "#r-posicion" },
   { n: "02", label: "Recursos predominantes", href: "#r-recursos" },
   { n: "03", label: "Aportación habitual", href: "#r-aportacion" },
   { n: "04", label: "Lo que otras personas suelen valorar", href: "#r-valoracion" },
   { n: "05", label: "Aspectos que merece la pena observar", href: "#r-observar" },
-  { n: "06", label: "Coordinación y colaboración", href: "#r-coordinacion" },
-  { n: "07", label: "Comunicación", href: "#r-comunicacion" },
-  { n: "08", label: "Contextos de mejor desempeño", href: "#r-contextos" },
-  { n: "09", label: "Ampliación de repertorio", href: "#r-repertorio" },
-  { n: "10", label: "Preguntas para la reflexión", href: "#r-reflexion" },
+  { n: "06", label: "Cómo puedes aportar mejor a un equipo", href: "#r-equipo" },
+  { n: "07", label: "Coordinación y colaboración", href: "#r-coordinacion" },
+  { n: "08", label: "Comunicación", href: "#r-comunicacion" },
+  { n: "09", label: "Contextos de mejor desempeño", href: "#r-contextos" },
+  { n: "10", label: "Ampliación de repertorio", href: "#r-repertorio" },
+  { n: "11", label: "Preguntas para la reflexión", href: "#r-reflexion" },
 ];
 
 /** Índice de lectura del informe (orientación; oculto en la versión impresa). */
@@ -378,6 +429,59 @@ function Num({ n }: { n: string }) {
     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold tabular-nums text-white">
       {n}
     </span>
+  );
+}
+
+/**
+ * Cuadrícula DISC clásica (2×2) con un marcador en la posición de la persona.
+ * Ejes: horizontal tarea↔personas, vertical activo↔reflexivo. D arriba-izq,
+ * I arriba-der, C abajo-izq, S abajo-der.
+ */
+function DiscGrid({
+  result,
+  dimColor,
+}: {
+  result: ScoringResult;
+  dimColor: (c: string) => string;
+}) {
+  const share = (code: string) =>
+    result.percentages.find((p) => p.dimensionCode === code)?.share ?? 0;
+  const d = share("D");
+  const i = share("I");
+  const s = share("S");
+  const c = share("C");
+  const x = (i + s - (d + c)) / 100; // + derecha (personas)
+  const y = (d + i - (s + c)) / 100; // + arriba (activo)
+  const cx = Math.max(24, Math.min(176, 100 + x * 76));
+  const cy = Math.max(24, Math.min(176, 100 - y * 76));
+
+  const quad = (code: string, qx: number, qy: number) => (
+    <g key={code}>
+      <rect x={qx} y={qy} width={90} height={90} fill={dimColor(code)} opacity={0.1} />
+      <text x={qx + 12} y={qy + 34} fontSize="32" fontWeight="800" fill={dimColor(code)} opacity={0.45}>
+        {code}
+      </text>
+      <text x={qx + 12} y={qy + 50} fontSize="10.5" fontWeight="700" fill={dimColor(code)}>
+        {styleShort(code)}
+      </text>
+    </g>
+  );
+
+  return (
+    <div className="flex justify-center">
+      <svg viewBox="0 0 200 200" className="h-60 w-60" role="img" aria-label="Tu posición en el modelo DISC">
+        <rect x="10" y="10" width="180" height="180" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+        {quad("D", 10, 10)}
+        {quad("I", 100, 10)}
+        {quad("C", 10, 100)}
+        {quad("S", 100, 100)}
+        <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
+        <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
+        <circle cx={cx} cy={cy} r="11" fill="#ffffff" />
+        <circle cx={cx} cy={cy} r="9" fill={dimColor(result.primaryDimension)} />
+        <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
+      </svg>
+    </div>
   );
 }
 

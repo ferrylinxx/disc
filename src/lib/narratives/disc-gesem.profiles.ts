@@ -51,6 +51,12 @@ export interface ResourceNarrative {
   repertoire: string;
   /** Preguntas para la reflexión (3, abiertas, no evalúan ni sugieren). */
   reflection: [string, string, string];
+  /** (Pág. 8) Lo que probablemente aportas a un equipo (4-6). */
+  teamContributions: string[];
+  /** (Pág. 8) Lo que probablemente agradeces de otras personas (3-5). */
+  teamAppreciates: string[];
+  /** (Pág. 8) Cuando aparecen diferencias en el equipo. */
+  differences: string;
 }
 
 /** Narrativa por recurso, indexada por código de dimensión (D, I, S, C). */
@@ -85,6 +91,21 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿En qué situaciones esos recursos te han ayudado especialmente a generar resultados o a movilizar a otras personas?",
       "¿Qué otras formas de actuar podrían complementar tus recursos cuando el contexto o las personas lo requieren?",
     ],
+    teamContributions: [
+      "Impulsar la acción y el avance.",
+      "Favorecer la toma de decisiones.",
+      "Generar energía y movimiento.",
+      "Movilizar a otras personas.",
+      "Orientar al equipo hacia los objetivos.",
+    ],
+    teamAppreciates: [
+      "Claridad en los objetivos.",
+      "Personas que aporten análisis y rigor.",
+      "Seguimiento de los acuerdos.",
+      "Espacios para escuchar otras perspectivas.",
+    ],
+    differences:
+      "Las diferencias de ritmo o de prioridades pueden generar tensiones naturales en cualquier equipo. Comprenderlas ayuda a equilibrar la velocidad con la reflexión y a convertirlas en oportunidades de colaboración.",
   },
   I: {
     resources: [
@@ -117,6 +138,21 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿En qué situaciones tu capacidad para conectar ha favorecido especialmente la colaboración?",
       "¿Qué formas de actuar podrían complementar tus recursos cuando una situación necesita más concreción?",
     ],
+    teamContributions: [
+      "Conectar a las personas del equipo.",
+      "Generar participación e implicación.",
+      "Comunicar ideas con entusiasmo.",
+      "Crear un clima de confianza.",
+      "Movilizar a través de la relación.",
+    ],
+    teamAppreciates: [
+      "Concreción y foco.",
+      "Personas que aterricen las ideas en acuerdos.",
+      "Estructura y seguimiento.",
+      "Reconocimiento del esfuerzo.",
+    ],
+    differences:
+      "Cuando conviven estilos más directos o más analíticos, las diferencias de comunicación pueden generar fricciones. Comprenderlas ayuda a mantener el foco sin perder la cercanía.",
   },
   S: {
     resources: [
@@ -149,6 +185,21 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿En qué situaciones tu estabilidad ha aportado especialmente valor al equipo?",
       "¿Qué formas de actuar podrían complementar tus recursos cuando una situación necesita más rapidez o decisión?",
     ],
+    teamContributions: [
+      "Aportar estabilidad y continuidad.",
+      "Escuchar y cuidar al equipo.",
+      "Sostener los acuerdos en el tiempo.",
+      "Generar confianza y cohesión.",
+      "Acompañar a las personas en los procesos.",
+    ],
+    teamAppreciates: [
+      "Claridad sobre las prioridades.",
+      "Personas que impulsen y decidan.",
+      "Anticipación ante los cambios.",
+      "Tiempo para adaptarse.",
+    ],
+    differences:
+      "Ante ritmos más rápidos o cambios frecuentes pueden aparecer tensiones. Comprender estas diferencias ayuda a equilibrar la estabilidad con la capacidad de adaptación.",
   },
   C: {
     resources: [
@@ -181,6 +232,21 @@ export const RESOURCE_NARRATIVES: Record<string, ResourceNarrative> = {
       "¿En qué situaciones tu rigor ha mejorado especialmente la calidad de una decisión?",
       "¿Qué formas de actuar podrían complementar tus recursos cuando una situación necesita más velocidad?",
     ],
+    teamContributions: [
+      "Aportar análisis y rigor.",
+      "Mejorar la calidad de las decisiones.",
+      "Ordenar la información y los procesos.",
+      "Anticipar riesgos.",
+      "Dar criterio y consistencia.",
+    ],
+    teamAppreciates: [
+      "Margen para analizar.",
+      "Personas que aporten impulso y decisión.",
+      "Objetivos y criterios claros.",
+      "Espacios para profundizar.",
+    ],
+    differences:
+      "Cuando el contexto exige rapidez, las diferencias entre análisis y acción pueden generar tensión. Comprenderlas ayuda a equilibrar el rigor con la agilidad.",
   },
 };
 
@@ -212,6 +278,15 @@ export interface ProfileNarrative {
   repertoire: string;
   /** Preguntas para la reflexión (3). */
   reflection: string[];
+  /** (Pág. 8) Cómo puedes aportar mejor a un equipo. */
+  team: {
+    /** Lo que probablemente aportas. */
+    contributions: string[];
+    /** Lo que probablemente agradeces de otras personas. */
+    appreciates: string[];
+    /** Cuando aparecen diferencias. */
+    differences: string;
+  };
 }
 
 /** Toma elementos distintos de dos listas hasta completar `n`. */
@@ -220,6 +295,16 @@ function pickDistinct(primary: ResourceItem[], secondary: ResourceItem[], n: num
   for (const v of [...primary, ...secondary]) {
     if (out.length >= n) break;
     if (!out.some((x) => x.name === v.name)) out.push(v);
+  }
+  return out;
+}
+
+/** Une dos listas de strings sin duplicados, hasta `n` elementos. */
+function pickStrings(primary: string[] = [], secondary: string[] = [], n = 6): string[] {
+  const out: string[] = [];
+  for (const v of [...primary, ...secondary]) {
+    if (out.length >= n) break;
+    if (v && !out.includes(v)) out.push(v);
   }
   return out;
 }
@@ -269,6 +354,15 @@ export function buildProfileNarrative(
       : primary.observe.slice(0, 3),
     repertoire: primary.repertoire,
     reflection: primary.reflection.slice(0, 3),
+    team: {
+      contributions: secondary
+        ? pickStrings(primary.teamContributions?.slice(0, 4), secondary.teamContributions, 6)
+        : (primary.teamContributions ?? []).slice(0, 6),
+      appreciates: secondary
+        ? pickStrings(primary.teamAppreciates?.slice(0, 3), secondary.teamAppreciates, 5)
+        : (primary.teamAppreciates ?? []).slice(0, 5),
+      differences: primary.differences ?? "",
+    },
   };
 }
 

@@ -26,10 +26,18 @@ export const loadNarrativeLibrary = cache(async (): Promise<NarrativeLibrary> =>
       where: { status: "PUBLISHED", locale: "es" },
     });
     for (const r of rows) {
+      // Fusión superficial sobre los valores por defecto: si una entrada de BD
+      // no trae campos nuevos (p. ej. team*), se completan desde el código.
       if (r.scope === "RESOURCE") {
-        resources[r.key] = r.content as unknown as ResourceNarrative;
+        resources[r.key] = {
+          ...(RESOURCE_NARRATIVES[r.key] ?? {}),
+          ...(r.content as object),
+        } as ResourceNarrative;
       } else if (r.scope === "PROFILE") {
-        profiles[r.key] = r.content as unknown as ProfileEntry;
+        profiles[r.key] = {
+          ...(PROFILE_CATALOG[r.key] ?? {}),
+          ...(r.content as object),
+        } as ProfileEntry;
       }
     }
   } catch (e) {

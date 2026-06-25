@@ -17,6 +17,9 @@ interface ResourceContent {
   observe: string[];
   repertoire: string;
   reflection: string[];
+  teamContributions?: string[];
+  teamAppreciates?: string[];
+  differences?: string;
 }
 
 /** Forma del contenido de un perfil (DI..EQ). */
@@ -121,6 +124,25 @@ function ResourceFields({
         rows={3}
         value={content.reflection.join("\n")}
         onChange={(v) => set({ ...content, reflection: lines(v) })}
+      />
+      <Field
+        label="Equipo · lo que aportas"
+        hint="una por línea (4-6)"
+        rows={4}
+        value={(content.teamContributions ?? []).join("\n")}
+        onChange={(v) => set({ ...content, teamContributions: lines(v) })}
+      />
+      <Field
+        label="Equipo · lo que agradeces de otras personas"
+        hint="una por línea (3-5)"
+        rows={4}
+        value={(content.teamAppreciates ?? []).join("\n")}
+        onChange={(v) => set({ ...content, teamAppreciates: lines(v) })}
+      />
+      <Field
+        label="Equipo · cuando aparecen diferencias"
+        value={content.differences ?? ""}
+        onChange={(v) => set({ ...content, differences: v })}
       />
     </div>
   );

@@ -48,7 +48,10 @@ export async function adminNarrativeEntries(): Promise<AdminNarrativeEntry[]> {
       scope: "RESOURCE",
       key,
       label: `${styleShort(key)} · recurso ${key}`,
-      content: r ? r.content : RESOURCE_NARRATIVES[key],
+      // Fusión sobre el valor por defecto: el editor ve también los campos nuevos.
+      content: r
+        ? { ...RESOURCE_NARRATIVES[key], ...(r.content as object) }
+        : RESOURCE_NARRATIVES[key],
       status: r?.status ?? "—",
       version: r?.version ?? 0,
       author: r?.author ?? null,
