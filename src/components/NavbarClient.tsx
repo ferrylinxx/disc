@@ -7,9 +7,9 @@ import { logout } from "@/app/actions/auth";
 
 /** Secciones de la landing (ancladas). Solo se muestran en la home. */
 const SECTIONS = [
-  { id: "como-funciona", href: "/#como-funciona", label: "Cómo funciona" },
-  { id: "dimensiones", href: "/#dimensiones", label: "El modelo" },
-  { id: "plataforma", href: "/#plataforma", label: "La plataforma" },
+  { id: "como-funciona", href: "/inicio#como-funciona", label: "Cómo funciona" },
+  { id: "dimensiones", href: "/inicio#dimensiones", label: "El modelo" },
+  { id: "plataforma", href: "/inicio#plataforma", label: "La plataforma" },
 ];
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
 /** Barra de navegación (cliente): isla flotante al scroll + scroll-spy + móvil. */
 export function NavbarClient({ authed, displayName, panelHref }: Props) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isHome = pathname === "/inicio";
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("");
