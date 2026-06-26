@@ -5,6 +5,7 @@ import { logout } from "@/app/actions/auth";
 import { AdminSidebar } from "@/components/admin/Sidebar";
 import { CommandPalette } from "@/components/admin/CommandPalette";
 import { CommandTrigger } from "@/components/admin/CommandTrigger";
+import { Toaster } from "@/components/admin/ui-client";
 
 export const metadata = { title: "Consola GESEM" };
 
@@ -26,6 +27,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-slate-50/60">
       <CommandPalette />
+      <Toaster />
       <main className="mx-auto w-full max-w-[1480px] px-4 py-5 sm:px-6">
         {/* Topbar */}
         <div className="animate-fade-up mb-5 flex items-center gap-3">

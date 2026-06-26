@@ -327,3 +327,69 @@ export async function bulkInviteParticipants(
   if (skipped > 0) parts.push(`${skipped} filas omitidas`);
   return { ok: true, message: parts.join(" · ") + "." };
 }
+
+/**
+ * Acción en lote sobre varios participantes: borrar o reenviar invitación.
+ * Opera solo sobre las personas de organizaciones a las que se tiene acceso.
+ */
+export async function bulkParticipantAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireAuth();
+  const op = String(formData.get("op") ?? "");
+  const ids = formData.getAll("ids").map(String).filter(Boolean);
+  if (ids.length === 0) return { error: "No hay participantes seleccionados." };
+  if (op !== "delete" && op !== "resend") {
+    return { error: "Acción no válida." };
+  }
+
+  const targets = await prisma.participant.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      organizationId: true,
+      fullName: true,
+      email: true,
+      invitations: {
+        where: {
+          status: { in: ["PENDING", "SENT", "OPENED"] },
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { token: true },
+      },
+    },
+  });
+  const allowed = targets.filter((t) => assertOrgAccess(session, t.organizationId));
+
+  if (op === "delete") {
+    const result = await prisma.participant.deleteMany({
+      where: { id: { in: allowed.map((t) => t.id) } },
+    });
+    revalidatePath("/admin", "layout");
+    revalidatePath("/cliente");
+    revalidatePath("/facilitador");
+    return { ok: true, message: `${result.count} participantes eliminados.` };
+  }
+
+  // resend
+  if (!isMailConfigured()) {
+    return { error: "SMTP no configurado. Define SMTP_PASS en .env.local." };
+  }
+  let sent = 0;
+  let noToken = 0;
+  for (const t of allowed) {
+    const token = t.invitations[0]?.token;
+    if (!token) {
+      noToken += 1;
+      continue;
+    }
+    const ok = await sendInvitationEmail(t.email, t.fullName, token);
+    if (ok) sent += 1;
+  }
+  const parts = [`${sent} invitaciones reenviadas`];
+  if (noToken > 0) parts.push(`${noToken} sin invitación activa`);
+  return { ok: true, message: parts.join(" · ") + "." };
+}
