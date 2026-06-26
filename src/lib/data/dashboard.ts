@@ -818,6 +818,28 @@ export type ParticipantReport = NonNullable<
   Awaited<ReturnType<typeof participantReport>>
 >;
 
+/**
+ * Señales de "requiere atención" para el dashboard admin (datos reales):
+ * invitaciones envejecidas sin completar, evaluaciones a medias y completados
+ * sin equipo asignado.
+ */
+export async function adminAttention() {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [staleInvites, inProgress, unassigned] = await Promise.all([
+    prisma.invitation.count({
+      where: {
+        status: { in: ["PENDING", "SENT", "OPENED"] },
+        createdAt: { lt: weekAgo },
+      },
+    }),
+    prisma.participant.count({ where: { status: "IN_PROGRESS" } }),
+    prisma.participant.count({
+      where: { status: "COMPLETED", teamId: null },
+    }),
+  ]);
+  return { staleInvites, inProgress, unassigned };
+}
+
 /** Organizaciones del cliente con sus equipos (para selects de formularios). */
 export async function teamsForOrganizations(organizationIds: string[]) {
   if (organizationIds.length === 0) return [];

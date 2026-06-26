@@ -1,9 +1,26 @@
 import type { ReactNode } from "react";
 
 /**
- * Kit de UI de la consola admin (server-safe, sin estado).
- * Estética: tarjetas blancas limpias sobre fondo neutro, tipografía compacta.
+ * Sistema de diseño de la Consola GESEM (server-safe, sin estado).
+ * Superficies limpias, esquinas suaves, azul GESEM como acento y tipografía
+ * compacta. Estos componentes son la única fuente de estilo del admin.
  */
+
+/** Clases de botón reutilizables (una sola fuente de verdad). */
+export const btn = {
+  primary:
+    "inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60",
+  secondary:
+    "inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-60",
+  danger:
+    "inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 disabled:opacity-60",
+  ghost:
+    "inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-60",
+};
+
+/** Clase de campo de formulario reutilizable. */
+export const fieldCls =
+  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 /** Cabecera de página: título, descripción y acciones a la derecha. */
 export function PageHeader({
@@ -25,7 +42,9 @@ export function PageHeader({
           <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>
         )}
       </div>
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+      {children && (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      )}
     </div>
   );
 }
@@ -46,14 +65,12 @@ export function Card({
 }) {
   return (
     <section
-      className={`animate-fade-up rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/50 ${className}`}
+      className={`animate-fade-up rounded-2xl border border-slate-200/70 bg-white shadow-sm shadow-slate-200/40 ${className}`}
     >
       {(title || action) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
           <div>
-            {title && (
-              <h2 className="text-sm font-bold text-slate-900">{title}</h2>
-            )}
+            {title && <h2 className="text-sm font-bold text-slate-900">{title}</h2>}
             {description && (
               <p className="mt-0.5 text-xs text-slate-500">{description}</p>
             )}
@@ -66,37 +83,55 @@ export function Card({
   );
 }
 
-/** KPI con icono, valor y pista contextual. */
+/** KPI con icono, valor y pista/tendencia contextual. */
 export function StatCard({
   label,
   value,
   hint,
   accent = "#00a1e0",
   icon,
+  trend,
 }: {
   label: string;
   value: number | string;
   hint?: string;
   accent?: string;
   icon?: ReactNode;
+  trend?: { dir: "up" | "down" | "flat"; text: string };
 }) {
+  const trendCls =
+    trend?.dir === "up"
+      ? "text-emerald-600"
+      : trend?.dir === "down"
+        ? "text-rose-600"
+        : "text-slate-400";
   return (
-    <div className="animate-scale-in rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/50 transition hover:-translate-y-0.5 hover:shadow-md">
+    <div className="animate-scale-in rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-200/40 transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           {label}
         </span>
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-xl"
-          style={{ backgroundColor: `${accent}14`, color: accent }}
-        >
-          {icon}
-        </span>
+        {icon && (
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-xl"
+            style={{ backgroundColor: `${accent}14`, color: accent }}
+          >
+            {icon}
+          </span>
+        )}
       </div>
       <div className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
         {value}
       </div>
-      {hint && <div className="mt-1 text-xs text-slate-400">{hint}</div>}
+      <div className="mt-1 flex items-center gap-2 text-xs">
+        {trend && (
+          <span className={`font-semibold ${trendCls}`}>
+            {trend.dir === "up" ? "↑" : trend.dir === "down" ? "↓" : "→"}{" "}
+            {trend.text}
+          </span>
+        )}
+        {hint && <span className="text-slate-400">{hint}</span>}
+      </div>
     </div>
   );
 }
@@ -119,6 +154,30 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/** Pastilla genérica con tono semántico. */
+export function Pill({
+  children,
+  tone = "slate",
+}: {
+  children: ReactNode;
+  tone?: "slate" | "sky" | "emerald" | "amber" | "rose";
+}) {
+  const tones: Record<string, string> = {
+    slate: "bg-slate-100 text-slate-600",
+    sky: "bg-sky-50 text-sky-700",
+    emerald: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-700",
+    rose: "bg-rose-50 text-rose-600",
+  };
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${tones[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 /** Chip de perfil DISC (p. ej. DI, EQ). */
 export function ProfileChip({ code }: { code: string }) {
   return (
@@ -130,19 +189,21 @@ export function ProfileChip({ code }: { code: string }) {
 
 /** Estado vacío de una tabla o sección. */
 export function EmptyState({
-  icon = "◌",
+  icon,
   title,
   hint,
 }: {
-  icon?: string;
+  icon?: ReactNode;
   title: string;
   hint?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 py-10 text-center">
-      <span className="text-2xl text-slate-300">{icon}</span>
-      <p className="text-sm font-semibold text-slate-500">{title}</p>
-      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-xl text-slate-300">
+        {icon ?? "◌"}
+      </span>
+      <p className="text-sm font-semibold text-slate-600">{title}</p>
+      {hint && <p className="max-w-sm text-xs text-slate-400">{hint}</p>}
     </div>
   );
 }

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
-const ic = "h-[18px] w-[18px]";
+const ic = "h-[18px] w-[18px] shrink-0";
 const svg = {
   fill: "none",
   stroke: "currentColor",
@@ -54,6 +54,11 @@ const Icons = {
       <path d="M14 5h5v5M19 5l-8 8M19 13v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
     </svg>
   ),
+  collapse: (
+    <svg viewBox="0 0 24 24" className={ic} {...svg}>
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  ),
 } satisfies Record<string, ReactNode>;
 
 interface NavItem {
@@ -62,52 +67,45 @@ interface NavItem {
   icon: ReactNode;
   badge?: number;
 }
-
 interface NavGroup {
   label: string;
   items: NavItem[];
 }
 
-/** Navegación lateral oscura de la consola admin. */
+/** Navegación lateral de la consola admin: colapsable (escritorio). */
 export function AdminSidebar({
   counts,
 }: {
   counts: { organizations: number; users: number; participants: number };
 }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("gesem:nav") === "collapsed");
+  }, []);
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem("gesem:nav", next ? "collapsed" : "open");
+      return next;
+    });
+  };
 
   const groups: NavGroup[] = [
-    {
-      label: "General",
-      items: [{ href: "/admin", label: "Resumen", icon: Icons.overview }],
-    },
+    { label: "General", items: [{ href: "/admin", label: "Resumen", icon: Icons.overview }] },
     {
       label: "Gestión",
       items: [
-        {
-          href: "/admin/organizaciones",
-          label: "Organizaciones",
-          icon: Icons.org,
-          badge: counts.organizations,
-        },
-        {
-          href: "/admin/usuarios",
-          label: "Usuarios",
-          icon: Icons.users,
-          badge: counts.users,
-        },
-        {
-          href: "/admin/participantes",
-          label: "Participantes",
-          icon: Icons.participants,
-          badge: counts.participants,
-        },
+        { href: "/admin/organizaciones", label: "Organizaciones", icon: Icons.org, badge: counts.organizations },
+        { href: "/admin/usuarios", label: "Usuarios", icon: Icons.users, badge: counts.users },
+        { href: "/admin/participantes", label: "Participantes", icon: Icons.participants, badge: counts.participants },
       ],
     },
     {
       label: "Plataforma",
       items: [
-        { href: "/admin/catalogo", label: "Catálogo", icon: Icons.catalog },
+        { href: "/admin/catalogo", label: "Contenido", icon: Icons.catalog },
         { href: "/admin/sistema", label: "Sistema", icon: Icons.system },
       ],
     },
@@ -117,36 +115,62 @@ export function AdminSidebar({
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
   return (
-    <nav className="animate-fade-up flex gap-1 overflow-x-auto rounded-2xl bg-slate-900 p-3 text-slate-300 shadow-xl shadow-slate-900/10 md:sticky md:top-[4.7rem] md:max-h-[calc(100vh-6rem)] md:w-60 md:shrink-0 md:flex-col md:overflow-y-auto">
+    <nav
+      className={`animate-fade-up flex gap-1 overflow-x-auto rounded-2xl bg-slate-900 p-3 text-slate-300 shadow-xl shadow-slate-900/10 transition-[width] md:sticky md:top-5 md:max-h-[calc(100vh-2.5rem)] md:shrink-0 md:flex-col md:overflow-y-auto ${
+        collapsed ? "md:w-[68px]" : "md:w-60"
+      }`}
+    >
+      {/* Marca + colapsar (escritorio) */}
+      <div className="mb-1 hidden items-center justify-between px-2 md:flex">
+        {!collapsed && (
+          <Link href="/admin" className="flex items-center gap-2 px-1 py-1">
+            <span className="text-sm font-bold tracking-tight text-white">GESEM</span>
+            <span className="h-4 w-px bg-white/25" />
+            <span className="text-sm font-bold tracking-tight text-sky-300">DISC</span>
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+        >
+          <span className={`transition-transform ${collapsed ? "rotate-180" : ""}`}>
+            {Icons.collapse}
+          </span>
+        </button>
+      </div>
+
       {groups.map((group, gi) => (
         <div key={group.label} className="flex shrink-0 gap-1 md:block">
-          <p
-            className={`hidden px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 md:block ${gi > 0 ? "pt-5" : "pt-1"}`}
-          >
-            {group.label}
-          </p>
+          {!collapsed && (
+            <p
+              className={`hidden px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 md:block ${gi > 0 ? "pt-4" : "pt-1"}`}
+            >
+              {group.label}
+            </p>
+          )}
           {group.items.map((item) => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                title={collapsed ? item.label : undefined}
                 className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition md:mb-0.5 ${
+                  collapsed ? "md:justify-center md:px-0" : ""
+                } ${
                   active
                     ? "bg-brand text-white shadow-lg shadow-sky-900/40"
                     : "hover:bg-white/[0.07] hover:text-white"
                 }`}
               >
-                <span className={active ? "" : "text-slate-400"}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-                {typeof item.badge === "number" && (
+                <span className={active ? "" : "text-slate-400"}>{item.icon}</span>
+                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && typeof item.badge === "number" && (
                   <span
                     className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                      active
-                        ? "bg-white/25 text-white"
-                        : "bg-white/10 text-slate-400"
+                      active ? "bg-white/25 text-white" : "bg-white/10 text-slate-400"
                     }`}
                   >
                     {item.badge}
@@ -158,24 +182,26 @@ export function AdminSidebar({
         </div>
       ))}
 
-      <div className="hidden md:mt-6 md:block md:border-t md:border-white/10 md:pt-4">
-        <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-          Otros paneles
-        </p>
-        {[
-          { href: "/cliente", label: "Panel cliente" },
-          { href: "/facilitador", label: "Facilitador" },
-        ].map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="mb-0.5 flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-[13px] font-medium text-slate-400 transition hover:bg-white/[0.07] hover:text-white"
-          >
-            <span>{Icons.external}</span>
-            {l.label}
-          </Link>
-        ))}
-      </div>
+      {!collapsed && (
+        <div className="hidden md:mt-5 md:block md:border-t md:border-white/10 md:pt-4">
+          <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            Otros paneles
+          </p>
+          {[
+            { href: "/cliente", label: "Panel cliente" },
+            { href: "/facilitador", label: "Facilitador" },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="mb-0.5 flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-[13px] font-medium text-slate-400 transition hover:bg-white/[0.07] hover:text-white"
+            >
+              <span>{Icons.external}</span>
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }
