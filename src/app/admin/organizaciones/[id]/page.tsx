@@ -56,6 +56,12 @@ export default async function AdminOrgDetailPage({
     <>
       <PageHeader title={org.name} description={`/${org.slug} · creada el ${dateFmt.format(org.createdAt)}`}>
         <Link
+          href={`/admin/organizaciones/${id}/equipo`}
+          className="bg-brand rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+        >
+          Informe de equipo →
+        </Link>
+        <Link
           href="/admin/organizaciones"
           className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
         >

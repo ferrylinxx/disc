@@ -627,6 +627,92 @@ export async function teamMap(teamId: string, organizationIds: string[]) {
   };
 }
 
+/**
+ * Informe de equipo a NIVEL DE ORGANIZACIÓN: agrega TODOS los participantes de
+ * la organización (de cualquier equipo o sin equipo) en una única lectura
+ * colectiva con la misma analítica que el mapa de equipo.
+ */
+export async function organizationTeamReport(
+  organizationId: string,
+  organizationIds: string[],
+) {
+  if (organizationIds.length === 0) return null;
+  if (!organizationIds.includes(organizationId)) return null;
+
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      id: true,
+      name: true,
+      createdAt: true,
+      participants: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          fullName: true,
+          status: true,
+          results: {
+            orderBy: { computedAt: "desc" },
+            take: 1,
+            select: {
+              eq: true,
+              profileCode: true,
+              primaryDimension: { select: { code: true } },
+              secondaryDimension: { select: { code: true } },
+              scores: {
+                select: {
+                  percent: true,
+                  raw: true,
+                  dimension: { select: { code: true } },
+                  context: { select: { code: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!org) return null;
+
+  const participants = org.participants.map((p) => {
+    const r = p.results[0];
+    let result: TeamParticipantResult | null = null;
+    if (r) {
+      const global = r.scores
+        .filter((s) => !s.context)
+        .map((s) => ({ dimensionCode: s.dimension.code, raw: s.raw, percent: s.percent }));
+      const byContext: TeamParticipantResult["byContext"] = {};
+      for (const s of r.scores) {
+        if (!s.context) continue;
+        (byContext[s.context.code] ??= []).push({
+          dimensionCode: s.dimension.code,
+          percent: s.percent,
+        });
+      }
+      result = {
+        eq: r.eq,
+        profileCode: r.profileCode,
+        isEq: r.profileCode === "EQ",
+        primary: r.primaryDimension.code,
+        global,
+        byContext,
+      };
+    }
+    return { id: p.id, hasResult: result !== null, result };
+  });
+
+  const def = getActiveInstrument();
+  const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
+  const insights = computeTeamInsights(dims, def.contexts, participants);
+
+  return {
+    org: { id: org.id, name: org.name, createdAt: org.createdAt.toISOString() },
+    totals: { total: participants.length, completed: insights.overview.completed },
+    insights,
+  };
+}
+
 export type TeamMapData = NonNullable<Awaited<ReturnType<typeof teamMap>>>;
 
 export type TeamMap = NonNullable<Awaited<ReturnType<typeof teamMap>>>;

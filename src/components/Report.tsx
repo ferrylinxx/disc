@@ -4,6 +4,7 @@ import { intensityLabel, styleShort } from "@/lib/narratives/disc-gesem.catalog"
 import {
   buildProfileNarrative,
   contextLeaders,
+  REPORT_CONTEXTS,
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
@@ -170,6 +171,12 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
             </p>
             <ScoreBars scores={result.global} dimensions={def.dimensions} />
           </div>
+        </div>
+        <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+          <p className="mb-2 text-xs font-medium text-slate-400">
+            Definición de tu tendencia
+          </p>
+          <IntensityScale intensity={result.intensity} />
         </div>
         <p className="mt-5 text-xs leading-relaxed text-slate-400">
           Los recursos predominantes muestran las tendencias que aparecen con
@@ -377,6 +384,12 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
                 </div>
               ))}
             </div>
+            <div className="mt-5">
+              <p className="mb-2 text-xs font-medium text-slate-400">
+                Intensidad de cada recurso por situación:
+              </p>
+              <ContextHeatmap result={result} def={def} dimColor={dimColor} />
+            </div>
           </>
         )}
       </section>
@@ -554,6 +567,99 @@ function DiscGrid({
         <circle cx={cx} cy={cy} r="9" fill={dimColor(result.primaryDimension)} />
         <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
       </svg>
+    </div>
+  );
+}
+
+/** Escala de definición de la tendencia (Flexible → Muy definida) con marcador. */
+function IntensityScale({ intensity }: { intensity: ScoringResult["intensity"] }) {
+  const levels = [
+    { key: "FLEXIBLE", label: "Flexible" },
+    { key: "MODERADA", label: "Moderada" },
+    { key: "DEFINIDA", label: "Definida" },
+    { key: "MUY_DEFINIDA", label: "Muy definida" },
+  ];
+  const idx = levels.findIndex((l) => l.key === intensity);
+  return (
+    <div>
+      <div className="flex gap-1.5">
+        {levels.map((l, i) => (
+          <div key={l.key} className="flex-1">
+            <div className={`h-2 rounded-full ${i <= idx ? "bg-brand" : "bg-slate-200"}`} />
+            <div
+              className={`mt-1 text-center text-[10px] font-semibold ${
+                i === idx ? "text-slate-900" : "text-slate-400"
+              }`}
+            >
+              {l.label}
+            </div>
+          </div>
+        ))}
+      </div>
+      {idx < 0 && (
+        <p className="mt-2 text-center text-[11px] text-slate-500">
+          Perfil adaptable: repartes tu energía entre varios recursos, sin una
+          tendencia marcada.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Mapa de calor: intensidad de cada recurso (D/I/S/C) por situación. */
+function ContextHeatmap({
+  result,
+  def,
+  dimColor,
+}: {
+  result: ScoringResult;
+  def: InstrumentDefinition;
+  dimColor: (c: string) => string;
+}) {
+  const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
+  const rows = REPORT_CONTEXTS.map(({ label, code }) => ({
+    label,
+    scores: result.byContext[code] ?? [],
+  })).filter((r) => r.scores.length > 0);
+  if (rows.length === 0) return null;
+  const pct = (scores: { dimensionCode: string; percent: number }[], code: string) =>
+    scores.find((s) => s.dimensionCode === code)?.percent ?? 0;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-xs">
+        <thead>
+          <tr>
+            <th className="p-1.5 text-left font-semibold text-slate-400">Situación</th>
+            {dims.map((d) => (
+              <th key={d.code} className="p-1.5 text-center font-semibold" style={{ color: d.color }}>
+                {styleShort(d.code)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label} className="border-t border-slate-100">
+              <td className="p-1.5 font-medium text-slate-600">{row.label}</td>
+              {dims.map((d) => {
+                const v = pct(row.scores, d.code);
+                return (
+                  <td key={d.code} className="p-1 text-center">
+                    <div
+                      className="mx-auto h-8 w-full max-w-[58px] rounded-lg"
+                      style={{
+                        backgroundColor: dimColor(d.code),
+                        opacity: 0.12 + (Math.min(100, Math.max(0, v)) / 100) * 0.85,
+                      }}
+                      title={`${row.label} · ${styleShort(d.code)}`}
+                    />
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
