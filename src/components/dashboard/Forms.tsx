@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   createOrganization,
   createProject,
@@ -170,10 +170,38 @@ export function BulkInviteForm({
     bulkInviteParticipants,
     initial,
   );
+  const rosterRef = useRef<HTMLTextAreaElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  function onCsvSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (rosterRef.current) {
+        rosterRef.current.value = String(reader.result ?? "");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // permite volver a subir el mismo archivo
+  }
+
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="organizationId" value={organizationId} />
+
+      <label className="flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-dashed border-slate-300 bg-white/60 px-3.5 py-2.5 text-sm text-slate-600 transition hover:border-sky-400 hover:text-slate-900">
+        <span>
+          <span className="font-semibold text-sky-700">Subir CSV</span>
+          {fileName ? ` · ${fileName}` : " (Nombre, email)"}
+        </span>
+        <span className="text-sky-600">↑</span>
+        <input type="file" accept=".csv,text/csv,text/plain" onChange={onCsvSelected} className="hidden" />
+      </label>
+
       <textarea
+        ref={rosterRef}
         name="roster"
         required
         rows={4}
@@ -192,8 +220,8 @@ export function BulkInviteForm({
         <Submit pending={pending} label="Invitar a todos" />
       </div>
       <p className="text-[11px] text-slate-400">
-        Una persona por línea: nombre y email separados por coma. Desde Excel,
-        copia las dos columnas y pégalas aquí.
+        Sube un CSV o pega las filas: una persona por línea, nombre y email
+        separados por coma. La primera fila de cabecera (Nombre, email) se ignora.
       </p>
       {state.message ? (
         <p className="text-xs font-medium text-emerald-600">{state.message}</p>
