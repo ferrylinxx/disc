@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   addMembership,
@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/users";
 import type { ActionState } from "@/app/actions/org";
 import type { AdminUser } from "@/lib/data/dashboard";
+import { ConfirmButton, toast } from "@/components/admin/ui-client";
 
 const initial: ActionState = {};
 
@@ -18,9 +19,47 @@ const inputCls =
   "rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 const globalRoleLabel: Record<string, string> = {
-  SUPERADMIN: "Admin GESEM",
+  SUPERADMIN: "Superadmin",
   USER: "Usuario",
 };
+
+/** Lanza un toast cuando una server action cambia de estado. */
+function useToastOnResult(state: ActionState, okMsg: string) {
+  const seen = useRef<ActionState | null>(null);
+  useEffect(() => {
+    if (state === seen.current) return;
+    seen.current = state;
+    if (state.error) toast(state.error, "error");
+    else if (state.ok) toast(state.message ?? okMsg, "success");
+  }, [state, okMsg]);
+}
+
+function csvCell(v: string | number): string {
+  const s = String(v ?? "");
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+function exportUsersCsv(users: AdminUser[]) {
+  const header = ["Nombre", "Email", "Rol", "Organizaciones", "Evaluaciones"];
+  const lines = users.map((u) =>
+    [
+      u.name ?? "",
+      u.email,
+      globalRoleLabel[u.globalRole] ?? u.globalRole,
+      u.memberships.length,
+      u.participantCount,
+    ]
+      .map(csvCell)
+      .join(","),
+  );
+  const csv = "﻿" + [header.join(","), ...lines].join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `usuarios-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`${users.length} filas exportadas a CSV.`, "info");
+}
 const memberRoleLabel: Record<string, string> = {
   ADMIN: "Admin cliente",
   FACILITATOR: "Facilitador",
@@ -139,6 +178,14 @@ export function UserManager({
           />
           <button
             type="button"
+            onClick={() => exportUsersCsv(filtered)}
+            disabled={filtered.length === 0}
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
+          >
+            ↓ CSV
+          </button>
+          <button
+            type="button"
             onClick={() => setShowCreate((v) => !v)}
             className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95"
           >
@@ -183,6 +230,7 @@ function CreateUserForm({
   onCreated?: () => void;
 }) {
   const [state, action, pending] = useActionState(createUser, initial);
+  useToastOnResult(state, "Usuario creado.");
 
   useEffect(() => {
     if (state.ok) onCreated?.();
@@ -342,12 +390,14 @@ function UserEditor({
   isSelf: boolean;
 }) {
   const [editState, editAction, editing] = useActionState(updateUser, initial);
-  const [delState, delAction, deleting] = useActionState(deleteUser, initial);
   const [memState, memAction, savingMem] = useActionState(
     addMembership,
     initial,
   );
   const [rmState, rmAction] = useActionState(removeMembership, initial);
+  useToastOnResult(editState, "Usuario actualizado.");
+  useToastOnResult(memState, "Organización asignada.");
+  useToastOnResult(rmState, "Asignación retirada.");
 
   return (
     <div className="mt-3 space-y-4 rounded-xl border border-slate-100 bg-white/60 p-4">
@@ -447,19 +497,26 @@ function UserEditor({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <Feedback state={delState} />
-        <form action={delAction}>
-          <input type="hidden" name="userId" value={user.id} />
-          <button
-            type="submit"
-            disabled={isSelf || deleting}
-            title={isSelf ? "No puedes eliminar tu propia cuenta" : undefined}
-            className="rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+      <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        {isSelf ? (
+          <span
+            title="No puedes eliminar tu propia cuenta"
+            className="cursor-not-allowed rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-300"
           >
-            {deleting ? "Eliminando…" : "Eliminar usuario"}
-          </button>
-        </form>
+            Eliminar usuario
+          </span>
+        ) : (
+          <ConfirmButton
+            action={deleteUser}
+            fields={{ userId: user.id }}
+            title={`Eliminar a ${user.name || user.email}`}
+            body="Se eliminará la cuenta y sus asignaciones. Esta acción no se puede deshacer."
+            confirmLabel="Eliminar usuario"
+            successMessage="Usuario eliminado."
+            triggerClass="rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+            triggerLabel="Eliminar usuario"
+          />
+        )}
       </div>
     </div>
   );
