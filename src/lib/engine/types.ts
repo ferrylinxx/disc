@@ -138,6 +138,15 @@ export interface DimensionShare {
   share: number;
 }
 
+/**
+ * Tres lecturas DISC del estilo: "público" (elecciones MÁS) y "privado"
+ * (elecciones MENOS). El "yo percibido" (espejo) se deriva del resultado neto.
+ */
+export interface DiscGraphs {
+  publico: DimensionShare[];
+  privado: DimensionShare[];
+}
+
 /** Resultado del cálculo para un participante. */
 export interface ScoringResult {
   /** Puntuaciones globales por dimensión. */

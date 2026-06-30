@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import type { ResponseQuality, ScoringResult } from "@/lib/engine/types";
+import type { ResponseQuality, ScoringResult, DiscGraphs } from "@/lib/engine/types";
 import { classifyIntensity, proportionalShares } from "@/lib/engine/scoring";
 import { getActiveInstrument } from "@/lib/instruments";
 import { computeTeamInsights } from "@/lib/analytics/team";
@@ -775,6 +775,54 @@ export async function participantReport(
   return { participant: meta, result: reconstructResult(r) };
 }
 
+/**
+ * Tres lecturas DISC del último cuestionario del participante (desde BD):
+ * "público" (elecciones MÁS) y "privado" (elecciones MENOS). El "yo percibido"
+ * se deriva del resultado neto en el propio informe. Devuelve null si no hay
+ * respuestas (p. ej. participantes antiguos sin ResponseSet).
+ */
+export async function participantDiscGraphs(
+  participantId: string,
+): Promise<DiscGraphs | null> {
+  const rs = await prisma.responseSet.findFirst({
+    where: { participantId, submittedAt: { not: null } },
+    orderBy: { submittedAt: "desc" },
+    select: {
+      responses: {
+        select: {
+          mostOption: { select: { dimension: { select: { code: true } } } },
+          leastOption: { select: { dimension: { select: { code: true } } } },
+        },
+      },
+    },
+  });
+  if (!rs || rs.responses.length === 0) return null;
+
+  const dimCodes = [...getActiveInstrument().dimensions]
+    .sort((a, b) => a.order - b.order)
+    .map((d) => d.code);
+  const most: Record<string, number> = {};
+  const least: Record<string, number> = {};
+  for (const c of dimCodes) {
+    most[c] = 0;
+    least[c] = 0;
+  }
+  let total = 0;
+  for (const r of rs.responses) {
+    const m = r.mostOption.dimension.code;
+    const l = r.leastOption.dimension.code;
+    if (m in most) most[m] += 1;
+    if (l in least) least[l] += 1;
+    total += 1;
+  }
+  const toShares = (counts: Record<string, number>) =>
+    dimCodes.map((code) => ({
+      dimensionCode: code,
+      share: total > 0 ? Math.round((counts[code] / total) * 100) : 0,
+    }));
+  return { publico: toShares(most), privado: toShares(least) };
+}
+
 /** Fila de resultado persistido (puntuaciones crudas) para reconstruir el ScoringResult. */
 interface PersistedResultRow {
   eq: number;
@@ -865,6 +913,7 @@ export async function participantReportByToken(token: string) {
     select: {
       participant: {
         select: {
+          id: true,
           fullName: true,
           organization: { select: { name: true } },
           team: { select: { name: true, project: { select: { name: true } } } },
@@ -876,6 +925,7 @@ export async function participantReportByToken(token: string) {
   if (!inv) return null;
   const p = inv.participant;
   const meta = {
+    id: p.id,
     fullName: p.fullName,
     organizationName: p.organization?.name ?? null,
     projectName: p.team?.project?.name ?? p.team?.name ?? null,

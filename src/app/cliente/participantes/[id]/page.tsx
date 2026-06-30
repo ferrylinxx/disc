@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/dal";
 import { effectiveRoles, adminOrganizationIds } from "@/lib/auth/rbac";
-import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
+import { allOrganizationIds, participantReport, participantDiscGraphs } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
 import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import DashboardShell from "@/components/dashboard/DashboardShell";
@@ -34,6 +34,7 @@ export default async function ParticipantReportPage({
   const def = getActiveInstrument();
   const narrative = result ? await buildProfileNarrativeDb(result) : undefined;
   const blocks = result ? await loadProfileBlocks(result.profileCode) : undefined;
+  const graphs = result ? ((await participantDiscGraphs(id)) ?? undefined) : undefined;
   const reportDate = new Date().toLocaleDateString("es-ES", {
     day: "2-digit",
     month: "long",
@@ -71,6 +72,7 @@ export default async function ParticipantReportPage({
               def={def}
               narrative={narrative}
               blocks={blocks}
+              graphs={graphs}
               meta={{
                 participantName: participant.fullName,
                 clientName: participant.organizationName,

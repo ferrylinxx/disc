@@ -5,8 +5,8 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getActiveInstrument } from "@/lib/instruments";
-import { score } from "@/lib/engine/scoring";
-import type { ScoringResult } from "@/lib/engine/types";
+import { score, discGraphShares } from "@/lib/engine/scoring";
+import type { ScoringResult, DiscGraphs } from "@/lib/engine/types";
 import { buildProfileNarrativeDb } from "@/lib/narratives/library";
 import type { ProfileNarrative } from "@/lib/narratives/disc-gesem.profiles";
 
@@ -37,6 +37,8 @@ export interface EvaluateResponse {
   result?: ScoringResult;
   /** Narrativa del informe compuesta desde la biblioteca (BD + valores base). */
   narrative?: ProfileNarrative;
+  /** Tres lecturas DISC (público=Más, privado=Menos) para el informe. */
+  graphs?: DiscGraphs;
   /** true si el resultado quedó guardado en base de datos. */
   saved?: boolean;
 }
@@ -71,6 +73,7 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
   }
 
   const narrative = await buildProfileNarrativeDb(result);
+  const graphs = discGraphShares(def, parsed.data.responses);
 
   if (parsed.data.token) {
     try {
@@ -81,14 +84,14 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
         parsed.data.selfPlacement,
         parsed.data.reflection,
       );
-      return { ok: true, result, narrative, saved };
+      return { ok: true, result, narrative, graphs, saved };
     } catch (e) {
       console.error("[evaluate] persistencia fallida:", e);
       return { ok: false, error: "No se pudo guardar el resultado." };
     }
   }
 
-  return { ok: true, result, narrative };
+  return { ok: true, result, narrative, graphs };
 }
 
 /**

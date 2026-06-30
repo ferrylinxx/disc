@@ -161,6 +161,13 @@ const es = {
     methodNote:
       "Este informe describe tendencias de interacción según tus respuestas y puede variar con el contexto y el momento. No constituye un diagnóstico, sino un punto de partida para la conversación y el desarrollo.",
     situacion: "Situación",
+    graphsLead: "Tres lecturas de tu estilo, según tus respuestas:",
+    graphPublic: "Yo público",
+    graphPublicDesc: "Cómo sueles mostrarte y adaptarte ante los demás.",
+    graphPrivate: "Yo privado",
+    graphPrivateDesc: "Tu estilo más instintivo, especialmente bajo presión.",
+    graphMirror: "Yo percibido",
+    graphMirrorDesc: "La integración de ambos, según el resultado del test.",
     index: [
       "Tu posición dentro del modelo DISC",
       "Recursos predominantes",
@@ -453,6 +460,13 @@ const ca: typeof es = {
     methodNote:
       "Aquest informe descriu tendències d'interacció segons les teves respostes i pot variar amb el context i el moment. No constitueix un diagnòstic, sinó un punt de partida per a la conversa i el desenvolupament.",
     situacion: "Situació",
+    graphsLead: "Tres lectures del teu estil, segons les teves respostes:",
+    graphPublic: "Jo públic",
+    graphPublicDesc: "Com sols mostrar-te i adaptar-te davant els altres.",
+    graphPrivate: "Jo privat",
+    graphPrivateDesc: "El teu estil més instintiu, especialment sota pressió.",
+    graphMirror: "Jo percebut",
+    graphMirrorDesc: "La integració de tots dos, segons el resultat del test.",
     index: [
       "La teva posició dins del model DISC",
       "Recursos predominants",

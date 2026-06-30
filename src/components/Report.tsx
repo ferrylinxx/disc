@@ -1,4 +1,4 @@
-import type { InstrumentDefinition, ScoringResult } from "@/lib/engine/types";
+import type { InstrumentDefinition, ScoringResult, DiscGraphs, DimensionShare } from "@/lib/engine/types";
 import { resolveEqBand } from "@/lib/narratives/disc-gesem.narratives";
 import { intensityLabel, styleShort } from "@/lib/narratives/disc-gesem.catalog";
 import {
@@ -26,6 +26,8 @@ interface Props {
    * la composición por defecto. Permite servir el contenido validado V1.
    */
   blocks?: Partial<Record<string, string>>;
+  /** Tres lecturas DISC (público=Más, privado=Menos). Si llega, se muestran 3 gráficos. */
+  graphs?: DiscGraphs;
   /** Datos de portada (nombre, cliente, proyecto, fecha). */
   meta?: {
     participantName?: string | null;
@@ -63,7 +65,7 @@ function Prose({ text, tone = "slate" }: { text: string; tone?: "slate" | "sky" 
  * No incluye retos, experimentos, tareas ni planes de acción individuales. El
  * protagonista es el RECURSO; el código de perfil es solo referencia interna.
  */
-export function Report({ result, def, narrative: narrativeProp, blocks, meta, lang = "es" }: Props) {
+export function Report({ result, def, narrative: narrativeProp, blocks, graphs, meta, lang = "es" }: Props) {
   const b = blocks ?? {};
   const t = getDict(lang).report;
   // Color base de cada dimensión = primera parada del degradado DISC oficial,
@@ -198,15 +200,46 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta, la
             {t.posicion}
           </h3>
         </div>
-        <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
-          <DiscGrid result={result} />
-          <div>
-            <p className="mb-3 text-xs font-medium text-slate-400">
-              {t.posicionCaption}
-            </p>
-            <ScoreBars scores={result.global} dimensions={def.dimensions} />
+        {graphs ? (
+          <>
+            <p className="mt-2 text-sm text-slate-500">{t.graphsLead}</p>
+            <div className="mt-4 grid gap-5 sm:grid-cols-3">
+              <GraphCard
+                gid="pub"
+                title={t.graphPublic}
+                desc={t.graphPublicDesc}
+                shares={graphs.publico}
+              />
+              <GraphCard
+                gid="priv"
+                title={t.graphPrivate}
+                desc={t.graphPrivateDesc}
+                shares={graphs.privado}
+              />
+              <GraphCard
+                gid="mir"
+                title={t.graphMirror}
+                desc={t.graphMirrorDesc}
+                shares={result.percentages}
+                markerCode={result.primaryDimension}
+              />
+            </div>
+            <div className="mt-6">
+              <p className="mb-3 text-xs font-medium text-slate-400">{t.posicionCaption}</p>
+              <ScoreBars scores={result.global} dimensions={def.dimensions} />
+            </div>
+          </>
+        ) : (
+          <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
+            <DiscGrid gid="mir" shares={result.percentages} markerCode={result.primaryDimension} />
+            <div>
+              <p className="mb-3 text-xs font-medium text-slate-400">
+                {t.posicionCaption}
+              </p>
+              <ScoreBars scores={result.global} dimensions={def.dimensions} />
+            </div>
           </div>
-        </div>
+        )}
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
           <p className="mb-4 text-sm font-semibold text-slate-500">{t.tendencyDef}</p>
           <IntensityScale intensity={result.intensity} t={t} />
@@ -557,27 +590,40 @@ function Num({ n }: { n: string }) {
 }
 
 /**
- * Cuadrícula DISC clásica (2×2) con un marcador en la posición de la persona.
- * Ejes: horizontal tarea↔personas, vertical activo↔reflexivo. D arriba-izq,
- * I arriba-der, C abajo-izq, S abajo-der.
+ * Cuadrícula DISC clásica (2×2) con un marcador en la posición indicada por
+ * `shares` (reparto 0-100 por dimensión). `gid` da ids de degradado únicos para
+ * poder mostrar varias cuadrículas en la misma página. D arriba-izq, I arriba-
+ * der, C abajo-izq, S abajo-der.
  */
-function DiscGrid({ result }: { result: ScoringResult }) {
-  const share = (code: string) =>
-    result.percentages.find((p) => p.dimensionCode === code)?.share ?? 0;
-  const d = share("D");
-  const i = share("I");
-  const s = share("S");
-  const c = share("C");
+function DiscGrid({
+  shares,
+  markerCode,
+  gid,
+}: {
+  shares: DimensionShare[];
+  markerCode?: string;
+  gid: string;
+}) {
+  const get = (code: string) =>
+    shares.find((p) => p.dimensionCode === code)?.share ?? 0;
+  const d = get("D");
+  const i = get("I");
+  const s = get("S");
+  const c = get("C");
   const x = (i + s - (d + c)) / 100; // + derecha (personas)
   const y = (d + i - (s + c)) / 100; // + arriba (activo)
   const cx = Math.max(24, Math.min(176, 100 + x * 76));
   const cy = Math.max(24, Math.min(176, 100 - y * 76));
   const CODES = ["D", "I", "S", "C"];
+  const marker =
+    markerCode ??
+    shares.reduce((a, b) => (b.share > a.share ? b : a), shares[0])?.dimensionCode ??
+    "D";
 
   const quad = (code: string, qx: number, qy: number) => (
     <g key={code}>
-      <rect x={qx} y={qy} width={90} height={90} rx={6} fill={`url(#dgrid-${code})`} opacity={0.16} />
-      <text x={qx + 12} y={qy + 34} fontSize="32" fontWeight="800" fill={`url(#dgrid-${code})`} opacity={0.6}>
+      <rect x={qx} y={qy} width={90} height={90} rx={6} fill={`url(#${gid}-${code})`} opacity={0.16} />
+      <text x={qx + 12} y={qy + 34} fontSize="32" fontWeight="800" fill={`url(#${gid}-${code})`} opacity={0.6}>
         {code}
       </text>
       <text x={qx + 12} y={qy + 50} fontSize="10.5" fontWeight="700" fill={discGradStops(code)[0]}>
@@ -588,12 +634,12 @@ function DiscGrid({ result }: { result: ScoringResult }) {
 
   return (
     <div className="flex justify-center">
-      <svg viewBox="0 0 200 200" className="h-60 w-60" role="img" aria-label="Tu posición en el modelo DISC">
+      <svg viewBox="0 0 200 200" className="h-auto w-full max-w-[210px]" role="img" aria-label="Cuadrícula DISC">
         <defs>
           {CODES.map((code) => {
             const [a, b] = discGradStops(code);
             return (
-              <linearGradient key={code} id={`dgrid-${code}`} x1="0" y1="0" x2="1" y2="1">
+              <linearGradient key={code} id={`${gid}-${code}`} x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor={a} />
                 <stop offset="100%" stopColor={b} />
               </linearGradient>
@@ -608,9 +654,32 @@ function DiscGrid({ result }: { result: ScoringResult }) {
         <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
         <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
         <circle cx={cx} cy={cy} r="11" fill="#ffffff" />
-        <circle cx={cx} cy={cy} r="9" fill={`url(#dgrid-${result.primaryDimension})`} />
+        <circle cx={cx} cy={cy} r="9" fill={`url(#${gid}-${marker})`} />
         <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
       </svg>
+    </div>
+  );
+}
+
+/** Tarjeta con una cuadrícula DISC + título y descripción (yo público/privado/percibido). */
+function GraphCard({
+  gid,
+  title,
+  desc,
+  shares,
+  markerCode,
+}: {
+  gid: string;
+  title: string;
+  desc: string;
+  shares: DimensionShare[];
+  markerCode?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white/70 p-4 text-center">
+      <DiscGrid gid={gid} shares={shares} markerCode={markerCode} />
+      <p className="mt-3 text-sm font-bold text-slate-800">{title}</p>
+      <p className="mt-1 text-xs leading-snug text-slate-500">{desc}</p>
     </div>
   );
 }

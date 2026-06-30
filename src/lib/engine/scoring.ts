@@ -188,3 +188,40 @@ export function score(
     },
   };
 }
+
+/**
+ * Tres lecturas clásicas DISC a partir de las respuestas Más/Menos:
+ * - "público": recuento de elecciones MÁS por dimensión (cómo tiende a mostrarse).
+ * - "privado": recuento de elecciones MENOS por dimensión (estilo más instintivo).
+ * Cada lectura se devuelve como reparto 0-100 (suma 100). El "yo percibido"
+ * (espejo) es el resultado neto del test (proportionalShares del global).
+ */
+export function discGraphShares(
+  def: InstrumentDefinition,
+  responses: ItemResponse[],
+): { publico: DimensionShare[]; privado: DimensionShare[] } {
+  const { optionDimension } = buildIndex(def);
+  const dimCodes = [...def.dimensions]
+    .sort((a, b) => a.order - b.order)
+    .map((d) => d.code);
+  const most: Record<string, number> = {};
+  const least: Record<string, number> = {};
+  for (const c of dimCodes) {
+    most[c] = 0;
+    least[c] = 0;
+  }
+  let total = 0;
+  for (const r of responses) {
+    const m = optionDimension.get(`${r.itemCode}:${r.mostOptionCode}`);
+    const l = optionDimension.get(`${r.itemCode}:${r.leastOptionCode}`);
+    if (m && m in most) most[m] += 1;
+    if (l && l in least) least[l] += 1;
+    total += 1;
+  }
+  const toShares = (counts: Record<string, number>): DimensionShare[] =>
+    dimCodes.map((code) => ({
+      dimensionCode: code,
+      share: total > 0 ? Math.round((counts[code] / total) * 100) : 0,
+    }));
+  return { publico: toShares(most), privado: toShares(least) };
+}

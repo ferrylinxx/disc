@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getActiveInstrument } from "@/lib/instruments";
-import { participantReportByToken } from "@/lib/data/dashboard";
+import { participantReportByToken, participantDiscGraphs } from "@/lib/data/dashboard";
 import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import { Questionnaire, type DraftState } from "@/components/Questionnaire";
 import { Report } from "@/components/Report";
@@ -47,6 +47,7 @@ export default async function EvaluacionTokenPage({
     const def = getActiveInstrument();
     const narrative = await buildProfileNarrativeDb(data.result);
     const blocks = await loadProfileBlocks(data.result.profileCode);
+    const graphs = (await participantDiscGraphs(data.participant.id)) ?? undefined;
     const reportDate = new Date().toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
       day: "2-digit",
       month: "long",
@@ -69,6 +70,7 @@ export default async function EvaluacionTokenPage({
             def={def}
             narrative={narrative}
             blocks={blocks}
+            graphs={graphs}
             lang={lang}
             meta={{
               participantName: data.participant.fullName,

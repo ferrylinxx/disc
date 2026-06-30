@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import type { InstrumentDefinition, ScoringResult } from "@/lib/engine/types";
+import type { InstrumentDefinition, ScoringResult, DiscGraphs } from "@/lib/engine/types";
 import type { ProfileNarrative } from "@/lib/narratives/disc-gesem.profiles";
 import { evaluate } from "@/app/actions/evaluate";
 import { clearDraft, saveDraft } from "@/app/actions/drafts";
@@ -51,6 +51,7 @@ export function Questionnaire({
   const [hasDraft, setHasDraft] = useState(false);
   const [result, setResult] = useState<ScoringResult | null>(null);
   const [narrative, setNarrative] = useState<ProfileNarrative | null>(null);
+  const [graphs, setGraphs] = useState<DiscGraphs | null>(null);
   const [pending, start] = useTransition();
 
   // Trazabilidad para validación: ms acumulados y nº de cambios por ítem.
@@ -95,6 +96,7 @@ export function Questionnaire({
       if (res.ok) {
         setResult(res.result ?? null);
         setNarrative(res.narrative ?? null);
+        setGraphs(res.graphs ?? null);
         setStep("result");
       } else {
         setError(res.error ?? t.error);
@@ -542,6 +544,7 @@ export function Questionnaire({
             result={result}
             def={def}
             narrative={narrative ?? undefined}
+            graphs={graphs ?? undefined}
             lang={lang}
             meta={{
               participantName: invite?.participantName,
