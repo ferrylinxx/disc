@@ -289,14 +289,15 @@ export function Questionnaire({
             </div>
           </div>
         )}
-        <div className="relative grid aspect-video w-full place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700">
-          <button className="bg-brand flex h-16 w-16 items-center justify-center rounded-full text-2xl text-white shadow-xl transition hover:scale-105">
-            ▶
-          </button>
-          <span className="absolute bottom-3 right-3 rounded-full bg-black/40 px-2.5 py-1 text-xs text-white/90">
-            Vídeo de preparación
-          </span>
-        </div>
+        <video
+          controls
+          playsInline
+          preload="metadata"
+          className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
+        >
+          <source src="/videos/CAT_intro.mp4" type="video/mp4" />
+          Tu navegador no admite la reproducción de vídeo.
+        </video>
         <p className="mt-5 leading-relaxed text-slate-600">
           En cada bloque toca primero la frase que{" "}
           <strong className="text-emerald-700">más</strong> te representa y luego
@@ -321,8 +322,8 @@ export function Questionnaire({
     return (
       <Shell
         step="self"
-        title="¿Cómo te ves?"
-        subtitle="Elige el estilo con el que más te identificas a priori. Luego lo compararemos con tu resultado real."
+        title="¿Cómo te ves? (evaluación inicial)"
+        subtitle="Estos son los cuatro estilos del modelo DISC. Antes de empezar, elige a priori con cuál te identificas más; al terminar lo compararemos con tu resultado real. Es solo un punto de partida: ninguno es mejor que otro."
       >
         <div className="grid grid-cols-2 gap-3">
           {def.dimensions.map((d) => {
@@ -335,12 +336,17 @@ export function Questionnaire({
                 style={active ? { borderColor: d.color } : undefined}
               >
                 <span
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-black text-white shadow-sm transition group-hover:scale-110"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-black text-white shadow-sm transition group-hover:scale-110"
                   style={{ backgroundColor: d.color }}
                 >
                   {d.code}
                 </span>
-                <span className="font-semibold text-slate-800">{d.name}</span>
+                <span className="min-w-0">
+                  <span className="block font-semibold text-slate-800">{d.name}</span>
+                  <span className="block text-xs leading-snug text-slate-500">
+                    {SELF_HINTS[d.code] ?? ""}
+                  </span>
+                </span>
               </button>
             );
           })}
@@ -557,6 +563,14 @@ export function Questionnaire({
     </main>
   );
 }
+
+/** Descriptor breve de cada estilo DISC para la evaluación inicial (neutral). */
+const SELF_HINTS: Record<string, string> = {
+  D: "Orientación a resultados y decisión",
+  I: "Comunicación, energía y relación",
+  S: "Cooperación, apoyo y constancia",
+  C: "Análisis, rigor y calidad",
+};
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "intro", label: "Preparación" },

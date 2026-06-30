@@ -51,3 +51,8 @@ scripts/_pdf_text/
 
 # artefactos de pruebas de navegador
 .playwright-mcp/
+
+# vídeos (pesados; se sirven desde public/videos en el servidor, fuera de git)
+video/
+public/videos/
+hero-v2*.jpeg
