@@ -209,7 +209,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta, la
         </div>
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
           <p className="mb-4 text-sm font-semibold text-slate-500">{t.tendencyDef}</p>
-          <IntensityScale intensity={result.intensity} t={t} code={result.primaryDimension} />
+          <IntensityScale intensity={result.intensity} t={t} />
         </div>
         <p className="mt-5 text-xs leading-relaxed text-slate-400">{t.posicionNote}</p>
       </section>
@@ -619,11 +619,9 @@ function DiscGrid({ result }: { result: ScoringResult }) {
 function IntensityScale({
   intensity,
   t,
-  code,
 }: {
   intensity: ScoringResult["intensity"];
   t: Dict["report"];
-  code: string;
 }) {
   const levels = [
     { key: "FLEXIBLE", label: t.intFlexible },
@@ -632,7 +630,6 @@ function IntensityScale({
     { key: "MUY_DEFINIDA", label: t.intMuyDefinida },
   ];
   const idx = levels.findIndex((l) => l.key === intensity);
-  const grad = discGrad(code, 90);
   return (
     <div>
       <div className="flex gap-2.5">
@@ -640,11 +637,11 @@ function IntensityScale({
           <div key={l.key} className="flex-1">
             <div
               className="h-3 rounded-full"
-              style={i === idx ? { backgroundImage: grad } : { backgroundColor: "#e8edf3" }}
+              style={{ backgroundColor: i === idx ? "#475569" : "#e8edf3" }}
             />
             <div
               className={`mt-2 text-center text-sm font-bold ${
-                i === idx ? "text-slate-800" : "text-slate-400"
+                i === idx ? "text-slate-700" : "text-slate-400"
               }`}
             >
               {l.label}
