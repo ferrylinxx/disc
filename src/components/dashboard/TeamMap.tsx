@@ -1,6 +1,7 @@
 import type { Dimension } from "@/lib/engine/types";
 import type { TeamInsights } from "@/lib/analytics/team";
 import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { discGrad, discGradStops } from "@/lib/disc-gradient";
 
 interface Props {
   insights: TeamInsights;
@@ -44,9 +45,9 @@ const SCREENS = [
  * sistema; nunca evalúa personas individualmente.
  */
 export function TeamMap({ insights, dimensions, header }: Props) {
-  const color = new Map(dimensions.map((d) => [d.code, d.color]));
   const name = new Map(dimensions.map((d) => [d.code, d.name]));
-  const dye = (code: string) => color.get(code) ?? "#64748b";
+  // Color base de cada dimensión = primera parada del degradado DISC oficial.
+  const dye = (code: string) => discGradStops(code)[0];
   const empty = insights.overview.completed === 0;
   const completed = insights.overview.completed;
   const pctOf = (count: number) =>
@@ -210,7 +211,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                 key={d.dimensionCode}
                 label={`${styleShort(d.dimensionCode)} · ${name.get(d.dimensionCode) ?? d.dimensionCode}`}
                 value={d.share}
-                color={dye(d.dimensionCode)}
+                code={d.dimensionCode}
               />
             ))}
           </div>
@@ -279,7 +280,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
               <li key={c.dimensionCode} className="flex items-start gap-3">
                 <span
                   className="mt-0.5 shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-white"
-                  style={{ backgroundColor: dye(c.dimensionCode) }}
+                  style={{ backgroundImage: discGrad(c.dimensionCode) }}
                 >
                   {styleShort(c.dimensionCode)}
                 </span>
@@ -469,6 +470,15 @@ function TeamDiscGrid({
           <filter id="tm-shadow" x="-60%" y="-60%" width="220%" height="220%">
             <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" floodColor="#0f172a" floodOpacity="0.2" />
           </filter>
+          {QUADS.map((q) => {
+            const [a, b] = discGradStops(q.code);
+            return (
+              <linearGradient key={q.code} id={`tmg-${q.code}`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={a} />
+                <stop offset="100%" stopColor={b} />
+              </linearGradient>
+            );
+          })}
         </defs>
 
         {/* Cuadrantes */}
@@ -480,10 +490,10 @@ function TeamDiscGrid({
               width={92}
               height={92}
               rx={12}
-              fill={dye(q.code)}
-              fillOpacity={0.1}
+              fill={`url(#tmg-${q.code})`}
+              fillOpacity={0.16}
               stroke={dye(q.code)}
-              strokeOpacity={0.28}
+              strokeOpacity={0.3}
             />
             <text
               x={q.lx}
@@ -491,8 +501,8 @@ function TeamDiscGrid({
               textAnchor={q.anchor}
               fontSize="30"
               fontWeight="800"
-              fill={dye(q.code)}
-              fillOpacity={0.55}
+              fill={`url(#tmg-${q.code})`}
+              fillOpacity={0.7}
             >
               {q.code}
             </text>
@@ -536,8 +546,7 @@ function TeamDiscGrid({
             cy={p.y}
             rx="9"
             ry="7"
-            fill={dye(p.code)}
-            fillOpacity="0.88"
+            fill={`url(#tmg-${p.code})`}
             stroke="#ffffff"
             strokeWidth="1.6"
             filter="url(#tm-shadow)"
@@ -623,7 +632,7 @@ function Radar({
 }
 
 /** Barra horizontal con etiqueta (intensidad relativa, sin porcentaje). */
-function BarRow({ label, value, color }: { label: string; value: number; color: string }) {
+function BarRow({ label, value, code }: { label: string; value: number; code: string }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
@@ -632,7 +641,7 @@ function BarRow({ label, value, color }: { label: string; value: number; color: 
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${Math.min(100, Math.max(0, value))}%`, backgroundColor: color }}
+          style={{ width: `${Math.min(100, Math.max(0, value))}%`, backgroundImage: discGrad(code, 90) }}
         />
       </div>
     </div>

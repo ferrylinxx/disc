@@ -9,7 +9,7 @@ import {
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
-import { discGradStops } from "@/lib/disc-gradient";
+import { discGrad, discGradStops } from "@/lib/disc-gradient";
 import { ScoreBars } from "./ScoreBars";
 
 interface Props {
@@ -66,8 +66,9 @@ function Prose({ text, tone = "slate" }: { text: string; tone?: "slate" | "sky" 
 export function Report({ result, def, narrative: narrativeProp, blocks, meta, lang = "es" }: Props) {
   const b = blocks ?? {};
   const t = getDict(lang).report;
-  const dimColor = (code: string) =>
-    def.dimensions.find((d) => d.code === code)?.color ?? "#0f172a";
+  // Color base de cada dimensión = primera parada del degradado DISC oficial,
+  // para que toda la paleta del informe sea consistente con los degradados.
+  const dimColor = (code: string) => discGradStops(code)[0];
   const eqBand = resolveEqBand(result.eq);
   const narrative = narrativeProp ?? buildProfileNarrative(result);
   const contexts = contextLeaders(result);
@@ -206,9 +207,9 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta, la
             <ScoreBars scores={result.global} dimensions={def.dimensions} />
           </div>
         </div>
-        <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-          <p className="mb-2 text-xs font-medium text-slate-400">{t.tendencyDef}</p>
-          <IntensityScale intensity={result.intensity} t={t} />
+        <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
+          <p className="mb-4 text-sm font-semibold text-slate-500">{t.tendencyDef}</p>
+          <IntensityScale intensity={result.intensity} t={t} code={result.primaryDimension} />
         </div>
         <p className="mt-5 text-xs leading-relaxed text-slate-400">{t.posicionNote}</p>
       </section>
@@ -414,7 +415,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta, la
                   <span className="text-sm font-medium text-slate-700">{ctx.label}</span>
                   <span
                     className="rounded-full px-2.5 py-1 text-xs font-semibold text-white"
-                    style={{ backgroundColor: dimColor(ctx.dimensionCode) }}
+                    style={{ backgroundImage: discGrad(ctx.dimensionCode) }}
                   >
                     {ctx.resource}
                   </span>
@@ -618,9 +619,11 @@ function DiscGrid({ result }: { result: ScoringResult }) {
 function IntensityScale({
   intensity,
   t,
+  code,
 }: {
   intensity: ScoringResult["intensity"];
   t: Dict["report"];
+  code: string;
 }) {
   const levels = [
     { key: "FLEXIBLE", label: t.intFlexible },
@@ -629,24 +632,33 @@ function IntensityScale({
     { key: "MUY_DEFINIDA", label: t.intMuyDefinida },
   ];
   const idx = levels.findIndex((l) => l.key === intensity);
+  const grad = discGrad(code, 90);
+  const gradText = {
+    backgroundImage: discGrad(code, 90),
+    WebkitBackgroundClip: "text" as const,
+    backgroundClip: "text" as const,
+    color: "transparent",
+  };
   return (
     <div>
-      <div className="flex gap-1.5">
+      <div className="flex gap-2.5">
         {levels.map((l, i) => (
           <div key={l.key} className="flex-1">
-            <div className={`h-2 rounded-full ${i <= idx ? "bg-brand" : "bg-slate-200"}`} />
             <div
-              className={`mt-1 text-center text-[10px] font-semibold ${
-                i === idx ? "text-slate-900" : "text-slate-400"
-              }`}
+              className="h-3 rounded-full"
+              style={i <= idx ? { backgroundImage: grad } : { backgroundColor: "#e2e8f0" }}
+            />
+            <div
+              className="mt-2 text-center text-sm font-bold"
+              style={i === idx ? gradText : undefined}
             >
-              {l.label}
+              <span className={i === idx ? "" : "text-slate-400"}>{l.label}</span>
             </div>
           </div>
         ))}
       </div>
       {idx < 0 && (
-        <p className="mt-2 text-center text-[11px] text-slate-500">{t.adaptableNote}</p>
+        <p className="mt-3 text-center text-xs leading-relaxed text-slate-500">{t.adaptableNote}</p>
       )}
     </div>
   );
