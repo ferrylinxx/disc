@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getActiveInstrument } from "@/lib/instruments";
 import { DIMENSION_NARRATIVES } from "@/lib/narratives/disc-gesem.narratives";
 import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { getLang } from "@/lib/i18n/server";
+import { getDict } from "@/lib/i18n/dictionaries";
 
 /** Degradados de las dimensiones DISC (Diseño DISC GESEM), a 45º. */
 const DISC_GRAD: Record<string, [string, string]> = {
@@ -32,77 +34,13 @@ const HEAT = [
   [0.2, 0.3, 0.5, 0.9],
 ];
 
-const STEPS = [
-  {
-    n: "1",
-    title: "Invita a tu equipo",
-    text: "Añade participantes uno a uno o pegando una lista desde Excel. Cada persona recibe su enlace personal por email.",
-  },
-  {
-    n: "2",
-    title: "Responden en 15 minutos",
-    text: "35 situaciones profesionales reales. El progreso se guarda solo: pueden parar y seguir en cualquier dispositivo.",
-  },
-  {
-    n: "3",
-    title: "Informe y mapa de equipo",
-    text: "Cada persona recibe su mapa de tendencias y tú ves el del equipo: estilos, complementariedad, vacíos y plan de acción.",
-  },
-];
+/** Iconos de las características (independientes del idioma). */
+const FEATURE_ICONS = ["✉", "⟳", "◫", "⬡", "⇩", "▦"];
 
-const FEATURES = [
-  {
-    icon: "✉",
-    title: "Invitaciones con un clic",
-    text: "Email automático con enlace personal, reenvío y carga masiva desde una lista pegada.",
-  },
-  {
-    icon: "⟳",
-    title: "Continúa donde lo dejaste",
-    text: "El borrador se guarda en el navegador y en el servidor: cambia de dispositivo sin perder nada.",
-  },
-  {
-    icon: "◫",
-    title: "Informe que se entiende",
-    text: "Sin jerga: qué recursos utilizas, qué merece la pena observar y preguntas para la reflexión.",
-  },
-  {
-    icon: "⬡",
-    title: "Mapa de equipo",
-    text: "Distribución de estilos, complementariedad, vacíos y conversaciones recomendadas.",
-  },
-  {
-    icon: "⇩",
-    title: "Exporta y comparte",
-    text: "Informe individual en PDF, mapa de equipo en CSV/PDF y envío por email al participante.",
-  },
-  {
-    icon: "▦",
-    title: "Multi-organización",
-    text: "Clientes, proyectos y equipos separados, con roles de administrador y facilitador.",
-  },
-];
-
-const REPORT_BLOCKS = [
-  "Tu tendencia predominante",
-  "Recursos predominantes",
-  "Aportación habitual",
-  "Coordinación y colaboración",
-  "Aspectos que merece la pena observar",
-  "Preguntas para la reflexión",
-];
-
-const TEAM_BLOCKS = [
-  "Distribución de estilos del equipo",
-  "Combinaciones y complementariedad",
-  "Vacíos: lo que falta en la mesa",
-  "Conversaciones recomendadas",
-  "Plan de acción colectivo",
-  "Exportación CSV y PDF",
-];
-
-export default function Home() {
+export default async function Home() {
   const def = getActiveInstrument();
+  const lang = await getLang();
+  const t = getDict(lang).inicio;
   const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
   const dimColor = new Map(dims.map((d) => [d.code, d.color]));
   const color = (c: string) => dimColor.get(c) ?? "#00a1e0";
@@ -122,27 +60,24 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500" />
               </span>
-              {def.instrumentName} · v{def.version} · basado en el modelo DISC
+              {def.instrumentName} · v{def.version} · {t.badge}
             </span>
 
             <h1 className="mt-7 text-[2.75rem] font-semibold leading-[1.02] tracking-tight text-slate-900 sm:text-7xl">
-              Descubre cómo
+              {t.heroH1a}
               <br />
-              trabaja{" "}
+              {t.heroH1b}{" "}
               <span className="bg-brand-animated bg-clip-text text-transparent">
-                tu equipo
+                {t.heroH1grad}
               </span>
               <br />
-              de verdad
+              {t.heroH1c}
             </h1>
 
             <p className="mt-7 max-w-xl text-lg leading-relaxed text-slate-600">
-              Evaluación de estilos conductuales, informe individual con
-              insights y mapa colectivo del equipo.{" "}
-              <span className="font-semibold text-slate-800">
-                De la invitación al plan de acción
-              </span>
-              , en una sola plataforma.
+              {t.heroLead1}
+              <span className="font-semibold text-slate-800">{t.heroLeadStrong}</span>
+              {t.heroLead2}
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -150,35 +85,33 @@ export default function Home() {
                 href="/evaluacion"
                 className="bg-brand-animated group inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-bold text-white shadow-2xl shadow-sky-500/40 transition hover:scale-[1.04] hover:shadow-cyan-500/30"
               >
-                Probar la evaluación
+                {t.ctaTry}
                 <span className="transition group-hover:translate-x-1">→</span>
               </Link>
               <Link
                 href="/login"
                 className="rounded-full border border-slate-300/80 bg-white/70 px-8 py-4 text-sm font-semibold text-slate-700 backdrop-blur transition hover:border-sky-300 hover:bg-white hover:text-sky-700"
               >
-                Acceso para organizaciones
+                {t.ctaOrg}
               </Link>
             </div>
 
             {/* Señal de credibilidad: producto de GESEM + enfoque metodológico */}
             <div className="mt-7 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-slate-500">
               <span>
-                Una herramienta de{" "}
+                {t.credPre}
                 <strong className="font-semibold text-slate-700">GESEM</strong>
               </span>
               <span className="hidden text-slate-300 sm:inline">·</span>
-              <span className="hidden text-slate-400 sm:inline">
-                comunicación, coordinación y colaboración
-              </span>
+              <span className="hidden text-slate-400 sm:inline">{t.cred3c}</span>
             </div>
 
             <dl className="mt-12 flex max-w-lg divide-x divide-slate-200">
               {[
-                [String(dims.length), "dimensiones"],
-                [String(contexts.length), "contextos"],
-                [String(def.items.length), "ítems"],
-                ["~15′", "duración"],
+                [String(dims.length), t.statDims],
+                [String(contexts.length), t.statCtx],
+                [String(def.items.length), t.statItems],
+                ["~15′", t.statDur],
               ].map(([n, label], i) => (
                 <div key={label} className={i === 0 ? "pr-7" : "px-7"}>
                   <dt className="text-3xl font-black tracking-tight text-slate-900">
@@ -194,7 +127,6 @@ export default function Home() {
 
           {/* Mock del informe con profundidad */}
           <div className="animate-fade-up relative hidden lg:block [animation-delay:150ms]">
-            {/* Halo cónico giratorio */}
             <div
               className="animate-spin-slow pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-25 blur-3xl"
               aria-hidden
@@ -208,13 +140,13 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                    Informe individual
+                    {t.mockReport}
                   </div>
                   <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
-                    Impulsar y movilizar
+                    {t.mockHeadline}
                   </div>
                   <div className="mt-0.5 text-[11px] font-medium text-slate-400">
-                    Tendencia definida · según tus respuestas
+                    {t.mockSub}
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1">
@@ -255,16 +187,16 @@ export default function Home() {
 
               <div className="mt-5 grid grid-cols-2 gap-2.5 text-[11px]">
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-3 font-medium leading-snug text-emerald-800">
-                  ✦ Decisión y empuje en momentos de avance
+                  ✦ {t.mockChip1}
                 </div>
                 <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-3 font-medium leading-snug text-amber-800">
-                  ⚑ Reservar espacio para escuchar al equipo
+                  ⚑ {t.mockChip2}
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3">
                 <span className="text-[11px] font-medium text-slate-300">
-                  Una pregunta para reflexionar
+                  {t.mockQuestion}
                 </span>
                 <span className="bg-brand flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white">
                   →
@@ -276,10 +208,10 @@ export default function Home() {
             <div className="absolute -bottom-14 -left-14 w-56 rotate-2 rounded-2xl border border-white/80 bg-white/95 p-4 shadow-2xl shadow-slate-900/15 backdrop-blur transition hover:rotate-0">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Mapa de equipo
+                  {t.mockTeam}
                 </span>
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
-                  92% participación
+                  {t.mockParticipation}
                 </span>
               </div>
               <div className="mt-3 flex h-16 items-end gap-2">
@@ -326,7 +258,7 @@ export default function Home() {
               <div>
                 <div className="text-base font-black leading-none text-slate-900">65</div>
                 <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
-                  Equilibrio
+                  {t.mockEq}
                 </div>
               </div>
             </div>
@@ -338,13 +270,13 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                    Informe individual
+                    {t.mockReport}
                   </div>
                   <div className="mt-1 text-lg font-extrabold tracking-tight text-slate-900">
-                    Impulsar + Conectar
+                    {t.mockHeadlineMobile}
                   </div>
                   <div className="mt-0.5 text-[11px] font-medium text-slate-400">
-                    Impulsar y movilizar · según tus respuestas
+                    {t.mockSubMobile}
                   </div>
                 </div>
                 <span className="bg-brand-animated shrink-0 rounded-xl px-3 py-1.5 text-sm font-black text-white shadow-sm">
@@ -379,10 +311,10 @@ export default function Home() {
 
               <div className="mt-4 grid grid-cols-2 gap-2.5 text-[11px]">
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-2.5 font-medium leading-snug text-emerald-800">
-                  ✦ Decisión y empuje en momentos de avance
+                  ✦ {t.mockChip1}
                 </div>
                 <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-2.5 font-medium leading-snug text-amber-800">
-                  ⚑ Reservar espacio para escuchar al equipo
+                  ⚑ {t.mockChip2}
                 </div>
               </div>
             </div>
@@ -418,12 +350,12 @@ export default function Home() {
       {/* ═══════════════════════ CÓMO FUNCIONA ═══════════════════════ */}
       <section id="como-funciona" className="reveal mx-auto w-full max-w-6xl scroll-mt-20 px-6 py-24">
         <h2 className="text-center text-xs font-bold uppercase tracking-[0.3em] text-sky-500">
-          Cómo funciona
+          {t.howKicker}
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-4xl font-black tracking-tight text-slate-900">
-          Del email de invitación
+          {t.howTitleA}
           <br />
-          <span className="text-gradient">al plan de acción</span>
+          <span className="text-gradient">{t.howTitleGrad}</span>
         </p>
 
         <div className="relative mt-16 grid gap-10 md:grid-cols-3 md:gap-6">
@@ -431,10 +363,10 @@ export default function Home() {
             className="pointer-events-none absolute left-[16%] right-[16%] top-7 hidden border-t-2 border-dashed border-sky-200 md:block"
             aria-hidden
           />
-          {STEPS.map((s) => (
-            <div key={s.n} className="relative text-center md:px-4">
+          {t.steps.map((s, i) => (
+            <div key={s.title} className="relative text-center md:px-4">
               <span className="bg-brand-animated relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-black text-white shadow-xl shadow-sky-500/30">
-                {s.n}
+                {i + 1}
               </span>
               <h3 className="mt-5 text-lg font-extrabold tracking-tight text-slate-900">
                 {s.title}
@@ -459,13 +391,13 @@ export default function Home() {
         />
         <div className="relative mx-auto w-full max-w-6xl px-6">
           <h2 className="text-center text-xs font-bold uppercase tracking-[0.3em] text-sky-400">
-            El resultado
+            {t.resultKicker}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-4xl font-black tracking-tight text-white">
-            Dos entregables que
+            {t.resultTitleA}
             <br />
             <span className="bg-brand-animated bg-clip-text text-transparent">
-              abren conversaciones
+              {t.resultTitleGrad}
             </span>
           </p>
 
@@ -474,16 +406,13 @@ export default function Home() {
             <div className="reveal group rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur transition hover:border-sky-400/40 hover:bg-white/[0.06]">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-extrabold tracking-tight text-white">
-                  Informe individual
+                  {t.indReport}
                 </h3>
                 <span className="rounded-full border border-sky-400/30 bg-sky-500/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-300">
-                  12 apartados
+                  {t.indBadge}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                Un mapa personal en clave de tendencia: claro, accionable y sin
-                etiquetas cerradas.
-              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.indDesc}</p>
               <div className="mt-6 space-y-2.5">
                 {HERO_BARS.map((b) => (
                   <div key={b.code} className="flex items-center gap-3">
@@ -503,10 +432,10 @@ export default function Home() {
                 ))}
               </div>
               <ul className="mt-6 grid gap-2 text-[13px] text-slate-300 sm:grid-cols-2">
-                {REPORT_BLOCKS.map((t) => (
-                  <li key={t} className="flex items-start gap-2">
+                {t.reportBlocks.map((b) => (
+                  <li key={b} className="flex items-start gap-2">
                     <span className="text-gradient mt-0.5 text-xs">✦</span>
-                    {t}
+                    {b}
                   </li>
                 ))}
               </ul>
@@ -516,16 +445,13 @@ export default function Home() {
             <div className="reveal group rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur transition hover:border-cyan-400/40 hover:bg-white/[0.06]">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-extrabold tracking-tight text-white">
-                  Mapa de equipo
+                  {t.teamReport}
                 </h3>
                 <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-cyan-300">
-                  10 pantallas
+                  {t.teamBadge}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                La foto colectiva: cómo se complementa el equipo por contexto y
-                qué le falta en la mesa.
-              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.teamDesc}</p>
               <div className="mt-6">
                 <div className="grid grid-cols-[auto_repeat(4,1fr)] items-center gap-1.5">
                   <span />
@@ -544,10 +470,10 @@ export default function Home() {
                 </div>
               </div>
               <ul className="mt-6 grid gap-2 text-[13px] text-slate-300 sm:grid-cols-2">
-                {TEAM_BLOCKS.map((t) => (
-                  <li key={t} className="flex items-start gap-2">
+                {t.teamBlocks.map((b) => (
+                  <li key={b} className="flex items-start gap-2">
                     <span className="text-gradient mt-0.5 text-xs">✦</span>
-                    {t}
+                    {b}
                   </li>
                 ))}
               </ul>
@@ -555,18 +481,12 @@ export default function Home() {
           </div>
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2.5">
-            {[
-              "Índice de equilibrio (EQ)",
-              "Intensidad del perfil",
-              "Insights automáticos",
-              "Narrativas en castellano claro",
-              "PDF · CSV · Email",
-            ].map((t) => (
+            {t.chips.map((c) => (
               <span
-                key={t}
+                key={c}
                 className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-xs font-semibold text-slate-300"
               >
-                {t}
+                {c}
               </span>
             ))}
           </div>
@@ -576,17 +496,15 @@ export default function Home() {
       {/* ═══════════════════════ EL MODELO ═══════════════════════ */}
       <section id="dimensiones" className="reveal relative mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-24">
         <h2 className="text-center text-xs font-bold uppercase tracking-[0.3em] text-sky-500">
-          El modelo
+          {t.modelKicker}
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-4xl font-black tracking-tight text-slate-900">
-          Cuatro maneras de
+          {t.modelTitleA}
           <br />
-          <span className="text-gradient">aportar al equipo</span>
+          <span className="text-gradient">{t.modelTitleGrad}</span>
         </p>
         <p className="mx-auto mt-4 max-w-xl text-center text-slate-600">
-          Ningún estilo es mejor que otro: cada uno suma algo distinto. El
-          cuestionario observa tus tendencias en {contexts.length} contextos
-          profesionales.
+          {t.modelDesc(contexts.length)}
         </p>
 
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -642,21 +560,21 @@ export default function Home() {
         <div className="bg-dots pointer-events-none absolute inset-0" aria-hidden />
         <div className="relative mx-auto w-full max-w-6xl px-6 py-24">
           <h2 className="text-center text-xs font-bold uppercase tracking-[0.3em] text-sky-500">
-            La plataforma
+            {t.platformKicker}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-4xl font-black tracking-tight text-slate-900">
-            Todo lo que necesitas para
+            {t.platformTitleA}
             <br />
-            <span className="text-gradient">llevarlo a tu organización</span>
+            <span className="text-gradient">{t.platformTitleGrad}</span>
           </p>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
+            {t.features.map((f, i) => (
               <div
                 key={f.title}
                 className="group rounded-3xl border border-slate-200/80 bg-white/90 p-7 backdrop-blur transition duration-300 hover:-translate-y-1.5 hover:border-sky-200 hover:shadow-2xl hover:shadow-sky-200/50"
               >
                 <span className="bg-brand-animated flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white shadow-lg shadow-sky-500/30 transition duration-300 group-hover:scale-110 group-hover:rotate-6">
-                  {f.icon}
+                  {FEATURE_ICONS[i]}
                 </span>
                 <h3 className="mt-5 font-extrabold tracking-tight text-slate-900">
                   {f.title}
@@ -673,14 +591,10 @@ export default function Home() {
         <div className="relative overflow-hidden rounded-3xl border border-sky-100 bg-white/80 p-9 text-center backdrop-blur">
           <span className="text-gradient mx-auto block text-2xl">❝</span>
           <h2 className="mt-2 text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-            Un punto de partida, no una etiqueta
+            {t.noteTitle}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
-            DISC GESEM es un cuestionario de estilos conductuales alineado con
-            las cuatro dimensiones del modelo DISC. Los resultados describen
-            tendencias que pueden variar según el contexto y el momento, y no
-            constituyen un diagnóstico: son una hipótesis de trabajo para la
-            conversación y el desarrollo personal y de equipo.
+            {t.noteBody}
           </p>
         </div>
       </section>
@@ -697,26 +611,25 @@ export default function Home() {
             aria-hidden
           />
           <h2 className="relative mx-auto max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">
-            Pruébalo tú antes de
+            {t.ctaTitleA}
             <br />
-            invitar a tu equipo
+            {t.ctaTitleB}
           </h2>
           <p className="relative mx-auto mt-5 max-w-xl text-sm text-white/85">
-            La evaluación abierta es anónima y tarda unos 15 minutos. Verás el
-            mismo informe que recibirá tu equipo.
+            {t.ctaDesc}
           </p>
           <div className="relative mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/evaluacion"
               className="rounded-full bg-white px-9 py-4 text-sm font-black text-sky-700 shadow-2xl transition hover:scale-[1.05]"
             >
-              Comenzar evaluación →
+              {t.ctaStart}
             </Link>
             <Link
               href="/login"
               className="rounded-full border border-white/50 bg-white/10 px-9 py-4 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
             >
-              Soy una organización
+              {t.ctaOrg2}
             </Link>
           </div>
         </div>
@@ -733,41 +646,40 @@ export default function Home() {
                 <span className="font-black tracking-tight text-slate-800">DISC</span>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
-                Plataforma de autoconocimiento conductual y desarrollo de
-                equipos. {def.instrumentName} v{def.version}.
+                {t.footerDesc(def.instrumentName, def.version)}
               </p>
             </div>
             <nav className="flex gap-14 text-sm">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                  Producto
+                  {t.footerProduct}
                 </p>
                 <ul className="mt-3 space-y-2 text-[13px] font-medium text-slate-600">
                   <li>
                     <Link href="/evaluacion" className="transition hover:text-sky-600">
-                      Evaluación
+                      {t.footerEval}
                     </Link>
                   </li>
                   <li>
                     <a href="#dimensiones" className="transition hover:text-sky-600">
-                      El modelo
+                      {t.footerModel}
                     </a>
                   </li>
                 </ul>
               </div>
               <div>
                 <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                  Organizaciones
+                  {t.footerOrgs}
                 </p>
                 <ul className="mt-3 space-y-2 text-[13px] font-medium text-slate-600">
                   <li>
                     <Link href="/login" className="transition hover:text-sky-600">
-                      Acceso
+                      {t.footerAccess}
                     </Link>
                   </li>
                   <li>
                     <Link href="/facilitador" className="transition hover:text-sky-600">
-                      Facilitadores
+                      {t.footerFacil}
                     </Link>
                   </li>
                 </ul>
@@ -775,15 +687,12 @@ export default function Home() {
             </nav>
           </div>
           <div className="mt-10 flex flex-col items-center gap-3 border-t border-slate-100 pt-5 text-center text-xs text-slate-400 sm:flex-row sm:justify-between sm:text-left">
-            <p>
-              Los resultados describen tendencias conductuales y no constituyen un
-              diagnóstico.
-            </p>
+            <p>{t.footerDisclaimer}</p>
             <Link
               href="/privacidad"
               className="font-semibold text-slate-500 transition hover:text-sky-600"
             >
-              Política de privacidad
+              {t.footerPrivacy}
             </Link>
           </div>
         </div>

@@ -434,6 +434,12 @@ function Fact({ label, value }: { label: string; value: string }) {
  * Mapa DISC del equipo: cuadrícula clásica 2×2 con un punto por participante.
  * D arriba-izq, I arriba-der, C abajo-izq, S abajo-der.
  */
+/**
+ * Mapa conductual del equipo: cuadrantes DISC clásicos (estilo "mapa Bimind").
+ * Ejes: tareas (arriba) ↔ personas (abajo) · indirecto/lento (izq) ↔ directo/
+ * rápido (der). C arriba-izq, D arriba-der, S abajo-izq, I abajo-der. Cada
+ * burbuja es una persona del equipo, situada por sus recursos predominantes.
+ */
 function TeamDiscGrid({
   points,
   dye,
@@ -441,34 +447,100 @@ function TeamDiscGrid({
   points: { x: number; y: number; code: string }[];
   dye: (c: string) => string;
 }) {
-  const quad = (code: string, qx: number, qy: number) => (
-    <g key={code}>
-      <rect x={qx} y={qy} width={90} height={90} fill={dye(code)} opacity={0.08} />
-      <text x={qx + 10} y={qy + 28} fontSize="24" fontWeight="800" fill={dye(code)} opacity={0.4}>
-        {code}
-      </text>
-    </g>
-  );
+  // code → [x del cuadrante, y del cuadrante, ancla horizontal del rótulo]
+  const QUADS: { code: string; x: number; y: number; lx: number; anchor: "start" | "end" }[] = [
+    { code: "C", x: 4, y: 4, lx: 14, anchor: "start" },
+    { code: "D", x: 104, y: 4, lx: 186, anchor: "end" },
+    { code: "S", x: 4, y: 104, lx: 14, anchor: "start" },
+    { code: "I", x: 104, y: 104, lx: 186, anchor: "end" },
+  ];
   return (
     <div className="flex justify-center">
-      <svg viewBox="0 0 200 200" className="h-64 w-64" role="img" aria-label="Mapa DISC del equipo">
-        <rect x="10" y="10" width="180" height="180" rx="14" fill="#ffffff" stroke="#e2e8f0" />
-        {quad("D", 10, 10)}
-        {quad("I", 100, 10)}
-        {quad("C", 10, 100)}
-        {quad("S", 100, 100)}
-        <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
-        <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
+      <svg
+        viewBox="-30 -26 260 252"
+        className="h-80 w-80 max-w-full"
+        role="img"
+        aria-label="Mapa conductual del equipo (cuadrantes DISC)"
+      >
+        <defs>
+          <marker id="tm-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#b8d3ef" />
+          </marker>
+          <filter id="tm-shadow" x="-60%" y="-60%" width="220%" height="220%">
+            <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" floodColor="#0f172a" floodOpacity="0.2" />
+          </filter>
+        </defs>
+
+        {/* Cuadrantes */}
+        {QUADS.map((q) => (
+          <g key={q.code}>
+            <rect
+              x={q.x}
+              y={q.y}
+              width={92}
+              height={92}
+              rx={12}
+              fill={dye(q.code)}
+              fillOpacity={0.1}
+              stroke={dye(q.code)}
+              strokeOpacity={0.28}
+            />
+            <text
+              x={q.lx}
+              y={q.y === 4 ? 30 : 174}
+              textAnchor={q.anchor}
+              fontSize="30"
+              fontWeight="800"
+              fill={dye(q.code)}
+              fillOpacity={0.55}
+            >
+              {q.code}
+            </text>
+            <text
+              x={q.lx}
+              y={q.y === 4 ? 42 : 186}
+              textAnchor={q.anchor}
+              fontSize="8.5"
+              fontWeight="700"
+              fill={dye(q.code)}
+              className="uppercase"
+            >
+              {styleShort(q.code)}
+            </text>
+          </g>
+        ))}
+
+        {/* Flechas centrales (tensiones de ritmo y prioridad) */}
+        <line x1="100" y1="22" x2="100" y2="178" stroke="#cfe1f5" strokeWidth="6" strokeLinecap="round" markerStart="url(#tm-arrow)" markerEnd="url(#tm-arrow)" />
+        <line x1="22" y1="100" x2="178" y2="100" stroke="#cfe1f5" strokeWidth="6" strokeLinecap="round" markerStart="url(#tm-arrow)" markerEnd="url(#tm-arrow)" />
+
+        {/* Rótulos de ejes */}
+        <text x="100" y="-12" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">
+          Orientado a tareas
+        </text>
+        <text x="100" y="214" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">
+          Orientado a personas
+        </text>
+        <text transform="translate(-16,100) rotate(-90)" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">
+          Indirecto · ritmo lento
+        </text>
+        <text transform="translate(216,100) rotate(90)" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">
+          Directo · ritmo rápido
+        </text>
+
+        {/* Personas */}
         {points.map((p, i) => (
-          <circle
+          <ellipse
             key={i}
             cx={p.x}
             cy={p.y}
-            r="6"
+            rx="9"
+            ry="7"
             fill={dye(p.code)}
-            fillOpacity="0.75"
+            fillOpacity="0.88"
             stroke="#ffffff"
-            strokeWidth="1.5"
+            strokeWidth="1.6"
+            filter="url(#tm-shadow)"
           />
         ))}
       </svg>

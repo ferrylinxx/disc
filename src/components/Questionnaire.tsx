@@ -39,6 +39,9 @@ export function Questionnaire({
   lang?: Lang;
 }) {
   const t = getDict(lang).quiz;
+  // Vídeos según idioma: catalán (CAT) o castellano (CAST).
+  const introVideo = lang === "ca" ? "/videos/CAT_intro.mp4" : "/videos/CAST_intro.mp4";
+  const finalVideo = lang === "ca" ? "/videos/CAT_Final.mp4" : "/videos/CAST_Final.mp4";
   const [step, setStep] = useState<Step>("intro");
   const [index, setIndex] = useState(0);
   const [picks, setPicks] = useState<Picks>({});
@@ -290,7 +293,7 @@ export function Questionnaire({
           </div>
         )}
         <AutoVideo
-          src="/videos/CAT_intro.mp4"
+          src={introVideo}
           className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
         />
         <p className="mt-5 leading-relaxed text-slate-600">
@@ -504,7 +507,7 @@ export function Questionnaire({
         subtitle={t.videoSubtitle}
       >
         <AutoVideo
-          src="/videos/CAT_Final.mp4"
+          src={finalVideo}
           className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
         />
         {error && (
