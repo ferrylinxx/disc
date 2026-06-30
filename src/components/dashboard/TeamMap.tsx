@@ -135,8 +135,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                 {insights.discPoints.map((p) => (
                   <li key={p.n} className="flex items-center gap-2.5 text-sm">
                     <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                      style={{ backgroundImage: discGrad(p.code) }}
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-500 text-[11px] font-bold text-white"
                     >
                       {p.n}
                     </span>
@@ -487,9 +486,6 @@ function TeamDiscGrid({
         aria-label="Mapa conductual del equipo (cuadrantes DISC)"
       >
         <defs>
-          <marker id="tm-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#b8d3ef" />
-          </marker>
           <filter id="tm-shadow" x="-60%" y="-60%" width="220%" height="220%">
             <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" floodColor="#0f172a" floodOpacity="0.2" />
           </filter>
@@ -543,10 +539,6 @@ function TeamDiscGrid({
           </g>
         ))}
 
-        {/* Flechas centrales (tensiones de ritmo y prioridad) */}
-        <line x1="100" y1="22" x2="100" y2="178" stroke="#cfe1f5" strokeWidth="6" strokeLinecap="round" markerStart="url(#tm-arrow)" markerEnd="url(#tm-arrow)" />
-        <line x1="22" y1="100" x2="178" y2="100" stroke="#cfe1f5" strokeWidth="6" strokeLinecap="round" markerStart="url(#tm-arrow)" markerEnd="url(#tm-arrow)" />
-
         {/* Rótulos de ejes */}
         <text x="100" y="-12" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">
           Orientado a tareas
@@ -569,7 +561,7 @@ function TeamDiscGrid({
               cy={p.y}
               rx="11"
               ry="9"
-              fill={`url(#tmg-${p.code})`}
+              fill="#64748b"
               stroke="#ffffff"
               strokeWidth="1.8"
             />
