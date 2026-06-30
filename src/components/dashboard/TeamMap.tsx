@@ -517,7 +517,7 @@ function TeamDiscGrid({
             />
             <text
               x={q.lx}
-              y={q.y === 4 ? 30 : 174}
+              y={q.y < 50 ? 32 : 176}
               textAnchor={q.anchor}
               fontSize="30"
               fontWeight="800"
@@ -528,7 +528,7 @@ function TeamDiscGrid({
             </text>
             <text
               x={q.lx}
-              y={q.y === 4 ? 42 : 186}
+              y={q.y < 50 ? 44 : 188}
               textAnchor={q.anchor}
               fontSize="8.5"
               fontWeight="700"
