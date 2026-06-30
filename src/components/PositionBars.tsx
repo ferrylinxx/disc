@@ -6,12 +6,6 @@ import type { DimensionShare } from "@/lib/engine/types";
 
 type Key = "publico" | "privado" | "percibido";
 const KEYS: Key[] = ["publico", "privado", "percibido"];
-/** Color de cada lectura (distinto de la paleta DISC para no confundir). */
-const COLOR: Record<Key, string> = {
-  publico: "#0ea5e9",
-  privado: "#f59e0b",
-  percibido: "#1f2937",
-};
 
 interface Props {
   readings: Record<Key, DimensionShare[]>;
@@ -28,7 +22,6 @@ interface Props {
  */
 export function PositionBars({ readings, labels, dims, lead, interp }: Props) {
   const [sel, setSel] = useState<Key>("percibido");
-  const color = COLOR[sel];
   const shareOf = (arr: DimensionShare[], code: string) =>
     arr.find((s) => s.dimensionCode === code)?.share ?? 0;
 
@@ -47,9 +40,8 @@ export function PositionBars({ readings, labels, dims, lead, interp }: Props) {
               onClick={() => setSel(k)}
               aria-pressed={on}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
-                on ? "text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+                on ? "bg-brand text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
               }`}
-              style={on ? { backgroundColor: COLOR[k] } : undefined}
             >
               {labels[k]}
             </button>
@@ -75,7 +67,7 @@ export function PositionBars({ readings, labels, dims, lead, interp }: Props) {
               <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(0, v))}%`, backgroundColor: color }}
+                  style={{ width: `${Math.min(100, Math.max(0, v))}%`, backgroundImage: discGrad(d.code, 90) }}
                 />
               </div>
               <span className="w-9 text-right text-xs font-bold text-slate-700">{v}%</span>
