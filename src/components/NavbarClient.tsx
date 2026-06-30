@@ -88,7 +88,7 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
               <img
                 src="/brand/gesem-logo.svg"
                 alt="GESEM"
-                className={`w-auto transition-all duration-300 ${solid ? "h-7" : "h-8"}`}
+                className={`w-auto transition-all duration-300 ${solid ? "h-9" : "h-11"}`}
               />
               <span
                 className={`w-px bg-slate-300 transition-all duration-300 ${

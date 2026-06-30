@@ -472,10 +472,10 @@ function TeamDiscGrid({
   });
   // code → [x del cuadrante, y del cuadrante, ancla horizontal del rótulo]
   const QUADS: { code: string; x: number; y: number; lx: number; anchor: "start" | "end" }[] = [
-    { code: "C", x: 4, y: 4, lx: 14, anchor: "start" },
-    { code: "D", x: 104, y: 4, lx: 186, anchor: "end" },
-    { code: "S", x: 4, y: 104, lx: 14, anchor: "start" },
-    { code: "I", x: 104, y: 104, lx: 186, anchor: "end" },
+    { code: "C", x: 6, y: 6, lx: 16, anchor: "start" },
+    { code: "D", x: 100, y: 6, lx: 184, anchor: "end" },
+    { code: "S", x: 6, y: 100, lx: 16, anchor: "start" },
+    { code: "I", x: 100, y: 100, lx: 184, anchor: "end" },
   ];
   return (
     <div className="flex justify-center">
@@ -506,9 +506,9 @@ function TeamDiscGrid({
             <rect
               x={q.x}
               y={q.y}
-              width={92}
-              height={92}
-              rx={12}
+              width={94}
+              height={94}
+              rx={10}
               fill={`url(#tmg-${q.code})`}
               fillOpacity={0.16}
               stroke={dye(q.code)}

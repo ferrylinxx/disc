@@ -699,7 +699,7 @@ export async function organizationTeamReport(
         byContext,
       };
     }
-    return { id: p.id, hasResult: result !== null, result };
+    return { id: p.id, fullName: p.fullName, hasResult: result !== null, result };
   });
 
   const def = getActiveInstrument();
