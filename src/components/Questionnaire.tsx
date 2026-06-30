@@ -8,7 +8,7 @@ import { evaluate } from "@/app/actions/evaluate";
 import { clearDraft, saveDraft } from "@/app/actions/drafts";
 import { Report } from "./Report";
 
-type Step = "intro" | "self" | "quiz" | "reflect" | "result";
+type Step = "intro" | "self" | "quiz" | "reflect" | "video" | "result";
 type Picks = Record<string, { most?: string; least?: string }>;
 export type DraftState = {
   step: Step;
@@ -164,7 +164,7 @@ export function Questionnaire({
   // Guarda el progreso mientras se avanza (no en intro ni en el resultado).
   // localStorage es inmediato; la BD se persiste con debounce (multi-dispositivo).
   useEffect(() => {
-    if (step === "intro" || step === "result") return;
+    if (step === "intro" || step === "video" || step === "result") return;
     const draft: DraftState = {
       step,
       index,
@@ -289,15 +289,10 @@ export function Questionnaire({
             </div>
           </div>
         )}
-        <video
-          controls
-          playsInline
-          preload="metadata"
+        <AutoVideo
+          src="/videos/CAT_intro.mp4"
           className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
-        >
-          <source src="/videos/CAT_intro.mp4" type="video/mp4" />
-          Tu navegador no admite la reproducción de vídeo.
-        </video>
+        />
         <p className="mt-5 leading-relaxed text-slate-600">
           En cada bloque toca primero la frase que{" "}
           <strong className="text-emerald-700">más</strong> te representa y luego
@@ -489,21 +484,40 @@ export function Questionnaire({
           </p>
         )}
         <div className="mt-7 flex items-center gap-3">
-          <Primary disabled={pending} onClick={() => runEvaluate(picks)}>
-            {pending ? "Calculando…" : "Ver mi resultado"}
-          </Primary>
-          {!pending && (
-            <button
-              onClick={() => {
-                setReflect("");
-                runEvaluate(picks);
-              }}
-              className="mt-7 rounded-full px-5 py-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
-            >
-              Omitir
-            </button>
-          )}
+          <Primary onClick={() => setStep("video")}>Continuar</Primary>
+          <button
+            onClick={() => {
+              setReflect("");
+              setStep("video");
+            }}
+            className="mt-7 rounded-full px-5 py-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
+          >
+            Omitir
+          </button>
         </div>
+      </Shell>
+    );
+  }
+
+  if (step === "video") {
+    return (
+      <Shell
+        step="video"
+        title="Un último paso antes de tu informe"
+        subtitle="Dedica un momento a este vídeo. Al terminar podrás ver tu informe."
+      >
+        <AutoVideo
+          src="/videos/CAT_Final.mp4"
+          className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
+        />
+        {error && (
+          <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
+            {error}
+          </p>
+        )}
+        <Primary disabled={pending} onClick={() => runEvaluate(picks)}>
+          {pending ? "Calculando…" : "Ver mi informe"}
+        </Primary>
       </Shell>
     );
   }
@@ -577,6 +591,7 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "self", label: "Posición" },
   { key: "quiz", label: "Cuestionario" },
   { key: "reflect", label: "Reflexión" },
+  { key: "video", label: "Vídeo" },
   { key: "result", label: "Resultado" },
 ];
 
@@ -602,6 +617,36 @@ function Shell({
         <div className="mt-6">{children}</div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Vídeo que arranca automáticamente al montarse. Intenta reproducir con sonido
+ * (si hay interacción previa del usuario el navegador lo permite); si lo bloquea,
+ * silencia y reproduce igualmente para garantizar el autoplay. Muestra controles.
+ */
+function AutoVideo({ src, className }: { src: string; className?: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.play().catch(() => {
+      v.muted = true;
+      v.play().catch(() => {
+        /* el navegador lo bloquea: queda con controles para reproducir a mano */
+      });
+    });
+  }, [src]);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      autoPlay
+      playsInline
+      controls
+      preload="metadata"
+      className={className}
+    />
   );
 }
 
