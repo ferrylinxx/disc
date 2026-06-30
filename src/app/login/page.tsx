@@ -8,9 +8,12 @@ export default function LoginPage() {
     <div className="mx-auto flex min-h-[80vh] w-full max-w-md flex-col justify-center px-6 py-12">
       <div className="animate-fade-up glass ring-brand rounded-3xl p-8">
         <div className="mb-7 text-center">
-          <div className="bg-brand mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold text-white">
-            G
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/gesem-logo.svg"
+            alt="GESEM DISC"
+            className="mx-auto mb-5 h-12 w-auto"
+          />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Bienvenido de nuevo
           </h1>
