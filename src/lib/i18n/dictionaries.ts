@@ -168,6 +168,14 @@ const es = {
     graphPrivateDesc: "Tu estilo más instintivo, especialmente bajo presión.",
     graphMirror: "Yo percibido",
     graphMirrorDesc: "La integración de ambos, según el resultado del test.",
+    axisTop: "Activo · directo",
+    axisBottom: "Reflexivo · sereno",
+    axisLeft: "Orientado a tareas",
+    axisRight: "Orientado a personas",
+    interpSame: (style: string) =>
+      `Te muestras y actúas de forma parecida: tu estilo ${style} aparece tanto de cara a los demás como en tu forma más instintiva.`,
+    interpDiff: (pub: string, priv: string, perc: string) =>
+      `De cara a los demás sueles apoyarte más en ${pub}; tu estilo más instintivo, bajo presión, tiende a ${priv}. Tu resultado integrado se apoya sobre todo en ${perc}.`,
     index: [
       "Tu posición dentro del modelo DISC",
       "Recursos predominantes",
@@ -467,6 +475,14 @@ const ca: typeof es = {
     graphPrivateDesc: "El teu estil més instintiu, especialment sota pressió.",
     graphMirror: "Jo percebut",
     graphMirrorDesc: "La integració de tots dos, segons el resultat del test.",
+    axisTop: "Actiu · directe",
+    axisBottom: "Reflexiu · serè",
+    axisLeft: "Orientat a tasques",
+    axisRight: "Orientat a persones",
+    interpSame: (style: string) =>
+      `Et mostres i actues de manera semblant: el teu estil ${style} apareix tant de cara als altres com en la teva forma més instintiva.`,
+    interpDiff: (pub: string, priv: string, perc: string) =>
+      `De cara als altres sols recolzar-te més en ${pub}; el teu estil més instintiu, sota pressió, tendeix a ${priv}. El teu resultat integrat es recolza sobretot en ${perc}.`,
     index: [
       "La teva posició dins del model DISC",
       "Recursos predominants",
