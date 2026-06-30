@@ -633,12 +633,6 @@ function IntensityScale({
   ];
   const idx = levels.findIndex((l) => l.key === intensity);
   const grad = discGrad(code, 90);
-  const gradText = {
-    backgroundImage: discGrad(code, 90),
-    WebkitBackgroundClip: "text" as const,
-    backgroundClip: "text" as const,
-    color: "transparent",
-  };
   return (
     <div>
       <div className="flex gap-2.5">
@@ -649,10 +643,11 @@ function IntensityScale({
               style={i === idx ? { backgroundImage: grad } : { backgroundColor: "#e8edf3" }}
             />
             <div
-              className="mt-2 text-center text-sm font-bold"
-              style={i === idx ? gradText : undefined}
+              className={`mt-2 text-center text-sm font-bold ${
+                i === idx ? "text-slate-800" : "text-slate-400"
+              }`}
             >
-              <span className={i === idx ? "" : "text-slate-400"}>{l.label}</span>
+              {l.label}
             </div>
           </div>
         ))}
@@ -691,7 +686,7 @@ function ContextHeatmap({
           <tr>
             <th className="p-1.5 text-left font-semibold text-slate-400">{situacion}</th>
             {dims.map((d) => (
-              <th key={d.code} className="p-1.5 text-center font-semibold" style={{ color: d.color }}>
+              <th key={d.code} className="p-1.5 text-center font-semibold" style={{ color: dimColor(d.code) }}>
                 {styleShort(d.code)}
               </th>
             ))}
@@ -708,8 +703,8 @@ function ContextHeatmap({
                     <div
                       className="mx-auto h-8 w-full max-w-[58px] rounded-lg"
                       style={{
-                        backgroundColor: dimColor(d.code),
-                        opacity: 0.12 + (Math.min(100, Math.max(0, v)) / 100) * 0.85,
+                        backgroundImage: discGrad(d.code, 135),
+                        opacity: 0.14 + (Math.min(100, Math.max(0, v)) / 100) * 0.86,
                       }}
                       title={`${row.label} · ${styleShort(d.code)}`}
                     />
