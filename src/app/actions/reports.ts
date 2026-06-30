@@ -5,7 +5,7 @@ import { adminOrganizationIds, effectiveRoles } from "@/lib/auth/rbac";
 import type { SessionPayload } from "@/lib/auth/jwt";
 import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
-import { buildProfileNarrativeDb } from "@/lib/narratives/library";
+import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import { reportEmail } from "@/lib/email/templates";
 import { isMailConfigured, sendMail } from "@/lib/email/mailer";
 import type { ActionState } from "./org";
@@ -41,11 +41,13 @@ export async function sendParticipantReport(
 
   const def = getActiveInstrument();
   const narrative = await buildProfileNarrativeDb(data.result);
+  const blocks = await loadProfileBlocks(data.result.profileCode);
   const email = reportEmail({
     participantName: data.participant.fullName,
     result: data.result,
     def,
     narrative,
+    blocks,
   });
   try {
     await sendMail({

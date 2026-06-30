@@ -90,8 +90,23 @@ export function reportEmail(input: {
   def: InstrumentDefinition;
   /** Narrativa precompuesta desde BD; si falta, se compone con valores base. */
   narrative?: ProfileNarrative;
+  /** Texto editorial fijo (Biblioteca V1) por apartado; tiene prioridad. */
+  blocks?: Partial<Record<string, string>>;
 }): { subject: string; html: string; text: string } {
   const { result, def, participantName } = input;
+  const b = input.blocks ?? {};
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const proseHtml = (t: string) =>
+    t
+      .split(/\n\n+/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map(
+        (p) =>
+          `<p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.6;">${escapeHtml(p)}</p>`,
+      )
+      .join("");
   const dimColor = (c: string) =>
     def.dimensions.find((d) => d.code === c)?.color ?? "#64748b";
   const narrative = input.narrative ?? buildProfileNarrative(result);
@@ -142,25 +157,23 @@ export function reportEmail(input: {
       <div style="font-size:13px;opacity:.9;margin-top:6px;">${narrative.intro}</div>
       <div style="font-size:12px;opacity:.8;margin-top:6px;">Intensidad: ${intensityLabel(result.intensity)} · Código interno: ${narrative.internalCode}</div>
     </div>
+    ${b.tendencia ? `<h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tendencia predominante</h3>${proseHtml(b.tendencia)}` : ""}
     <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Recursos predominantes</h3>
     <table style="width:100%;border-collapse:collapse;margin:0 0 14px;">${bars}</table>
-    <ul style="margin:0 0 20px;padding:0;">${resourcesHtml}</ul>
+    ${b.recursos ? proseHtml(b.recursos) : `<ul style="margin:0 0 20px;padding:0;">${resourcesHtml}</ul>`}
     <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Aportación habitual</h3>
-    <p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.contribution}</p>
+    ${b.aportacion ? proseHtml(b.aportacion) : `<p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.contribution}</p>`}
     <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Lo que otras personas suelen valorar</h3>
-    <p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.valued}</p>
+    ${b.valoracion ? proseHtml(b.valoracion) : `<p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.valued}</p>`}
     <h3 style="margin:0 0 8px;font-size:14px;color:#b45309;">Aspectos que merece la pena observar</h3>
-    <ul style="margin:0 0 18px;padding:0;">${list(narrative.observe, "•", "#d97706")}</ul>
+    ${b.observar ? proseHtml(b.observar) : `<ul style="margin:0 0 18px;padding:0;">${list(narrative.observe, "•", "#d97706")}</ul>`}
     <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Coordinación y colaboración</h3>
-    <div style="margin:0 0 18px;">${coordHtml}</div>
-    <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Comunicación</h3>
-    <p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.communication}</p>
+    ${b.coordinacion ? proseHtml(b.coordinacion) : `<div style="margin:0 0 18px;">${coordHtml}</div><h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Comunicación</h3><p style="margin:0 0 18px;font-size:14px;color:#475569;line-height:1.5;">${narrative.communication}</p>`}
     <h3 style="margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Contextos de mejor desempeño</h3>
-    <p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.contexts}</p>
+    ${b.contextos ? proseHtml(b.contextos) : `<p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.contexts}</p>`}
     <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">${contextRows}</table>
     <h3 style="margin:0 0 8px;font-size:14px;color:${BRAND};">Ampliación de repertorio</h3>
-    <p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.repertoire}</p>
-    ${insights.length > 0 ? `<ul style="margin:0 0 18px;padding:0;">${insightsHtml}</ul>` : ""}
+    ${b.ampliacion ? proseHtml(b.ampliacion) : `<p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">${narrative.repertoire}</p>${insights.length > 0 ? `<ul style="margin:0 0 18px;padding:0;">${insightsHtml}</ul>` : ""}`}
     <div style="background:#e0f2fe;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
       <strong style="color:#075985;">Equilibrio entre recursos (EQ ${result.eq}): ${eqBand.label}.</strong>
       <span style="color:#475569;">${eqBand.description}</span>
