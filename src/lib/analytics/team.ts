@@ -38,8 +38,8 @@ export interface TeamInsights {
   };
   /** Resumen ejecutivo narrativo del equipo (120-180 palabras). */
   executiveSummary: string;
-  /** Puntos del scatter sobre la cuadrícula DISC (uno por participante). */
-  discPoints: { x: number; y: number; code: string }[];
+  /** Puntos del scatter sobre la cuadrícula DISC (uno por participante, numerado). */
+  discPoints: { x: number; y: number; code: string; n: number; name: string; profile: string }[];
   /** Claves de lectura de la distribución de recursos (3-4 ideas). */
   readingKeys: string[];
   /** Claves para el liderazgo del equipo (implicaciones para el responsable). */
@@ -69,7 +69,11 @@ export interface TeamInsights {
 export function computeTeamInsights(
   dimensions: Dimension[],
   contexts: EvaluationContext[],
-  participants: { hasResult: boolean; result: TeamParticipantResult | null }[],
+  participants: {
+    hasResult: boolean;
+    fullName?: string;
+    result: TeamParticipantResult | null;
+  }[],
 ): TeamInsights {
   const dimCodes = [...dimensions].sort((a, b) => a.order - b.order).map((d) => d.code);
   const dimName = new Map(dimensions.map((d) => [d.code, d.name]));
@@ -266,18 +270,24 @@ export function computeTeamInsights(
   // Orientación clásica DISC (mapa Bimind): eje vertical tareas(arriba)↔personas
   // (abajo), eje horizontal indirecto/lento(izq)↔directo/rápido(der). Así
   // C=arriba-izq, D=arriba-der, S=abajo-izq, I=abajo-der.
-  const discPoints = withResult.map((r) => {
-    const sh: Record<string, number> = {};
-    for (const s of proportionalShares(r.global)) sh[s.dimensionCode] = s.share;
-    const dd = sh.D ?? 0, ii = sh.I ?? 0, ss = sh.S ?? 0, cc = sh.C ?? 0;
-    const x = (dd + ii - (cc + ss)) / 100; // + derecha: directo / ritmo rápido
-    const yUp = (dd + cc - (ii + ss)) / 100; // + arriba: orientado a tareas
-    return {
-      x: Math.max(22, Math.min(178, 100 + x * 74)),
-      y: Math.max(22, Math.min(178, 100 - yUp * 74)),
-      code: r.primary,
-    };
-  });
+  const discPoints = participants
+    .filter((p) => p.result)
+    .map((p, idx) => {
+      const r = p.result!;
+      const sh: Record<string, number> = {};
+      for (const s of proportionalShares(r.global)) sh[s.dimensionCode] = s.share;
+      const dd = sh.D ?? 0, ii = sh.I ?? 0, ss = sh.S ?? 0, cc = sh.C ?? 0;
+      const x = (dd + ii - (cc + ss)) / 100; // + derecha: directo / ritmo rápido
+      const yUp = (dd + cc - (ii + ss)) / 100; // + arriba: orientado a tareas
+      return {
+        x: Math.max(22, Math.min(178, 100 + x * 74)),
+        y: Math.max(22, Math.min(178, 100 - yUp * 74)),
+        code: r.primary,
+        n: idx + 1,
+        name: p.fullName ?? `Persona ${idx + 1}`,
+        profile: r.profileCode,
+      };
+    });
 
   // Resumen ejecutivo (radiografía): párrafo narrativo de la composición.
   const topNames = leading.map((d) => styleShort(d.dimensionCode)).join(" y ");

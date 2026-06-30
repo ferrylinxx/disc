@@ -127,21 +127,28 @@ export function TeamMap({ insights, dimensions, header }: Props) {
             <TeamDiscGrid points={insights.discPoints} dye={dye} />
             <div>
               <p className="text-sm leading-relaxed text-slate-600">
-                Cada punto representa a una persona del equipo, situada según los
-                recursos que utiliza con más frecuencia. Las agrupaciones muestran
-                dónde se concentra el equipo y qué zonas aparecen menos presentes.
+                Cada burbuja representa a una persona del equipo, numerada según la
+                leyenda y situada según los recursos que utiliza con más frecuencia.
+                Las agrupaciones muestran dónde se concentra el equipo.
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {insights.combinations.map((c) => (
-                  <span
-                    key={c.code}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
-                  >
-                    <span className="font-bold text-slate-900">{c.code}</span>
-                    {c.count}
-                  </span>
+              <ul className="mt-4 space-y-1.5">
+                {insights.discPoints.map((p) => (
+                  <li key={p.n} className="flex items-center gap-2.5 text-sm">
+                    <span
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                      style={{ backgroundImage: discGrad(p.code) }}
+                    >
+                      {p.n}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
+                      {p.name}
+                    </span>
+                    <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-500">
+                      {p.profile}
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </div>
         )}
@@ -445,9 +452,25 @@ function TeamDiscGrid({
   points,
   dye,
 }: {
-  points: { x: number; y: number; code: string }[];
+  points: { x: number; y: number; code: string; n: number }[];
   dye: (c: string) => string;
 }) {
+  // Separa burbujas que caen casi en el mismo punto para que todas se vean.
+  const placed: { x: number; y: number }[] = [];
+  const spread = points.map((p) => {
+    let x = p.x;
+    let y = p.y;
+    let tries = 0;
+    while (placed.some((q) => Math.hypot(q.x - x, q.y - y) < 18) && tries < 16) {
+      const ang = tries * 2.399;
+      const rad = 16 + Math.floor(tries / 8) * 10;
+      x = Math.max(20, Math.min(180, p.x + Math.cos(ang) * rad));
+      y = Math.max(20, Math.min(180, p.y + Math.sin(ang) * rad));
+      tries += 1;
+    }
+    placed.push({ x, y });
+    return { ...p, x, y };
+  });
   // code → [x del cuadrante, y del cuadrante, ancla horizontal del rótulo]
   const QUADS: { code: string; x: number; y: number; lx: number; anchor: "start" | "end" }[] = [
     { code: "C", x: 4, y: 4, lx: 14, anchor: "start" },
@@ -538,19 +561,30 @@ function TeamDiscGrid({
           Directo · ritmo rápido
         </text>
 
-        {/* Personas */}
-        {points.map((p, i) => (
-          <ellipse
-            key={i}
-            cx={p.x}
-            cy={p.y}
-            rx="9"
-            ry="7"
-            fill={`url(#tmg-${p.code})`}
-            stroke="#ffffff"
-            strokeWidth="1.6"
-            filter="url(#tm-shadow)"
-          />
+        {/* Personas (numeradas; ver leyenda) */}
+        {spread.map((p) => (
+          <g key={p.n} filter="url(#tm-shadow)">
+            <ellipse
+              cx={p.x}
+              cy={p.y}
+              rx="11"
+              ry="9"
+              fill={`url(#tmg-${p.code})`}
+              stroke="#ffffff"
+              strokeWidth="1.8"
+            />
+            <text
+              x={p.x}
+              y={p.y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="9"
+              fontWeight="800"
+              fill="#ffffff"
+            >
+              {p.n}
+            </text>
+          </g>
         ))}
       </svg>
     </div>
