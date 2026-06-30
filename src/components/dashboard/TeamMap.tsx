@@ -135,7 +135,8 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                 {insights.discPoints.map((p) => (
                   <li key={p.n} className="flex items-center gap-2.5 text-sm">
                     <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-500 text-[11px] font-bold text-white"
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                      style={{ backgroundColor: "#222222" }}
                     >
                       {p.n}
                     </span>
@@ -556,12 +557,11 @@ function TeamDiscGrid({
         {/* Personas (numeradas; ver leyenda) */}
         {spread.map((p) => (
           <g key={p.n} filter="url(#tm-shadow)">
-            <ellipse
+            <circle
               cx={p.x}
               cy={p.y}
-              rx="11"
-              ry="9"
-              fill="#64748b"
+              r="10"
+              fill="#222222"
               stroke="#ffffff"
               strokeWidth="1.8"
             />
