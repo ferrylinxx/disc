@@ -53,3 +53,34 @@ export async function buildProfileNarrativeDb(
   const library = await loadNarrativeLibrary();
   return buildProfileNarrative(result, library);
 }
+
+/**
+ * Carga el texto editorial fijo (Biblioteca V1) de un perfil: los apartados
+ * publicados como bloques (scope "BLOCK", clave `<PERFIL>:<apartado>`). Devuelve
+ * un mapa apartado→texto con lo que esté PUBLICADO (puede ser parcial o vacío).
+ * El informe usa estos textos cuando existen y compone el resto por defecto.
+ */
+export const loadProfileBlocks = cache(
+  async (profileCode: string): Promise<Record<string, string>> => {
+    const out: Record<string, string> = {};
+    try {
+      const rows = await prisma.narrativeEntry.findMany({
+        where: {
+          scope: "BLOCK",
+          status: "PUBLISHED",
+          locale: "es",
+          key: { startsWith: `${profileCode}:` },
+        },
+        select: { key: true, content: true },
+      });
+      for (const r of rows) {
+        const blockId = r.key.split(":")[1];
+        const text = (r.content as { text?: string })?.text?.trim();
+        if (blockId && text) out[blockId] = text;
+      }
+    } catch (e) {
+      console.error("[narratives] no se pudieron cargar los bloques:", e);
+    }
+    return out;
+  },
+);

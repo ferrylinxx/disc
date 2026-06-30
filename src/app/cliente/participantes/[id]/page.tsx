@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth/dal";
 import { effectiveRoles, adminOrganizationIds } from "@/lib/auth/rbac";
 import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
-import { buildProfileNarrativeDb } from "@/lib/narratives/library";
+import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Report } from "@/components/Report";
 import { ReportActions } from "@/components/dashboard/ReportActions";
@@ -33,6 +33,7 @@ export default async function ParticipantReportPage({
   const { participant, result } = data;
   const def = getActiveInstrument();
   const narrative = result ? await buildProfileNarrativeDb(result) : undefined;
+  const blocks = result ? await loadProfileBlocks(result.profileCode) : undefined;
   const reportDate = new Date().toLocaleDateString("es-ES", {
     day: "2-digit",
     month: "long",
@@ -69,6 +70,7 @@ export default async function ParticipantReportPage({
               result={result}
               def={def}
               narrative={narrative}
+              blocks={blocks}
               meta={{
                 participantName: participant.fullName,
                 clientName: participant.organizationName,

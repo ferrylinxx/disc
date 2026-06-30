@@ -15,6 +15,13 @@ interface Props {
   def: InstrumentDefinition;
   /** Narrativa precompuesta desde BD; si falta, se compone con valores base. */
   narrative?: ProfileNarrative;
+  /**
+   * Texto editorial fijo (Biblioteca V1) por apartado: tendencia, recursos,
+   * aportacion, valoracion, observar, coordinacion, contextos, ampliacion.
+   * Cuando un apartado está presente, el informe muestra esa prosa en lugar de
+   * la composición por defecto. Permite servir el contenido validado V1.
+   */
+  blocks?: Partial<Record<string, string>>;
   /** Datos de portada (nombre, cliente, proyecto, fecha). */
   meta?: {
     participantName?: string | null;
@@ -22,6 +29,24 @@ interface Props {
     projectName?: string | null;
     date?: string | null;
   };
+}
+
+/** Renderiza un texto multipárrafo (separado por líneas en blanco) como prosa. */
+function Prose({ text, tone = "slate" }: { text: string; tone?: "slate" | "sky" }) {
+  const cls = tone === "sky" ? "text-slate-700" : "text-slate-600";
+  return (
+    <div className="space-y-3">
+      {text
+        .split(/\n\n+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((p, i) => (
+          <p key={i} className={`text-sm leading-relaxed ${cls}`}>
+            {p}
+          </p>
+        ))}
+    </div>
+  );
 }
 
 /**
@@ -34,7 +59,8 @@ interface Props {
  * No incluye retos, experimentos, tareas ni planes de acción individuales. El
  * protagonista es el RECURSO; el código de perfil es solo referencia interna.
  */
-export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
+export function Report({ result, def, narrative: narrativeProp, blocks, meta }: Props) {
+  const b = blocks ?? {};
   const dimColor = (code: string) =>
     def.dimensions.find((d) => d.code === code)?.color ?? "#0f172a";
   const eqBand = resolveEqBand(result.eq);
@@ -148,6 +174,18 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
         </div>
       </header>
 
+      {/* Tendencia predominante (texto editorial fijo V1, si existe) */}
+      {b.tendencia && (
+        <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Tendencia predominante
+          </h3>
+          <div className="mt-3">
+            <Prose text={b.tendencia} />
+          </div>
+        </section>
+      )}
+
       {/* Cierre común del bloque "Tendencia predominante" (Entregable 10) */}
       <p className="px-1 text-xs leading-relaxed text-slate-400">
         Como cualquier tendencia, esta puede variar según las circunstancias y
@@ -197,19 +235,25 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
           Todas las personas disponen de los cuatro recursos. La diferencia suele
           estar en cuáles utilizamos con más frecuencia y en qué situaciones.
         </p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {narrative.resources.map((r) => (
-            <div
-              key={r.name}
-              className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3"
-            >
-              <p className="text-sm font-semibold text-slate-800">{r.name}</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                {r.description}
-              </p>
-            </div>
-          ))}
-        </div>
+        {b.recursos ? (
+          <div className="mt-4">
+            <Prose text={b.recursos} />
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {narrative.resources.map((r) => (
+              <div
+                key={r.name}
+                className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+              >
+                <p className="text-sm font-semibold text-slate-800">{r.name}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  {r.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Aportación habitual */}
@@ -220,9 +264,15 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
             Aportación habitual
           </h3>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          {narrative.contribution}
-        </p>
+        <div className="mt-2">
+          {b.aportacion ? (
+            <Prose text={b.aportacion} />
+          ) : (
+            <p className="text-sm leading-relaxed text-slate-600">
+              {narrative.contribution}
+            </p>
+          )}
+        </div>
       </section>
 
       {/* Lo que otras personas suelen valorar (tarjetas) */}
@@ -233,19 +283,27 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
             Lo que otras personas suelen valorar
           </h3>
         </div>
-        <p className="mt-2 text-sm text-slate-500">
-          Las personas de tu entorno suelen valorar especialmente:
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {narrative.valuedItems.map((t) => (
-            <div
-              key={t}
-              className="flex items-start gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-900/80"
-            >
-              <span className="text-emerald-500">✦</span> {t}
+        {b.valoracion ? (
+          <div className="mt-2">
+            <Prose text={b.valoracion} />
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 text-sm text-slate-500">
+              Las personas de tu entorno suelen valorar especialmente:
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {narrative.valuedItems.map((t) => (
+                <div
+                  key={t}
+                  className="flex items-start gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-900/80"
+                >
+                  <span className="text-emerald-500">✦</span> {t}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
         <p className="mt-3 text-xs text-slate-400">
           Estas aportaciones pueden variar según el contexto, el momento y las
           personas con las que interactúas.
@@ -264,16 +322,22 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
           Como cualquier recurso, aquello que suele ayudarte en muchas situaciones
           también puede requerir ajustes en determinados contextos.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {narrative.observe.map((s) => (
-            <div
-              key={s}
-              className="flex items-start gap-2.5 rounded-xl border border-sky-100 bg-sky-50/40 px-4 py-3 text-sm text-slate-600"
-            >
-              <span className="text-sky-400">◇</span> {s}
-            </div>
-          ))}
-        </div>
+        {b.observar ? (
+          <div className="mt-4">
+            <Prose text={b.observar} />
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {narrative.observe.map((s) => (
+              <div
+                key={s}
+                className="flex items-start gap-2.5 rounded-xl border border-sky-100 bg-sky-50/40 px-4 py-3 text-sm text-slate-600"
+              >
+                <span className="text-sky-400">◇</span> {s}
+              </div>
+            ))}
+          </div>
+        )}
         <p className="mt-3 text-xs leading-relaxed text-slate-400">
           El objetivo no consiste en cambiar quién eres, sino en ampliar tu
           repertorio para responder con mayor flexibilidad a cada situación.
@@ -295,59 +359,67 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
           diferentes: el valor aparece al reconocer qué aportas y qué necesitas de
           los demás.
         </p>
-        <dl className="mt-4 space-y-4">
-          <div>
-            <dt className="text-sm font-semibold text-slate-900">
-              Cuando coordinas personas o proyectos
-            </dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-600">
-              {narrative.coordination.coordinating}
-            </dd>
+        {b.coordinacion ? (
+          <div className="mt-4">
+            <Prose text={b.coordinacion} tone="sky" />
           </div>
-          <div>
-            <dt className="text-sm font-semibold text-slate-900">
-              Cuando colaboras con otras personas
-            </dt>
-            <dd className="mt-1 text-sm leading-relaxed text-slate-600">
-              {narrative.coordination.collaborating}
-            </dd>
-          </div>
-        </dl>
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-            <h4 className="text-sm font-bold text-emerald-900">
-              Lo que probablemente aportas
-            </h4>
-            <ul className="mt-2 space-y-1.5 text-sm text-emerald-900/80">
-              {narrative.team.contributions.map((t) => (
-                <li key={t} className="flex gap-2">
-                  <span className="text-emerald-500">+</span> {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-xl border border-sky-100 bg-white/70 p-4">
-            <h4 className="text-sm font-bold text-sky-900">
-              Lo que probablemente necesitas de otras personas
-            </h4>
-            <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
-              {narrative.team.appreciates.map((t) => (
-                <li key={t} className="flex gap-2">
-                  <span className="text-sky-500">◆</span> {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        {narrative.team.differences && (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-4">
-            <h4 className="text-sm font-bold text-slate-800">
-              Cuando aparecen diferencias
-            </h4>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">
-              {narrative.team.differences}
-            </p>
-          </div>
+        ) : (
+          <>
+            <dl className="mt-4 space-y-4">
+              <div>
+                <dt className="text-sm font-semibold text-slate-900">
+                  Cuando coordinas personas o proyectos
+                </dt>
+                <dd className="mt-1 text-sm leading-relaxed text-slate-600">
+                  {narrative.coordination.coordinating}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-semibold text-slate-900">
+                  Cuando colaboras con otras personas
+                </dt>
+                <dd className="mt-1 text-sm leading-relaxed text-slate-600">
+                  {narrative.coordination.collaborating}
+                </dd>
+              </div>
+            </dl>
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                <h4 className="text-sm font-bold text-emerald-900">
+                  Lo que probablemente aportas
+                </h4>
+                <ul className="mt-2 space-y-1.5 text-sm text-emerald-900/80">
+                  {narrative.team.contributions.map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <span className="text-emerald-500">+</span> {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-sky-100 bg-white/70 p-4">
+                <h4 className="text-sm font-bold text-sky-900">
+                  Lo que probablemente necesitas de otras personas
+                </h4>
+                <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
+                  {narrative.team.appreciates.map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <span className="text-sky-500">◆</span> {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            {narrative.team.differences && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-4">
+                <h4 className="text-sm font-bold text-slate-800">
+                  Cuando aparecen diferencias
+                </h4>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  {narrative.team.differences}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -359,9 +431,15 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
             Contextos de mejor desempeño
           </h3>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          {narrative.contexts}
-        </p>
+        <div className="mt-2">
+          {b.contextos ? (
+            <Prose text={b.contextos} />
+          ) : (
+            <p className="text-sm leading-relaxed text-slate-600">
+              {narrative.contexts}
+            </p>
+          )}
+        </div>
         {contexts.length > 0 && (
           <>
             <p className="mt-5 text-xs font-medium text-slate-400">
@@ -402,20 +480,28 @@ export function Report({ result, def, narrative: narrativeProp, meta }: Props) {
             Ampliación de repertorio
           </h3>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-700">
-          {narrative.repertoire}
-        </p>
-        {insights.length > 0 && (
-          <ul className="mt-4 space-y-3">
-            {insights.map((text) => (
-              <li
-                key={text}
-                className="rounded-xl border border-sky-100 bg-white/70 p-4 text-sm leading-relaxed text-slate-700"
-              >
-                {text}
-              </li>
-            ))}
-          </ul>
+        {b.ampliacion ? (
+          <div className="mt-2">
+            <Prose text={b.ampliacion} tone="sky" />
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">
+              {narrative.repertoire}
+            </p>
+            {insights.length > 0 && (
+              <ul className="mt-4 space-y-3">
+                {insights.map((text) => (
+                  <li
+                    key={text}
+                    className="rounded-xl border border-sky-100 bg-white/70 p-4 text-sm leading-relaxed text-slate-700"
+                  >
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </section>
 
