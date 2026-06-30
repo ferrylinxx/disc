@@ -2,7 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getActiveInstrument } from "@/lib/instruments";
+import { participantReportByToken } from "@/lib/data/dashboard";
+import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import { Questionnaire, type DraftState } from "@/components/Questionnaire";
+import { Report } from "@/components/Report";
+import { PrintButton } from "@/components/PrintButton";
 
 export const metadata: Metadata = {
   title: "Tu evaluación · DISC GESEM",
@@ -35,11 +39,61 @@ export default async function EvaluacionTokenPage({
     );
   }
   if (invitation.status === "COMPLETED") {
+    const data = await participantReportByToken(token);
+    if (!data?.result) {
+      return (
+        <Notice
+          title="Evaluación completada"
+          body="Ya has completado este cuestionario. Tu facilitador puede compartir contigo el informe de resultados."
+        />
+      );
+    }
+    const def = getActiveInstrument();
+    const narrative = await buildProfileNarrativeDb(data.result);
+    const blocks = await loadProfileBlocks(data.result.profileCode);
+    const reportDate = new Date().toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
     return (
-      <Notice
-        title="Evaluación completada"
-        body="Ya has completado este cuestionario. Tu facilitador puede compartir contigo el informe de resultados."
-      />
+      <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+        <div className="animate-fade-up mb-6 flex flex-col items-center text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
+            ✓
+          </span>
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+            ¡Gracias por completar el cuestionario!
+          </h1>
+          <p className="mt-2 max-w-md leading-relaxed text-slate-600">
+            Este es tu informe. Describe los recursos que sueles utilizar con más
+            frecuencia. Puedes leerlo ahora; también lo tendrá tu facilitador.
+          </p>
+        </div>
+        <div className="print-area">
+          <Report
+            result={data.result}
+            def={def}
+            narrative={narrative}
+            blocks={blocks}
+            meta={{
+              participantName: data.participant.fullName,
+              clientName: data.participant.organizationName,
+              projectName: data.participant.projectName,
+              date: reportDate,
+            }}
+          />
+        </div>
+        <div className="no-print mt-8 flex flex-wrap items-center justify-center gap-3">
+          <PrintButton />
+          <Link
+            href="/"
+            className="rounded-full border border-slate-200 bg-white/80 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+          >
+            ← Volver al inicio
+          </Link>
+        </div>
+      </main>
     );
   }
   if (invitation.expiresAt.getTime() < Date.now()) {

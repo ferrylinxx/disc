@@ -772,7 +772,48 @@ export async function participantReport(
   };
   const r = participant.results[0];
   if (!r) return { participant: meta, result: null };
+  return { participant: meta, result: reconstructResult(r) };
+}
 
+/** Fila de resultado persistido (puntuaciones crudas) para reconstruir el ScoringResult. */
+interface PersistedResultRow {
+  eq: number;
+  profileCode: string;
+  primaryDimension: { code: string };
+  secondaryDimension: { code: string };
+  quality: unknown;
+  scores: {
+    raw: number;
+    percent: number;
+    dimension: { code: string };
+    context: { code: string } | null;
+  }[];
+}
+
+/** Selección Prisma de un resultado para reconstruir el informe. */
+const RESULT_SELECT = {
+  eq: true,
+  profileCode: true,
+  isPureProfile: true,
+  quality: true,
+  computedAt: true,
+  primaryDimension: { select: { code: true } },
+  secondaryDimension: { select: { code: true } },
+  scores: {
+    select: {
+      raw: true,
+      percent: true,
+      dimension: { select: { code: true } },
+      context: { select: { code: true } },
+    },
+  },
+} as const;
+
+/**
+ * Reconstruye el ScoringResult completo desde una fila de resultado persistida
+ * (scores global + por contexto), recalculando intensidad y reparto proporcional.
+ */
+function reconstructResult(r: PersistedResultRow): ScoringResult {
   const global = r.scores
     .filter((s) => !s.context)
     .map((s) => ({ dimensionCode: s.dimension.code, raw: s.raw, percent: s.percent }));
@@ -785,9 +826,6 @@ export async function participantReport(
       percent: s.percent,
     });
   }
-
-  // Reconstruye los campos derivados (intensidad, EQ, reparto proporcional) a
-  // partir de las puntuaciones crudas persistidas y la config del instrumento.
   const cfg = getActiveInstrument().scoring;
   const isEq = r.profileCode === "EQ";
   const rawOf = (code: string) =>
@@ -798,8 +836,7 @@ export async function participantReport(
         rawOf(r.primaryDimension.code) - rawOf(r.secondaryDimension.code),
         cfg.intensity,
       );
-
-  const result: ScoringResult = {
+  return {
     global,
     percentages: proportionalShares(global),
     byContext,
@@ -811,12 +848,41 @@ export async function participantReport(
     eq: r.eq,
     quality: r.quality as unknown as ResponseQuality,
   };
-  return { participant: meta, result };
 }
 
 export type ParticipantReport = NonNullable<
   Awaited<ReturnType<typeof participantReport>>
 >;
+
+/**
+ * Informe del participante resuelto por TOKEN de invitación (sin gating por
+ * organización: el propio token autoriza). Lo usa la página de evaluación para
+ * mostrar el informe al terminar y al volver a abrir el enlace ya completado.
+ */
+export async function participantReportByToken(token: string) {
+  const inv = await prisma.invitation.findUnique({
+    where: { token },
+    select: {
+      participant: {
+        select: {
+          fullName: true,
+          organization: { select: { name: true } },
+          team: { select: { name: true, project: { select: { name: true } } } },
+          results: { orderBy: { computedAt: "desc" }, take: 1, select: RESULT_SELECT },
+        },
+      },
+    },
+  });
+  if (!inv) return null;
+  const p = inv.participant;
+  const meta = {
+    fullName: p.fullName,
+    organizationName: p.organization?.name ?? null,
+    projectName: p.team?.project?.name ?? p.team?.name ?? null,
+  };
+  const r = p.results[0];
+  return { participant: meta, result: r ? reconstructResult(r) : null };
+}
 
 /**
  * Señales de "requiere atención" para el dashboard admin (datos reales):
