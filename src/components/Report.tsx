@@ -9,6 +9,7 @@ import {
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
+import { discGradStops } from "@/lib/disc-gradient";
 import { ScoreBars } from "./ScoreBars";
 
 interface Props {
@@ -197,7 +198,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta, la
           </h3>
         </div>
         <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
-          <DiscGrid result={result} dimColor={dimColor} />
+          <DiscGrid result={result} />
           <div>
             <p className="mb-3 text-xs font-medium text-slate-400">
               {t.posicionCaption}
@@ -559,13 +560,7 @@ function Num({ n }: { n: string }) {
  * Ejes: horizontal tarea↔personas, vertical activo↔reflexivo. D arriba-izq,
  * I arriba-der, C abajo-izq, S abajo-der.
  */
-function DiscGrid({
-  result,
-  dimColor,
-}: {
-  result: ScoringResult;
-  dimColor: (c: string) => string;
-}) {
+function DiscGrid({ result }: { result: ScoringResult }) {
   const share = (code: string) =>
     result.percentages.find((p) => p.dimensionCode === code)?.share ?? 0;
   const d = share("D");
@@ -576,14 +571,15 @@ function DiscGrid({
   const y = (d + i - (s + c)) / 100; // + arriba (activo)
   const cx = Math.max(24, Math.min(176, 100 + x * 76));
   const cy = Math.max(24, Math.min(176, 100 - y * 76));
+  const CODES = ["D", "I", "S", "C"];
 
   const quad = (code: string, qx: number, qy: number) => (
     <g key={code}>
-      <rect x={qx} y={qy} width={90} height={90} fill={dimColor(code)} opacity={0.1} />
-      <text x={qx + 12} y={qy + 34} fontSize="32" fontWeight="800" fill={dimColor(code)} opacity={0.45}>
+      <rect x={qx} y={qy} width={90} height={90} rx={6} fill={`url(#dgrid-${code})`} opacity={0.16} />
+      <text x={qx + 12} y={qy + 34} fontSize="32" fontWeight="800" fill={`url(#dgrid-${code})`} opacity={0.6}>
         {code}
       </text>
-      <text x={qx + 12} y={qy + 50} fontSize="10.5" fontWeight="700" fill={dimColor(code)}>
+      <text x={qx + 12} y={qy + 50} fontSize="10.5" fontWeight="700" fill={discGradStops(code)[0]}>
         {styleShort(code)}
       </text>
     </g>
@@ -592,6 +588,17 @@ function DiscGrid({
   return (
     <div className="flex justify-center">
       <svg viewBox="0 0 200 200" className="h-60 w-60" role="img" aria-label="Tu posición en el modelo DISC">
+        <defs>
+          {CODES.map((code) => {
+            const [a, b] = discGradStops(code);
+            return (
+              <linearGradient key={code} id={`dgrid-${code}`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={a} />
+                <stop offset="100%" stopColor={b} />
+              </linearGradient>
+            );
+          })}
+        </defs>
         <rect x="10" y="10" width="180" height="180" rx="14" fill="#ffffff" stroke="#e2e8f0" />
         {quad("D", 10, 10)}
         {quad("I", 100, 10)}
@@ -600,7 +607,7 @@ function DiscGrid({
         <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
         <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
         <circle cx={cx} cy={cy} r="11" fill="#ffffff" />
-        <circle cx={cx} cy={cy} r="9" fill={dimColor(result.primaryDimension)} />
+        <circle cx={cx} cy={cy} r="9" fill={`url(#dgrid-${result.primaryDimension})`} />
         <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
       </svg>
     </div>
