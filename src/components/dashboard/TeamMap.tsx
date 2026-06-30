@@ -15,31 +15,42 @@ interface Props {
   };
 }
 
-/** Pantallas del mapa de equipo (informe ejecutivo), con su ancla. */
+/**
+ * Pantallas del Informe de Equipo, alineadas con la Especificación Funcional
+ * V1 (13 secciones oficiales). "Contextos" se conserva como detalle ampliado
+ * (solo PDF del facilitador).
+ */
 const SCREENS = [
-  { id: "vision", label: "Radiografía" },
-  { id: "mapa-disc", label: "Mapa DISC" },
-  { id: "distribucion", label: "Recursos" },
-  { id: "combinaciones", label: "Combinaciones" },
-  { id: "contextos", label: "Contextos" },
-  { id: "fortalezas", label: "Fortalezas" },
-  { id: "riesgos", label: "A observar" },
+  { id: "portada", label: "Portada" },
+  { id: "mapa-disc", label: "Mapa conductual" },
+  { id: "lectura-global", label: "Lectura global" },
+  { id: "distribucion-perfiles", label: "Distribución por perfiles" },
+  { id: "recursos", label: "Recursos colectivos" },
+  { id: "observar", label: "A observar" },
+  { id: "comunicacion", label: "Comunicación" },
+  { id: "decisiones", label: "Toma de decisiones" },
+  { id: "coordinacion", label: "Coordinación" },
+  { id: "cambio", label: "Gestión del cambio" },
   { id: "complementariedad", label: "Complementariedad" },
-  { id: "vacios", label: "Vacíos" },
-  { id: "conversaciones", label: "Conversaciones" },
-  { id: "liderazgo", label: "Liderazgo" },
-  { id: "plan", label: "Plan de equipo" },
+  { id: "homogeneidad", label: "Riesgos de homogeneidad" },
+  { id: "claves", label: "Claves para potenciar" },
+  { id: "contextos", label: "Contextos" },
 ];
 
 /**
- * Mapa de equipo avanzado: lectura colectiva en 10 pantallas a partir de la
- * analítica del equipo. Redacción en clave de tendencia/hipótesis (AGENTS.md).
+ * Informe de Equipo DISC GESEM: lectura colectiva del sistema según la
+ * Especificación Funcional V1 (13 secciones). Redacción en clave de
+ * tendencia/hipótesis, nunca diagnóstico (AGENTS.md). Describe el equipo como
+ * sistema; nunca evalúa personas individualmente.
  */
 export function TeamMap({ insights, dimensions, header }: Props) {
   const color = new Map(dimensions.map((d) => [d.code, d.color]));
   const name = new Map(dimensions.map((d) => [d.code, d.name]));
   const dye = (code: string) => color.get(code) ?? "#64748b";
   const empty = insights.overview.completed === 0;
+  const completed = insights.overview.completed;
+  const pctOf = (count: number) =>
+    completed > 0 ? Math.round((count / completed) * 100) : 0;
   const teamDate = header
     ? new Date(header.createdAt).toLocaleDateString("es-ES", {
         day: "2-digit",
@@ -55,7 +66,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
           <a
             key={s.id}
             href={`#${s.id}`}
-            className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-brand-soft hover:text-brand"
+            className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-700"
           >
             <span className="text-slate-400">{i + 1}.</span> {s.label}
           </a>
@@ -65,11 +76,12 @@ export function TeamMap({ insights, dimensions, header }: Props) {
       {empty && (
         <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
           Aún no hay resultados suficientes para generar la lectura del equipo.
-          Las pantallas se completarán a medida que el equipo finalice sus evaluaciones.
+          Las secciones se completarán a medida que el equipo finalice sus evaluaciones.
         </p>
       )}
 
-      <Screen id="vision" n={1} title="Radiografía del equipo">
+      {/* 1 · Portada */}
+      <Screen id="portada" n={1} title="Portada">
         {header && (
           <div className="mb-4 grid gap-3 rounded-2xl border border-slate-100 bg-white/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <Fact label="Organización" value={header.organizationName} />
@@ -78,14 +90,9 @@ export function TeamMap({ insights, dimensions, header }: Props) {
             <Fact label="Fecha" value={teamDate ?? "—"} />
           </div>
         )}
-        {!empty && (
-          <p className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-sm leading-relaxed text-slate-600">
-            {insights.executiveSummary}
-          </p>
-        )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Tile label="Participantes" value={insights.overview.total} accent="#00a1e0" />
-          <Tile label="Completados" value={insights.overview.completed} accent="#10b981" />
+          <Tile label="Completados" value={completed} accent="#10b981" />
           <Tile label="Participación" value={`${insights.overview.participation}%`} accent="#0ea5e9" />
           <Tile label="EQ medio" value={empty ? "—" : insights.overview.eqAverage} accent="#f59e0b" />
         </div>
@@ -110,7 +117,8 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         </div>
       </Screen>
 
-      <Screen id="mapa-disc" n={2} title="Mapa DISC del equipo">
+      {/* 2 · Mapa conductual del equipo */}
+      <Screen id="mapa-disc" n={2} title="Mapa conductual del equipo">
         {empty ? (
           <Muted />
         ) : (
@@ -138,8 +146,55 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="distribucion" n={3} title="Distribución de recursos predominantes">
-        <p className="mb-4 text-sm text-slate-600">{insights.distributionText}</p>
+      {/* 3 · Lectura global del equipo */}
+      <Screen id="lectura-global" n={3} title="Lectura global del equipo">
+        {empty ? (
+          <Muted />
+        ) : (
+          <p className="text-sm leading-relaxed text-slate-600">
+            {insights.executiveSummary}
+          </p>
+        )}
+      </Screen>
+
+      {/* 4 · Distribución por perfiles (tabla con %) */}
+      <Screen id="distribucion-perfiles" n={4} title="Distribución por perfiles">
+        {insights.combinations.length === 0 ? (
+          <Muted />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <th className="px-3 py-2">Perfil</th>
+                    <th className="px-3 py-2 text-right">Participantes</th>
+                    <th className="px-3 py-2 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {insights.combinations.map((c) => (
+                    <tr key={c.code} className="border-b border-slate-50">
+                      <td className="px-3 py-2">
+                        <span className="mr-2 inline-flex rounded-md bg-slate-900 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                          {c.code}
+                        </span>
+                        <span className="text-slate-700">{c.name}</span>
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-slate-700">{c.count}</td>
+                      <td className="px-3 py-2 text-right text-slate-500">{pctOf(c.count)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{insights.distributionText}</p>
+          </>
+        )}
+      </Screen>
+
+      {/* 5 · Recursos colectivos */}
+      <Screen id="recursos" n={5} title="Recursos colectivos">
         <div className="grid items-center gap-6 lg:grid-cols-2">
           <Radar
             data={insights.distribution.map((d) => ({
@@ -160,6 +215,16 @@ export function TeamMap({ insights, dimensions, header }: Props) {
             ))}
           </div>
         </div>
+        {insights.strengths.length > 0 && (
+          <div className="mt-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Recursos que aporta el conjunto del equipo
+            </p>
+            <div className="mt-2">
+              <Bullets items={insights.strengths} tone="emerald" />
+            </div>
+          </div>
+        )}
         {insights.readingKeys.length > 0 && (
           <div className="mt-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
@@ -179,45 +244,33 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="combinaciones" n={4} title="Distribución de combinaciones" detail>
-        {insights.combinations.length === 0 ? (
-          <Muted />
-        ) : (
-          <ul className="space-y-2.5">
-            {insights.combinations.map((c) => (
-              <li key={c.code} className="flex items-center gap-3">
-                <span className="w-12 shrink-0 rounded-lg bg-slate-900 px-2 py-1 text-center text-xs font-bold text-white">
-                  {c.code}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-slate-800">{c.name}</div>
-                  <div className="text-xs text-slate-400">
-                    {c.count} {c.count === 1 ? "persona" : "personas"}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Screen>
-
-      <Screen id="contextos" n={5} title="Mapa de contextos" detail>
-        {empty ? (
-          <Muted />
-        ) : (
-          <ContextHeatmap insights={insights} dimensions={dimensions} dye={dye} />
-        )}
-      </Screen>
-
-      <Screen id="fortalezas" n={6} title="Recursos que caracterizan al equipo">
-        <Bullets items={insights.strengths} tone="emerald" />
-      </Screen>
-
-      <Screen id="riesgos" n={7} title="Aspectos que merece la pena observar">
+      {/* 6 · Aspectos que conviene observar */}
+      <Screen id="observar" n={6} title="Aspectos que conviene observar">
         <Bullets items={insights.risks} tone="sky" />
       </Screen>
 
-      <Screen id="complementariedad" n={8} title="Cómo interactúan los recursos predominantes" detail>
+      {/* 7 · Comunicación */}
+      <Screen id="comunicacion" n={7} title="Comunicación">
+        {empty ? <Muted /> : <p className="text-sm leading-relaxed text-slate-600">{insights.communication}</p>}
+      </Screen>
+
+      {/* 8 · Toma de decisiones */}
+      <Screen id="decisiones" n={8} title="Toma de decisiones">
+        {empty ? <Muted /> : <p className="text-sm leading-relaxed text-slate-600">{insights.decisionMaking}</p>}
+      </Screen>
+
+      {/* 9 · Coordinación y colaboración */}
+      <Screen id="coordinacion" n={9} title="Coordinación y colaboración">
+        {empty ? <Muted /> : <p className="text-sm leading-relaxed text-slate-600">{insights.coordination}</p>}
+      </Screen>
+
+      {/* 10 · Gestión del cambio */}
+      <Screen id="cambio" n={10} title="Gestión del cambio">
+        {empty ? <Muted /> : <p className="text-sm leading-relaxed text-slate-600">{insights.changeManagement}</p>}
+      </Screen>
+
+      {/* 11 · Complementariedad del equipo */}
+      <Screen id="complementariedad" n={11} title="Complementariedad del equipo">
         {insights.complementarity.length === 0 ? (
           <Muted />
         ) : (
@@ -237,11 +290,17 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="vacios" n={9} title="Vacíos del equipo (estilos poco presentes)">
+      {/* 12 · Riesgos de homogeneidad */}
+      <Screen id="homogeneidad" n={12} title="Riesgos de homogeneidad">
+        <p className="mb-3 text-sm leading-relaxed text-slate-600">
+          Cuando una orientación concentra buena parte del equipo, algunas
+          perspectivas pueden aparecer con menor frecuencia durante el análisis de
+          situaciones complejas. No es una carencia: es una tendencia a cuidar.
+        </p>
         {insights.gaps.length === 0 ? (
           <p className="text-sm text-slate-500">
-            No se detectan estilos por debajo del umbral: el equipo cubre las
-            cuatro tendencias de forma razonable.
+            El equipo cubre las cuatro tendencias de forma razonable; no se observa
+            una concentración marcada en un único estilo.
           </p>
         ) : (
           <ul className="space-y-3">
@@ -266,56 +325,51 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         )}
       </Screen>
 
-      <Screen id="conversaciones" n={10} title="Conversaciones recomendadas">
-        <Bullets items={insights.conversations} tone="sky" />
-      </Screen>
-
-      <Screen id="liderazgo" n={11} title="Claves para el liderazgo del equipo">
+      {/* 13 · Claves para potenciar el funcionamiento del equipo */}
+      <Screen id="claves" n={13} title="Claves para potenciar el funcionamiento del equipo">
         {empty ? (
           <Muted />
         ) : (
           <>
             <p className="mb-3 text-sm text-slate-600">
-              Implicaciones de esta composición para quien coordina el equipo.
-              No describen a ninguna persona: orientan cómo facilitar la
-              coordinación y la colaboración.
+              Condiciones organizativas que favorecen el mejor funcionamiento
+              colectivo. No son recomendaciones individuales.
             </p>
             <ol className="space-y-2.5">
               {insights.leadershipKeys.map((k, i) => (
                 <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
-                  <span className="bg-brand-soft text-brand mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">
                     {i + 1}
                   </span>
                   <span>{k}</span>
                 </li>
               ))}
             </ol>
+            {insights.conversations.length > 0 && (
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Conversaciones recomendadas
+                </p>
+                <Bullets items={insights.conversations} tone="sky" />
+              </div>
+            )}
+            <p className="mt-5 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
+              Este informe describe tendencias del equipo como sistema, según las
+              respuestas, y no constituye un diagnóstico. Úsalo como punto de partida
+              para la conversación y el desarrollo; puede variar según el contexto y el
+              momento.
+            </p>
           </>
         )}
       </Screen>
 
-      <Screen id="plan" n={12} title="Conclusiones y plan de equipo">
-        <ol className="space-y-2.5">
-          {insights.actionPlan.map((p, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
-              <span className="bg-brand-soft text-brand mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
-                {i + 1}
-              </span>
-              {p}
-            </li>
-          ))}
-        </ol>
-        {insights.insights.length > 0 && (
-          <div className="mt-5 border-t border-slate-100 pt-4">
-            <h3 className="mb-2 text-sm font-semibold text-slate-700">Insights</h3>
-            <Bullets items={insights.insights} tone="indigo" />
-          </div>
+      {/* Detalle ampliado · Mapa de contextos (solo PDF facilitador) */}
+      <Screen id="contextos" n={14} title="Mapa de contextos" detail>
+        {empty ? (
+          <Muted />
+        ) : (
+          <ContextHeatmap insights={insights} dimensions={dimensions} dye={dye} />
         )}
-        <p className="mt-5 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
-          Estos resultados describen tendencias del equipo según las respuestas
-          y no constituyen un diagnóstico. Úsalos como punto de partida para la
-          conversación y el desarrollo; pueden variar según el contexto y el momento.
-        </p>
       </Screen>
     </div>
   );
@@ -343,7 +397,7 @@ function Screen({
       className="glass animate-fade-up scroll-mt-20 rounded-2xl border border-white/60 p-6"
     >
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
-        <span className="bg-brand-soft text-brand flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-sky-700">
           {n}
         </span>
         {title}

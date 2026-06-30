@@ -50,6 +50,14 @@ export interface TeamInsights {
   contexts: { code: string; name: string; scores: { dimensionCode: string; percent: number }[] }[];
   strengths: string[];
   risks: string[];
+  /** Cómo suele comunicarse el equipo (derivado de la composición DISC). */
+  communication: string;
+  /** Cómo suele tomar decisiones el equipo. */
+  decisionMaking: string;
+  /** Cómo suele coordinarse y colaborar el equipo. */
+  coordination: string;
+  /** Cómo suele afrontar el cambio el equipo (nunca "resistencia"). */
+  changeManagement: string;
   complementarity: { dimensionCode: string; share: number; text: string }[];
   gaps: { dimensionCode: string; share: number; observation: string }[];
   conversations: string[];
@@ -171,6 +179,38 @@ export function computeTeamInsights(
       share: d.share,
       observation: teamDimensionInsight(d.dimensionCode).gap,
     }));
+
+  // Narrativas derivadas de la composición (Informe de Equipo, secciones 7-10).
+  // Se construyen a partir de los estilos predominantes, en clave de tendencia.
+  const joinAnd = (parts: string[]) =>
+    parts.length <= 1
+      ? parts[0] ?? ""
+      : `${parts.slice(0, -1).join(", ")} y ${parts[parts.length - 1]}`;
+  const leadCodes = leading.map((d) => d.dimensionCode);
+  const frag = (field: "communication" | "decision" | "coordination" | "change") =>
+    joinAnd(leadCodes.map((c) => teamDimensionInsight(c)[field]));
+  const communication =
+    completed === 0
+      ? ""
+      : `La comunicación del equipo suele caracterizarse por ${frag("communication")}. ` +
+        `Describe cómo tiende a comunicarse el conjunto, no cómo debería hacerlo.`;
+  const decisionMaking =
+    completed === 0
+      ? ""
+      : `En la toma de decisiones, el equipo tiende a apoyarse en ${frag("decision")}. ` +
+        (gaps.length > 0
+          ? `Conviene asegurar que las perspectivas menos presentes (${gaps.map((g) => styleShort(g.dimensionCode)).join(", ")}) también se tengan en cuenta.`
+          : `El reparto de estilos favorece equilibrar agilidad, análisis y consenso.`);
+  const coordination =
+    completed === 0
+      ? ""
+      : `La coordinación y la colaboración acostumbran a sostenerse en ${frag("coordination")}. ` +
+        `El reparto natural de responsabilidades suele reflejar los recursos más presentes del equipo.`;
+  const changeManagement =
+    completed === 0
+      ? ""
+      : `Ante el cambio, el equipo suele mostrar ${frag("change")}. ` +
+        `Es una tendencia colectiva del sistema, no una valoración de su capacidad de adaptación.`;
 
   // Conversaciones recomendadas: prioriza los vacíos y el estilo predominante.
   const conversations = [
@@ -330,6 +370,10 @@ export function computeTeamInsights(
     contexts: ctxScores,
     strengths,
     risks,
+    communication,
+    decisionMaking,
+    coordination,
+    changeManagement,
     complementarity,
     gaps,
     conversations,
