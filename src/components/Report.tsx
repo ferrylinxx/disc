@@ -646,7 +646,7 @@ function IntensityScale({
           <div key={l.key} className="flex-1">
             <div
               className="h-3 rounded-full"
-              style={i <= idx ? { backgroundImage: grad } : { backgroundColor: "#e2e8f0" }}
+              style={i === idx ? { backgroundImage: grad } : { backgroundColor: "#e8edf3" }}
             />
             <div
               className="mt-2 text-center text-sm font-bold"
