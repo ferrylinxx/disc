@@ -4,22 +4,27 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
+import { getDict, type Lang } from "@/lib/i18n/dictionaries";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /** Secciones de la landing (ancladas). Solo se muestran en la home. */
-const SECTIONS = [
-  { id: "como-funciona", href: "/inicio#como-funciona", label: "Cómo funciona" },
-  { id: "dimensiones", href: "/inicio#dimensiones", label: "El modelo" },
-  { id: "plataforma", href: "/inicio#plataforma", label: "La plataforma" },
-];
+const SECTION_DEFS = [
+  { id: "como-funciona", href: "/inicio#como-funciona", key: "howItWorks" },
+  { id: "dimensiones", href: "/inicio#dimensiones", key: "model" },
+  { id: "plataforma", href: "/inicio#plataforma", key: "platform" },
+] as const;
 
 interface Props {
   authed: boolean;
   displayName: string | null;
   panelHref: string | null;
+  lang: Lang;
 }
 
 /** Barra de navegación (cliente): isla flotante al scroll + scroll-spy + móvil. */
-export function NavbarClient({ authed, displayName, panelHref }: Props) {
+export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
+  const t = getDict(lang);
+  const SECTIONS = SECTION_DEFS.map((s) => ({ ...s, label: t.nav[s.key] }));
   const pathname = usePathname();
   const isHome = pathname === "/inicio";
   const [open, setOpen] = useState(false);
@@ -120,6 +125,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
 
             {/* Acciones (escritorio) */}
             <div className="hidden shrink-0 items-center gap-2 md:flex">
+              <LanguageSwitcher lang={lang} />
               {authed ? (
                 <>
                   {displayName && (
@@ -132,7 +138,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                       href={panelHref}
                       className="rounded-full px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
                     >
-                      Mi panel
+                      {t.nav.myPanel}
                     </Link>
                   )}
                   <form action={logout}>
@@ -140,7 +146,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                       type="submit"
                       className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
                     >
-                      Salir
+                      {t.nav.logout}
                     </button>
                   </form>
                 </>
@@ -150,13 +156,13 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                     href="/login"
                     className="rounded-full px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
                   >
-                    Acceder
+                    {t.nav.access}
                   </Link>
                   <Link
                     href="/evaluacion"
                     className="bg-brand group inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold text-white shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5 hover:shadow-sky-500/40"
                   >
-                    Comenzar
+                    {t.nav.start}
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </Link>
                 </>
@@ -167,7 +173,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              aria-label={open ? "Cerrar menú" : "Abrir menú"}
+              aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
               aria-expanded={open}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-slate-700 transition hover:border-slate-300 md:hidden"
             >
@@ -219,10 +225,11 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                   onClick={close}
                   className="rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
                 >
-                  Privacidad
+                  {t.nav.privacy}
                 </Link>
 
-                <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
+                <div className="mt-3 flex flex-col gap-3 border-t border-slate-100 pt-3">
+                  <LanguageSwitcher lang={lang} />
                   {authed ? (
                     <>
                       {panelHref && (
@@ -231,7 +238,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                           onClick={close}
                           className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700"
                         >
-                          Mi panel
+                          {t.nav.myPanel}
                         </Link>
                       )}
                       <form action={logout}>
@@ -239,7 +246,7 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                           type="submit"
                           className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600"
                         >
-                          Salir
+                          {t.nav.logout}
                         </button>
                       </form>
                     </>
@@ -250,14 +257,14 @@ export function NavbarClient({ authed, displayName, panelHref }: Props) {
                         onClick={close}
                         className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700"
                       >
-                        Acceder
+                        {t.nav.access}
                       </Link>
                       <Link
                         href="/evaluacion"
                         onClick={close}
                         className="bg-brand inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-sky-500/25"
                       >
-                        Comenzar evaluación →
+                        {t.nav.start} →
                       </Link>
                     </>
                   )}

@@ -8,11 +8,14 @@ import {
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
+import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
 import { ScoreBars } from "./ScoreBars";
 
 interface Props {
   result: ScoringResult;
   def: InstrumentDefinition;
+  /** Idioma de la interfaz del informe (el contenido editorial va como esté almacenado). */
+  lang?: Lang;
   /** Narrativa precompuesta desde BD; si falta, se compone con valores base. */
   narrative?: ProfileNarrative;
   /**
@@ -59,8 +62,9 @@ function Prose({ text, tone = "slate" }: { text: string; tone?: "slate" | "sky" 
  * No incluye retos, experimentos, tareas ni planes de acción individuales. El
  * protagonista es el RECURSO; el código de perfil es solo referencia interna.
  */
-export function Report({ result, def, narrative: narrativeProp, blocks, meta }: Props) {
+export function Report({ result, def, narrative: narrativeProp, blocks, meta, lang = "es" }: Props) {
   const b = blocks ?? {};
+  const t = getDict(lang).report;
   const dimColor = (code: string) =>
     def.dimensions.find((d) => d.code === code)?.color ?? "#0f172a";
   const eqBand = resolveEqBand(result.eq);
@@ -86,7 +90,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
             GESEM · DISC
           </div>
           <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Informe individual
+            {t.individual}
           </p>
           {meta?.participantName && (
             <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
@@ -115,22 +119,17 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
       {/* Página 2 — Cómo interpretar este informe */}
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Cómo interpretar este informe
+          {t.howToRead}
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          DISC GESEM describe los <strong>recursos</strong> que sueles utilizar con
-          más frecuencia y cómo pueden influir en tu forma de comunicarte,
-          coordinarte y colaborar. <strong>No</strong> es un test de personalidad ni
-          un diagnóstico: describe tendencias, según tus respuestas, que pueden
-          variar con el contexto y el momento.
+          {t.howToReadPre}
+          <strong>{t.howToReadResources}</strong>
+          {t.howToReadMid}
+          <strong>{t.howToReadNo}</strong>
+          {t.howToReadPost}
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            "Ningún perfil es mejor que otro.",
-            "El resultado muestra tendencias predominantes.",
-            "Todos los recursos pueden desarrollarse.",
-            "El verdadero valor aparece al comprender las diferencias.",
-          ].map((p, i) => (
+          {t.principles.map((p, i) => (
             <div
               key={p}
               className="rounded-xl border border-slate-100 bg-white px-4 py-3"
@@ -142,7 +141,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
             </div>
           ))}
         </div>
-        <ReadingIndex />
+        <ReadingIndex title={t.readingIndexTitle} items={t.index} />
       </section>
 
       {/* Tendencia predominante — protagonista: el recurso */}
@@ -153,7 +152,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
       >
         <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
         <p className="text-xs font-semibold uppercase tracking-widest text-white/80">
-          Tu tendencia predominante
+          {t.tendencyPre}
         </p>
         <h2 className="mt-2 text-3xl font-black leading-tight">
           {narrative.resourceHeadline}
@@ -164,11 +163,11 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
-            <span className="opacity-80">Intensidad</span>
+            <span className="opacity-80">{t.intensity}</span>
             <span>{intensityLabel(result.intensity)}</span>
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-white/70 backdrop-blur">
-            <span className="opacity-70">Código interno</span>
+            <span className="opacity-70">{t.internalCode}</span>
             <span>{narrative.internalCode}</span>
           </span>
         </div>
@@ -178,7 +177,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
       {b.tendencia && (
         <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Tendencia predominante
+            {t.tendencyPre}
           </h3>
           <div className="mt-3">
             <Prose text={b.tendencia} />
@@ -187,40 +186,30 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
       )}
 
       {/* Cierre común del bloque "Tendencia predominante" (Entregable 10) */}
-      <p className="px-1 text-xs leading-relaxed text-slate-400">
-        Como cualquier tendencia, esta puede variar según las circunstancias y
-        ampliarse con la experiencia. Ningún estilo es mejor que otro: todos
-        aportan valor y todos pueden desarrollar nuevas formas de actuar.
-      </p>
+      <p className="px-1 text-xs leading-relaxed text-slate-400">{t.tendencyClose}</p>
 
       {/* Tu posición dentro del modelo DISC (cuadrícula clásica + intensidad) */}
       <section id="r-posicion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
           <Num n="01" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Tu posición dentro del modelo DISC
+            {t.posicion}
           </h3>
         </div>
         <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
           <DiscGrid result={result} dimColor={dimColor} />
           <div>
             <p className="mb-3 text-xs font-medium text-slate-400">
-              Intensidad relativa de cada recurso, según tus respuestas:
+              {t.posicionCaption}
             </p>
             <ScoreBars scores={result.global} dimensions={def.dimensions} />
           </div>
         </div>
         <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-          <p className="mb-2 text-xs font-medium text-slate-400">
-            Definición de tu tendencia
-          </p>
-          <IntensityScale intensity={result.intensity} />
+          <p className="mb-2 text-xs font-medium text-slate-400">{t.tendencyDef}</p>
+          <IntensityScale intensity={result.intensity} t={t} />
         </div>
-        <p className="mt-5 text-xs leading-relaxed text-slate-400">
-          Los recursos predominantes muestran las tendencias que aparecen con
-          mayor frecuencia en tu manera de actuar y relacionarte. No representan
-          capacidades fijas ni limitan tu forma de responder en otros contextos.
-        </p>
+        <p className="mt-5 text-xs leading-relaxed text-slate-400">{t.posicionNote}</p>
       </section>
 
       {/* Recursos predominantes */}
@@ -228,13 +217,10 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="02" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Recursos predominantes
+            {t.recursos}
           </h3>
         </div>
-        <p className="mt-2 text-sm text-slate-500">
-          Todas las personas disponen de los cuatro recursos. La diferencia suele
-          estar en cuáles utilizamos con más frecuencia y en qué situaciones.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">{t.recursosLead}</p>
         {b.recursos ? (
           <div className="mt-4">
             <Prose text={b.recursos} />
@@ -261,7 +247,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="03" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Aportación habitual
+            {t.aportacion}
           </h3>
         </div>
         <div className="mt-2">
@@ -280,7 +266,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="04" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Lo que otras personas suelen valorar
+            {t.valoracion}
           </h3>
         </div>
         {b.valoracion ? (
@@ -289,25 +275,20 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
           </div>
         ) : (
           <>
-            <p className="mt-2 text-sm text-slate-500">
-              Las personas de tu entorno suelen valorar especialmente:
-            </p>
+            <p className="mt-2 text-sm text-slate-500">{t.valoracionLead}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {narrative.valuedItems.map((t) => (
+              {narrative.valuedItems.map((v) => (
                 <div
-                  key={t}
+                  key={v}
                   className="flex items-start gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-900/80"
                 >
-                  <span className="text-emerald-500">✦</span> {t}
+                  <span className="text-emerald-500">✦</span> {v}
                 </div>
               ))}
             </div>
           </>
         )}
-        <p className="mt-3 text-xs text-slate-400">
-          Estas aportaciones pueden variar según el contexto, el momento y las
-          personas con las que interactúas.
-        </p>
+        <p className="mt-3 text-xs text-slate-400">{t.valoracionNote}</p>
       </section>
 
       {/* Aspectos que merece la pena observar (diseño positivo, sin colores de error) */}
@@ -315,13 +296,10 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="05" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Aspectos que merece la pena observar
+            {t.observar}
           </h3>
         </div>
-        <p className="mt-2 text-sm text-slate-500">
-          Como cualquier recurso, aquello que suele ayudarte en muchas situaciones
-          también puede requerir ajustes en determinados contextos.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">{t.observarLead}</p>
         {b.observar ? (
           <div className="mt-4">
             <Prose text={b.observar} />
@@ -338,10 +316,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
             ))}
           </div>
         )}
-        <p className="mt-3 text-xs leading-relaxed text-slate-400">
-          El objetivo no consiste en cambiar quién eres, sino en ampliar tu
-          repertorio para responder con mayor flexibilidad a cada situación.
-        </p>
+        <p className="mt-3 text-xs leading-relaxed text-slate-400">{t.observarNote}</p>
       </section>
 
       {/* Coordinación y colaboración (bloque diferencial DISC GESEM: incluye
@@ -350,15 +325,10 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="06" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-500">
-            Coordinación y colaboración
+            {t.coordinacion}
           </h3>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Comprender tus recursos resulta especialmente útil cuando los utilizas de
-          forma consciente con otras personas. Cada equipo necesita recursos
-          diferentes: el valor aparece al reconocer qué aportas y qué necesitas de
-          los demás.
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">{t.coordinacionBlurb}</p>
         {b.coordinacion ? (
           <div className="mt-4">
             <Prose text={b.coordinacion} tone="sky" />
@@ -367,17 +337,13 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
           <>
             <dl className="mt-4 space-y-4">
               <div>
-                <dt className="text-sm font-semibold text-slate-900">
-                  Cuando coordinas personas o proyectos
-                </dt>
+                <dt className="text-sm font-semibold text-slate-900">{t.coordinating}</dt>
                 <dd className="mt-1 text-sm leading-relaxed text-slate-600">
                   {narrative.coordination.coordinating}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-semibold text-slate-900">
-                  Cuando colaboras con otras personas
-                </dt>
+                <dt className="text-sm font-semibold text-slate-900">{t.collaborating}</dt>
                 <dd className="mt-1 text-sm leading-relaxed text-slate-600">
                   {narrative.coordination.collaborating}
                 </dd>
@@ -385,25 +351,21 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
             </dl>
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                <h4 className="text-sm font-bold text-emerald-900">
-                  Lo que probablemente aportas
-                </h4>
+                <h4 className="text-sm font-bold text-emerald-900">{t.contributions}</h4>
                 <ul className="mt-2 space-y-1.5 text-sm text-emerald-900/80">
-                  {narrative.team.contributions.map((t) => (
-                    <li key={t} className="flex gap-2">
-                      <span className="text-emerald-500">+</span> {t}
+                  {narrative.team.contributions.map((c) => (
+                    <li key={c} className="flex gap-2">
+                      <span className="text-emerald-500">+</span> {c}
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="rounded-xl border border-sky-100 bg-white/70 p-4">
-                <h4 className="text-sm font-bold text-sky-900">
-                  Lo que probablemente necesitas de otras personas
-                </h4>
+                <h4 className="text-sm font-bold text-sky-900">{t.needs}</h4>
                 <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
-                  {narrative.team.appreciates.map((t) => (
-                    <li key={t} className="flex gap-2">
-                      <span className="text-sky-500">◆</span> {t}
+                  {narrative.team.appreciates.map((a) => (
+                    <li key={a} className="flex gap-2">
+                      <span className="text-sky-500">◆</span> {a}
                     </li>
                   ))}
                 </ul>
@@ -411,9 +373,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
             </div>
             {narrative.team.differences && (
               <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-4">
-                <h4 className="text-sm font-bold text-slate-800">
-                  Cuando aparecen diferencias
-                </h4>
+                <h4 className="text-sm font-bold text-slate-800">{t.differences}</h4>
                 <p className="mt-1 text-sm leading-relaxed text-slate-600">
                   {narrative.team.differences}
                 </p>
@@ -428,7 +388,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="07" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Contextos de mejor desempeño
+            {t.contextos}
           </h3>
         </div>
         <div className="mt-2">
@@ -442,9 +402,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         </div>
         {contexts.length > 0 && (
           <>
-            <p className="mt-5 text-xs font-medium text-slate-400">
-              Recurso que sueles activar en cada situación, según tus respuestas:
-            </p>
+            <p className="mt-5 text-xs font-medium text-slate-400">{t.contextosCaption}</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {contexts.map((ctx, i) => (
                 <div
@@ -463,10 +421,8 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
               ))}
             </div>
             <div className="mt-5">
-              <p className="mb-2 text-xs font-medium text-slate-400">
-                Intensidad de cada recurso por situación:
-              </p>
-              <ContextHeatmap result={result} def={def} dimColor={dimColor} />
+              <p className="mb-2 text-xs font-medium text-slate-400">{t.contextosHeatmap}</p>
+              <ContextHeatmap result={result} def={def} dimColor={dimColor} situacion={t.situacion} />
             </div>
           </>
         )}
@@ -477,7 +433,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <div className="flex items-center gap-2">
           <Num n="08" />
           <h3 className="text-xs font-semibold uppercase tracking-widest text-sky-400">
-            Ampliación de repertorio
+            {t.repertorio}
           </h3>
         </div>
         {b.ampliacion ? (
@@ -510,7 +466,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
         <EqGauge value={result.eq} />
         <div className="text-center sm:text-left">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Equilibrio entre recursos (EQ)
+            {t.eq}
           </h3>
           <p className="mt-1 text-lg font-bold text-slate-900">{eqBand.label}</p>
           <p className="mt-1 text-sm leading-relaxed text-slate-600">
@@ -526,7 +482,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
             09
           </span>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-white/60">
-            Preguntas para la reflexión
+            {t.reflexion}
           </h3>
         </div>
         <ol className="mt-3 space-y-3">
@@ -541,43 +497,37 @@ export function Report({ result, def, narrative: narrativeProp, blocks, meta }: 
 
       {/* Cierre */}
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 text-center shadow-sm backdrop-blur">
-        <p className="text-sm font-medium leading-relaxed text-slate-700">
-          El autoconocimiento es el punto de partida. La comprensión mutua es el
-          puente. La adaptación consciente es la competencia. La colaboración eficaz
-          es el resultado.
-        </p>
+        <p className="text-sm font-medium leading-relaxed text-slate-700">{t.closing}</p>
         <p className="mx-auto mt-4 max-w-2xl text-xs leading-relaxed text-slate-400">
-          Este informe describe tendencias de interacción según tus respuestas y
-          puede variar con el contexto y el momento. No constituye un diagnóstico,
-          sino un punto de partida para la conversación y el desarrollo.
+          {t.methodNote}
         </p>
       </section>
     </div>
   );
 }
 
-/** Apartados navegables del informe (índice de lectura). */
-const INDEX_ITEMS: { n: string; label: string; href: string }[] = [
-  { n: "01", label: "Tu posición dentro del modelo DISC", href: "#r-posicion" },
-  { n: "02", label: "Recursos predominantes", href: "#r-recursos" },
-  { n: "03", label: "Aportación habitual", href: "#r-aportacion" },
-  { n: "04", label: "Lo que otras personas suelen valorar", href: "#r-valoracion" },
-  { n: "05", label: "Aspectos que merece la pena observar", href: "#r-observar" },
-  { n: "06", label: "Coordinación y colaboración", href: "#r-coordinacion" },
-  { n: "07", label: "Contextos de mejor desempeño", href: "#r-contextos" },
-  { n: "08", label: "Ampliación de repertorio", href: "#r-repertorio" },
-  { n: "09", label: "Preguntas para la reflexión", href: "#r-reflexion" },
+/** Anclas y numeración de los apartados navegables (las etiquetas vienen del idioma). */
+const INDEX_ANCHORS: { n: string; href: string }[] = [
+  { n: "01", href: "#r-posicion" },
+  { n: "02", href: "#r-recursos" },
+  { n: "03", href: "#r-aportacion" },
+  { n: "04", href: "#r-valoracion" },
+  { n: "05", href: "#r-observar" },
+  { n: "06", href: "#r-coordinacion" },
+  { n: "07", href: "#r-contextos" },
+  { n: "08", href: "#r-repertorio" },
+  { n: "09", href: "#r-reflexion" },
 ];
 
 /** Índice de lectura del informe (orientación; oculto en la versión impresa). */
-function ReadingIndex() {
+function ReadingIndex({ title, items }: { title: string; items: string[] }) {
   return (
     <nav className="no-print mt-4 border-t border-slate-100 pt-4">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-        En este informe · 5-8 min de lectura
+        {title}
       </p>
       <ol className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-        {INDEX_ITEMS.map((it) => (
+        {INDEX_ANCHORS.map((it, i) => (
           <li key={it.href}>
             <a
               href={it.href}
@@ -586,7 +536,7 @@ function ReadingIndex() {
               <span className="text-[11px] font-bold tabular-nums text-slate-300 group-hover:text-sky-400">
                 {it.n}
               </span>
-              <span className="truncate">{it.label}</span>
+              <span className="truncate">{items[i] ?? ""}</span>
             </a>
           </li>
         ))}
@@ -658,12 +608,18 @@ function DiscGrid({
 }
 
 /** Escala de definición de la tendencia (Flexible → Muy definida) con marcador. */
-function IntensityScale({ intensity }: { intensity: ScoringResult["intensity"] }) {
+function IntensityScale({
+  intensity,
+  t,
+}: {
+  intensity: ScoringResult["intensity"];
+  t: Dict["report"];
+}) {
   const levels = [
-    { key: "FLEXIBLE", label: "Flexible" },
-    { key: "MODERADA", label: "Moderada" },
-    { key: "DEFINIDA", label: "Definida" },
-    { key: "MUY_DEFINIDA", label: "Muy definida" },
+    { key: "FLEXIBLE", label: t.intFlexible },
+    { key: "MODERADA", label: t.intModerada },
+    { key: "DEFINIDA", label: t.intDefinida },
+    { key: "MUY_DEFINIDA", label: t.intMuyDefinida },
   ];
   const idx = levels.findIndex((l) => l.key === intensity);
   return (
@@ -683,10 +639,7 @@ function IntensityScale({ intensity }: { intensity: ScoringResult["intensity"] }
         ))}
       </div>
       {idx < 0 && (
-        <p className="mt-2 text-center text-[11px] text-slate-500">
-          Perfil adaptable: repartes tu energía entre varios recursos, sin una
-          tendencia marcada.
-        </p>
+        <p className="mt-2 text-center text-[11px] text-slate-500">{t.adaptableNote}</p>
       )}
     </div>
   );
@@ -697,10 +650,12 @@ function ContextHeatmap({
   result,
   def,
   dimColor,
+  situacion,
 }: {
   result: ScoringResult;
   def: InstrumentDefinition;
   dimColor: (c: string) => string;
+  situacion: string;
 }) {
   const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
   const rows = REPORT_CONTEXTS.map(({ label, code }) => ({
@@ -715,7 +670,7 @@ function ContextHeatmap({
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr>
-            <th className="p-1.5 text-left font-semibold text-slate-400">Situación</th>
+            <th className="p-1.5 text-left font-semibold text-slate-400">{situacion}</th>
             {dims.map((d) => (
               <th key={d.code} className="p-1.5 text-center font-semibold" style={{ color: d.color }}>
                 {styleShort(d.code)}

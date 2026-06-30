@@ -2,8 +2,10 @@
 
 import { useActionState } from "react";
 import { startLibreEvaluation, type LibreState } from "@/app/actions/libre";
+import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 
-export function IntakeForm() {
+export function IntakeForm({ lang }: { lang: Lang }) {
+  const t = getDict(lang).intake;
   const [state, action, pending] = useActionState<LibreState, FormData>(
     startLibreEvaluation,
     null,
@@ -29,12 +31,9 @@ export function IntakeForm() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Evaluación DISC GESEM
+            {t.title}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Introduce tus datos para comenzar. Tu informe quedará guardado y
-            podrás recibirlo por email.
-          </p>
+          <p className="mt-2 text-sm text-slate-500">{t.subtitle}</p>
         </div>
 
         {/* Tarjeta del formulario */}
@@ -46,7 +45,7 @@ export function IntakeForm() {
                 htmlFor="fullName"
                 className="block text-sm font-semibold text-slate-700"
               >
-                Nombre completo
+                {t.name}
               </label>
               <input
                 id="fullName"
@@ -54,7 +53,7 @@ export function IntakeForm() {
                 type="text"
                 required
                 autoComplete="name"
-                placeholder="Ej. Ana García López"
+                placeholder={t.namePh}
                 className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
             </div>
@@ -65,7 +64,7 @@ export function IntakeForm() {
                 htmlFor="email"
                 className="block text-sm font-semibold text-slate-700"
               >
-                Email
+                {t.email}
               </label>
               <input
                 id="email"
@@ -73,12 +72,10 @@ export function IntakeForm() {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="Ej. ana@empresa.com"
+                placeholder={t.emailPh}
                 className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
-              <p className="text-[11px] text-slate-400">
-                Solo se usará para enviarte tu informe si lo solicitas.
-              </p>
+              <p className="text-[11px] text-slate-400">{t.emailNote}</p>
             </div>
 
             {/* Error */}
@@ -94,15 +91,14 @@ export function IntakeForm() {
               disabled={pending}
               className="bg-brand w-full rounded-xl py-3.5 text-sm font-semibold text-white shadow-md shadow-sky-200 transition hover:opacity-90 disabled:opacity-60"
             >
-              {pending ? "Preparando cuestionario…" : "Comenzar evaluación →"}
+              {pending ? t.submitting : t.submit}
             </button>
           </form>
         </div>
 
         {/* Nota metodológica */}
         <p className="mt-5 text-center text-[11px] leading-relaxed text-slate-400">
-          Este cuestionario mide estilos conductuales, no rasgos clínicos.
-          Los resultados son tendencias, no diagnósticos.
+          {t.methodNote}
         </p>
       </div>
     </div>

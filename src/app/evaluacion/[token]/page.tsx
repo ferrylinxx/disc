@@ -7,6 +7,8 @@ import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/lib
 import { Questionnaire, type DraftState } from "@/components/Questionnaire";
 import { Report } from "@/components/Report";
 import { PrintButton } from "@/components/PrintButton";
+import { getLang } from "@/lib/i18n/server";
+import { getDict } from "@/lib/i18n/dictionaries";
 
 export const metadata: Metadata = {
   title: "Tu evaluación · DISC GESEM",
@@ -24,6 +26,8 @@ export default async function EvaluacionTokenPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const lang = await getLang();
+  const d = getDict(lang);
 
   const invitation = await prisma.invitation.findUnique({
     where: { token },
@@ -31,27 +35,19 @@ export default async function EvaluacionTokenPage({
   });
 
   if (!invitation) {
-    return (
-      <Notice
-        title="Invitación no válida"
-        body="El enlace no existe o ha cambiado. Pide a tu facilitador que te reenvíe la invitación."
-      />
-    );
+    return <Notice title={d.token.invalidTitle} body={d.token.invalidBody} goHome={d.token.goHome} />;
   }
   if (invitation.status === "COMPLETED") {
     const data = await participantReportByToken(token);
     if (!data?.result) {
       return (
-        <Notice
-          title="Evaluación completada"
-          body="Ya has completado este cuestionario. Tu facilitador puede compartir contigo el informe de resultados."
-        />
+        <Notice title={d.token.completedTitle} body={d.token.completedBody} goHome={d.token.goHome} />
       );
     }
     const def = getActiveInstrument();
     const narrative = await buildProfileNarrativeDb(data.result);
     const blocks = await loadProfileBlocks(data.result.profileCode);
-    const reportDate = new Date().toLocaleDateString("es-ES", {
+    const reportDate = new Date().toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -63,12 +59,9 @@ export default async function EvaluacionTokenPage({
             ✓
           </span>
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
-            ¡Gracias por completar el cuestionario!
+            {d.quiz.thanks}
           </h1>
-          <p className="mt-2 max-w-md leading-relaxed text-slate-600">
-            Este es tu informe. Describe los recursos que sueles utilizar con más
-            frecuencia. Puedes leerlo ahora; también lo tendrá tu facilitador.
-          </p>
+          <p className="mt-2 max-w-md leading-relaxed text-slate-600">{d.quiz.resultDesc}</p>
         </div>
         <div className="print-area">
           <Report
@@ -76,6 +69,7 @@ export default async function EvaluacionTokenPage({
             def={def}
             narrative={narrative}
             blocks={blocks}
+            lang={lang}
             meta={{
               participantName: data.participant.fullName,
               clientName: data.participant.organizationName,
@@ -85,30 +79,26 @@ export default async function EvaluacionTokenPage({
           />
         </div>
         <div className="no-print mt-8 flex flex-wrap items-center justify-center gap-3">
-          <PrintButton />
+          <PrintButton label={d.quiz.downloadPdf} />
           <Link
             href="/"
             className="rounded-full border border-slate-200 bg-white/80 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
           >
-            ← Volver al inicio
+            {d.quiz.backHome}
           </Link>
         </div>
       </main>
     );
   }
   if (invitation.expiresAt.getTime() < Date.now()) {
-    return (
-      <Notice
-        title="Invitación caducada"
-        body="Este enlace ha expirado. Solicita uno nuevo a tu facilitador para continuar."
-      />
-    );
+    return <Notice title={d.token.expiredTitle} body={d.token.expiredBody} goHome={d.token.goHome} />;
   }
 
   const def = getActiveInstrument();
   return (
     <Questionnaire
       def={def}
+      lang={lang}
       invite={{
         token,
         participantName: invitation.participant.fullName,
@@ -118,7 +108,7 @@ export default async function EvaluacionTokenPage({
   );
 }
 
-function Notice({ title, body }: { title: string; body: string }) {
+function Notice({ title, body, goHome }: { title: string; body: string; goHome: string }) {
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-md flex-col justify-center px-6 py-12">
       <div className="animate-fade-up glass rounded-3xl border border-white/70 p-8 text-center shadow-xl">
@@ -130,7 +120,7 @@ function Notice({ title, body }: { title: string; body: string }) {
           href="/"
           className="bg-brand mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:scale-[1.02]"
         >
-          Ir al inicio
+          {goHome}
         </Link>
       </div>
     </div>

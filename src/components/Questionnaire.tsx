@@ -6,6 +6,7 @@ import type { InstrumentDefinition, ScoringResult } from "@/lib/engine/types";
 import type { ProfileNarrative } from "@/lib/narratives/disc-gesem.profiles";
 import { evaluate } from "@/app/actions/evaluate";
 import { clearDraft, saveDraft } from "@/app/actions/drafts";
+import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 import { Report } from "./Report";
 
 type Step = "intro" | "self" | "quiz" | "reflect" | "video" | "result";
@@ -25,6 +26,7 @@ export type DraftState = {
 export function Questionnaire({
   def,
   invite,
+  lang = "ca",
 }: {
   def: InstrumentDefinition;
   /** Contexto de invitación: si llega, el resultado se guarda en BD. */
@@ -34,7 +36,9 @@ export function Questionnaire({
     /** Borrador persistido en BD (reanudación multi-dispositivo). */
     draft?: DraftState | null;
   };
+  lang?: Lang;
 }) {
+  const t = getDict(lang).quiz;
   const [step, setStep] = useState<Step>("intro");
   const [index, setIndex] = useState(0);
   const [picks, setPicks] = useState<Picks>({});
@@ -90,7 +94,7 @@ export function Questionnaire({
         setNarrative(res.narrative ?? null);
         setStep("result");
       } else {
-        setError(res.error ?? "Error al calcular el resultado.");
+        setError(res.error ?? t.error);
       }
     });
   }
@@ -258,33 +262,29 @@ export function Questionnaire({
         step="intro"
         title={
           invite?.participantName
-            ? `Hola, ${invite.participantName.split(" ")[0]}`
-            : "Preparación"
+            ? t.hello(invite.participantName.split(" ")[0])
+            : t.prep
         }
-        subtitle="Antes de empezar, dedica un momento a entender cómo funciona."
+        subtitle={t.introSubtitle}
       >
         {hasDraft && (
           <div className="mb-5 rounded-2xl border-2 border-sky-200 bg-sky-50 p-4">
-            <p className="text-sm font-semibold text-sky-900">
-              Tienes un cuestionario a medias
-            </p>
+            <p className="text-sm font-semibold text-sky-900">{t.draftTitle}</p>
             <p className="mt-1 text-sm text-sky-700/90">
-              Guardamos tu progreso ({savedDraft.current?.answered ?? 0}{" "}
-              {savedDraft.current?.answered === 1 ? "bloque" : "bloques"}{" "}
-              completados). ¿Quieres continuar donde lo dejaste?
+              {t.draftBody(savedDraft.current?.answered ?? 0)}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 onClick={resumeDraft}
                 className="bg-brand inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:scale-[1.02]"
               >
-                Continuar
+                {t.resume}
               </button>
               <button
                 onClick={discardDraft}
                 className="rounded-full px-5 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
               >
-                Empezar de nuevo
+                {t.startOver}
               </button>
             </div>
           </div>
@@ -294,11 +294,13 @@ export function Questionnaire({
           className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
         />
         <p className="mt-5 leading-relaxed text-slate-600">
-          En cada bloque toca primero la frase que{" "}
-          <strong className="text-emerald-700">más</strong> te representa y luego
-          la que <strong className="text-rose-700">menos</strong>. El cuestionario{" "}
-          <strong className="text-slate-900">avanza solo</strong>; en ordenador
-          puedes usar las teclas{" "}
+          {t.instrPre}
+          <strong className="text-emerald-700">{t.instrMost}</strong>
+          {t.instrMid}
+          <strong className="text-rose-700">{t.instrLeast}</strong>
+          {t.instrPost}
+          <strong className="text-slate-900">{t.instrAuto}</strong>
+          {t.instrKeys}
           <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600">
             1
           </kbd>
@@ -308,7 +310,7 @@ export function Questionnaire({
           </kbd>
           .
         </p>
-        <Primary onClick={() => setStep("self")}>Continuar</Primary>
+        <Primary onClick={() => setStep("self")}>{t.continue}</Primary>
       </Shell>
     );
   }
@@ -317,8 +319,8 @@ export function Questionnaire({
     return (
       <Shell
         step="self"
-        title="¿Cómo te ves? (evaluación inicial)"
-        subtitle="Estos son los cuatro estilos del modelo DISC. Antes de empezar, elige a priori con cuál te identificas más; al terminar lo compararemos con tu resultado real. Es solo un punto de partida: ninguno es mejor que otro."
+        title={t.selfTitle}
+        subtitle={t.selfSubtitle}
       >
         <div className="grid grid-cols-2 gap-3">
           {def.dimensions.map((d) => {
@@ -339,7 +341,7 @@ export function Questionnaire({
                 <span className="min-w-0">
                   <span className="block font-semibold text-slate-800">{d.name}</span>
                   <span className="block text-xs leading-snug text-slate-500">
-                    {SELF_HINTS[d.code] ?? ""}
+                    {t.selfHints[d.code] ?? ""}
                   </span>
                 </span>
               </button>
@@ -347,7 +349,7 @@ export function Questionnaire({
           })}
         </div>
         <Primary disabled={!self} onClick={() => setStep("quiz")}>
-          Empezar cuestionario
+          {t.selfStart}
         </Primary>
       </Shell>
     );
@@ -356,12 +358,10 @@ export function Questionnaire({
   if (step === "quiz") {
     const pct = Math.round(((index + 1) / def.items.length) * 100);
     return (
-      <Shell step="quiz" title="Cuestionario">
+      <Shell step="quiz" title={t.quizTitle}>
         <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-          <span>
-            Ítem {index + 1} de {def.items.length}
-          </span>
-          <span>{answered} completados · {pct}%</span>
+          <span>{t.itemOf(index + 1, def.items.length)}</span>
+          <span>{t.completed(answered, pct)}</span>
         </div>
         <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
           <div
@@ -375,9 +375,7 @@ export function Questionnaire({
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs shadow-sm">
             {phase === "least" ? "2" : "1"}
           </span>
-          {phase === "least"
-            ? "Ahora toca la que MENOS te representa"
-            : "Toca la frase que MÁS te representa"}
+          {phase === "least" ? t.pickLeast : t.pickMost}
         </div>
         <p className="mt-5 text-lg font-semibold leading-snug text-slate-900">
           {item.prompt}
@@ -414,12 +412,12 @@ export function Questionnaire({
                 </span>
                 {isMost && (
                   <span className="shrink-0 text-xs font-bold text-emerald-600">
-                    MÁS
+                    {t.most}
                   </span>
                 )}
                 {isLeast && (
                   <span className="shrink-0 text-xs font-bold text-rose-600">
-                    MENOS
+                    {t.least}
                   </span>
                 )}
               </button>
@@ -437,7 +435,7 @@ export function Questionnaire({
             disabled={index === 0}
             className="rounded-full px-5 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 disabled:opacity-30"
           >
-            ← Atrás
+            {t.back}
           </button>
           {current.most && (
             <button
@@ -447,12 +445,12 @@ export function Questionnaire({
               }}
               className="rounded-full px-5 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
             >
-              Reiniciar bloque
+              {t.restartBlock}
             </button>
           )}
           {pending && (
             <span className="text-sm font-semibold text-sky-600">
-              Calculando…
+              {t.calculating}
             </span>
           )}
         </div>
@@ -464,18 +462,17 @@ export function Questionnaire({
     return (
       <Shell
         step="reflect"
-        title="Una última reflexión"
-        subtitle="Opcional. Tus palabras nos ayudan a interpretar y mejorar el cuestionario."
+        title={t.reflectTitle}
+        subtitle={t.reflectSubtitle}
       >
         <label className="text-sm font-semibold text-slate-700">
-          ¿Te has reconocido en lo que has ido respondiendo? ¿Algo te ha
-          sorprendido?
+          {t.reflectLabel}
         </label>
         <textarea
           value={reflect}
           onChange={(e) => setReflect(e.target.value)}
           rows={5}
-          placeholder="Escribe aquí tu reflexión (opcional)…"
+          placeholder={t.reflectPh}
           className="mt-3 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
         />
         {error && (
@@ -484,7 +481,7 @@ export function Questionnaire({
           </p>
         )}
         <div className="mt-7 flex items-center gap-3">
-          <Primary onClick={() => setStep("video")}>Continuar</Primary>
+          <Primary onClick={() => setStep("video")}>{t.continue}</Primary>
           <button
             onClick={() => {
               setReflect("");
@@ -492,7 +489,7 @@ export function Questionnaire({
             }}
             className="mt-7 rounded-full px-5 py-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
           >
-            Omitir
+            {t.skip}
           </button>
         </div>
       </Shell>
@@ -503,8 +500,8 @@ export function Questionnaire({
     return (
       <Shell
         step="video"
-        title="Un último paso antes de tu informe"
-        subtitle="Dedica un momento a este vídeo. Al terminar podrás ver tu informe."
+        title={t.videoTitle}
+        subtitle={t.videoSubtitle}
       >
         <AutoVideo
           src="/videos/CAT_Final.mp4"
@@ -516,7 +513,7 @@ export function Questionnaire({
           </p>
         )}
         <Primary disabled={pending} onClick={() => runEvaluate(picks)}>
-          {pending ? "Calculando…" : "Ver mi informe"}
+          {pending ? t.calculating : t.seeReport}
         </Primary>
       </Shell>
     );
@@ -529,11 +526,10 @@ export function Questionnaire({
           ✓
         </span>
         <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
-          ¡Gracias por completar el cuestionario!
+          {t.thanks}
         </h1>
         <p className="mt-2 max-w-md leading-relaxed text-slate-600">
-          Este es tu informe. Describe los recursos que sueles utilizar con más
-          frecuencia. Puedes leerlo ahora; también lo tendrá tu facilitador.
+          {t.resultDesc}
         </p>
       </div>
 
@@ -543,9 +539,10 @@ export function Questionnaire({
             result={result}
             def={def}
             narrative={narrative ?? undefined}
+            lang={lang}
             meta={{
               participantName: invite?.participantName,
-              date: new Date().toLocaleDateString("es-ES", {
+              date: new Date().toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
                 day: "2-digit",
                 month: "long",
                 year: "numeric",
@@ -555,8 +552,7 @@ export function Questionnaire({
         </div>
       ) : (
         <p className="rounded-2xl border border-slate-200 bg-white/80 p-6 text-center text-sm text-slate-600">
-          Hemos recibido tus respuestas correctamente. Tu facilitador te hará
-          llegar tu informe personalizado.
+          {t.received}
         </p>
       )}
 
@@ -565,26 +561,18 @@ export function Questionnaire({
           onClick={() => window.print()}
           className="bg-brand rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
         >
-          ↓ Descargar informe (PDF)
+          {t.downloadPdf}
         </button>
         <Link
           href="/"
           className="rounded-full border border-slate-200 bg-white/80 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
         >
-          ← Volver al inicio
+          {t.backHome}
         </Link>
       </div>
     </main>
   );
 }
-
-/** Descriptor breve de cada estilo DISC para la evaluación inicial (neutral). */
-const SELF_HINTS: Record<string, string> = {
-  D: "Orientación a resultados y decisión",
-  I: "Comunicación, energía y relación",
-  S: "Cooperación, apoyo y constancia",
-  C: "Análisis, rigor y calidad",
-};
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "intro", label: "Preparación" },

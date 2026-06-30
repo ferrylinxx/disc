@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import { PresenceHeartbeat } from "@/components/PresenceHeartbeat";
+import { getLang } from "@/lib/i18n/server";
 import "./globals.css";
 
 // Tipografía corporativa GESEM (Poppins). Conserva el nombre de variable CSS
@@ -58,14 +59,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const lang = await getLang();
   return (
     <html
-      lang="es"
+      lang={lang}
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
