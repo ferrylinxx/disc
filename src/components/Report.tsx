@@ -11,6 +11,7 @@ import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
 import { discGrad, discGradStops } from "@/lib/disc-gradient";
 import { ScoreBars } from "./ScoreBars";
+import { PositionBars } from "./PositionBars";
 
 interface Props {
   result: ScoringResult;
@@ -77,6 +78,18 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
   const insights = generateInsights(result);
   const pColor = dimColor(result.primaryDimension);
   const sColor = result.isEq ? pColor : dimColor(result.secondaryDimension);
+
+  // Frase de interpretación en lenguaje claro de las tres lecturas.
+  const interpText = (() => {
+    if (!graphs) return "";
+    const dom = (arr: DimensionShare[]) =>
+      arr.reduce((a, b) => (b.share > a.share ? b : a), arr[0])?.dimensionCode ?? "D";
+    const pub = dom(graphs.publico);
+    const priv = dom(graphs.privado);
+    return pub === priv
+      ? t.interpSame(styleShort(pub))
+      : t.interpDiff(styleShort(pub), styleShort(priv), styleShort(result.primaryDimension));
+  })();
 
   return (
     <div className="space-y-6">
@@ -201,63 +214,21 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
           </h3>
         </div>
         {graphs ? (
-          <>
-            <p className="mt-2 text-sm text-slate-500">{t.graphsLead}</p>
-            <div className="mt-4 grid items-center gap-6 lg:grid-cols-[300px_1fr]">
-              <PositionMap
-                t={t}
-                readings={[
-                  { key: "pub", color: "#0ea5e9", kind: "hollow", shares: graphs.publico },
-                  { key: "priv", color: "#f59e0b", kind: "ring", shares: graphs.privado },
-                  {
-                    key: "mir",
-                    color: "#0f172a",
-                    kind: "fill",
-                    shares: result.percentages,
-                    markerCode: result.primaryDimension,
-                  },
-                ]}
-              />
-              <div>
-                <ul className="space-y-3">
-                  {[
-                    { kind: "hollow" as const, color: "#0ea5e9", title: t.graphPublic, desc: t.graphPublicDesc },
-                    { kind: "ring" as const, color: "#f59e0b", title: t.graphPrivate, desc: t.graphPrivateDesc },
-                    { kind: "fill" as const, color: "#0f172a", title: t.graphMirror, desc: t.graphMirrorDesc },
-                  ].map((r) => (
-                    <li key={r.title} className="flex items-center gap-3">
-                      <svg viewBox="0 0 22 22" className="h-5 w-5 shrink-0">
-                        <Marker cx={11} cy={11} r={8} color={r.color} kind={r.kind} />
-                      </svg>
-                      <span className="text-sm">
-                        <span className="font-bold text-slate-800">{r.title}</span>
-                        <span className="text-slate-500"> · {r.desc}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-4 rounded-xl border border-sky-100 bg-sky-50/50 p-3 text-sm leading-relaxed text-slate-700">
-                  {(() => {
-                    const dom = (arr: DimensionShare[]) =>
-                      arr.reduce((a, b) => (b.share > a.share ? b : a), arr[0])?.dimensionCode ?? "D";
-                    const pub = dom(graphs.publico);
-                    const priv = dom(graphs.privado);
-                    return pub === priv
-                      ? t.interpSame(styleShort(pub))
-                      : t.interpDiff(
-                          styleShort(pub),
-                          styleShort(priv),
-                          styleShort(result.primaryDimension),
-                        );
-                  })()}
-                </p>
-              </div>
-            </div>
-            <div className="mt-6">
-              <p className="mb-3 text-xs font-medium text-slate-400">{t.posicionCaption}</p>
-              <ScoreBars scores={result.global} dimensions={def.dimensions} />
-            </div>
-          </>
+          <div className="mt-4">
+            <PositionBars
+              lead={t.graphsLead}
+              interp={interpText}
+              labels={{ publico: t.graphPublic, privado: t.graphPrivate, percibido: t.graphMirror }}
+              readings={{
+                publico: graphs.publico,
+                privado: graphs.privado,
+                percibido: result.percentages,
+              }}
+              dims={[...def.dimensions]
+                .sort((a, c) => a.order - c.order)
+                .map((d) => ({ code: d.code, name: styleShort(d.code) }))}
+            />
+          </div>
         ) : (
           <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
             <DiscGrid gid="mir" shares={result.percentages} markerCode={result.primaryDimension} />
@@ -685,103 +656,6 @@ function DiscGrid({
         <circle cx={cx} cy={cy} r="11" fill="#ffffff" />
         <circle cx={cx} cy={cy} r="9" fill={`url(#${gid}-${marker})`} />
         <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
-      </svg>
-    </div>
-  );
-}
-
-type MarkerKind = "hollow" | "ring" | "fill";
-
-/** Marcador de una lectura: hueco (público), anillo (privado) o relleno (percibido). */
-function Marker({
-  cx,
-  cy,
-  r,
-  color,
-  kind,
-}: {
-  cx: number;
-  cy: number;
-  r: number;
-  color: string;
-  kind: MarkerKind;
-}) {
-  if (kind === "hollow")
-    return <circle cx={cx} cy={cy} r={r} fill="#ffffff" stroke={color} strokeWidth={3} />;
-  if (kind === "ring")
-    return (
-      <g>
-        <circle cx={cx} cy={cy} r={r} fill={color} stroke="#ffffff" strokeWidth={2.5} />
-        <circle cx={cx} cy={cy} r={r * 0.42} fill="#ffffff" />
-      </g>
-    );
-  return <circle cx={cx} cy={cy} r={r} fill={color} stroke="#ffffff" strokeWidth={2.5} />;
-}
-
-/**
- * Mapa DISC único con ejes etiquetados y las tres lecturas como marcadores
- * (público/privado/percibido) unidas por el "recorrido". Fácil de leer de un
- * vistazo: dónde estás y cómo cambia tu estilo entre las tres lecturas.
- */
-function PositionMap({
-  readings,
-  t,
-}: {
-  readings: { key: string; color: string; kind: MarkerKind; shares: DimensionShare[]; markerCode?: string }[];
-  t: Dict["report"];
-}) {
-  const clamp = (v: number) => Math.max(24, Math.min(176, v));
-  const sh = (arr: DimensionShare[], code: string) =>
-    arr.find((p) => p.dimensionCode === code)?.share ?? 0;
-  const posOf = (arr: DimensionShare[]) => {
-    const d = sh(arr, "D"), i = sh(arr, "I"), s = sh(arr, "S"), c = sh(arr, "C");
-    const x = (i + s - (d + c)) / 100;
-    const y = (d + i - (s + c)) / 100;
-    return { cx: clamp(100 + x * 76), cy: clamp(100 - y * 76) };
-  };
-  const pts = readings.map((r) => ({ ...r, ...posOf(r.shares) }));
-  const Q = [
-    { code: "D", x: 4, y: 4, lx: 14, anchor: "start" as const, top: true },
-    { code: "I", x: 104, y: 4, lx: 186, anchor: "end" as const, top: true },
-    { code: "C", x: 4, y: 104, lx: 14, anchor: "start" as const, top: false },
-    { code: "S", x: 104, y: 104, lx: 186, anchor: "end" as const, top: false },
-  ];
-  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.cx} ${p.cy}`).join(" ");
-  return (
-    <div className="flex justify-center">
-      <svg viewBox="-34 -28 268 266" className="h-auto w-full max-w-[300px]" role="img" aria-label="Tu posición en el modelo DISC">
-        <defs>
-          {Q.map((q) => {
-            const [a, b] = discGradStops(q.code);
-            return (
-              <linearGradient key={q.code} id={`pm-${q.code}`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={a} />
-                <stop offset="100%" stopColor={b} />
-              </linearGradient>
-            );
-          })}
-        </defs>
-        {Q.map((q) => (
-          <g key={q.code}>
-            <rect x={q.x} y={q.y} width={92} height={92} rx={12} fill={`url(#pm-${q.code})`} fillOpacity={0.14} stroke={discGradStops(q.code)[0]} strokeOpacity={0.25} />
-            <text x={q.lx} y={q.top ? 30 : 174} textAnchor={q.anchor} fontSize="26" fontWeight="800" fill={`url(#pm-${q.code})`} opacity={0.6}>
-              {q.code}
-            </text>
-            <text x={q.lx} y={q.top ? 42 : 186} textAnchor={q.anchor} fontSize="8.5" fontWeight="700" fill={discGradStops(q.code)[0]}>
-              {styleShort(q.code)}
-            </text>
-          </g>
-        ))}
-        {/* Rótulos de ejes */}
-        <text x="100" y="-13" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">{t.axisTop}</text>
-        <text x="100" y="216" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">{t.axisBottom}</text>
-        <text transform="translate(-17,100) rotate(-90)" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">{t.axisLeft}</text>
-        <text transform="translate(217,100) rotate(90)" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">{t.axisRight}</text>
-        {/* Recorrido + marcadores */}
-        <path d={path} fill="none" stroke="#94a3b8" strokeWidth="1.4" strokeDasharray="3 3" />
-        {pts.map((p) => (
-          <Marker key={p.key} cx={p.cx} cy={p.cy} r={8} color={p.color} kind={p.kind} />
-        ))}
       </svg>
     </div>
   );
