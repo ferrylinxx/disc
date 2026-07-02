@@ -13,7 +13,13 @@ import type {
   Item,
   ScoringConfig,
 } from "@/lib/engine/types";
+import type { ContextRow, ItemRow } from "./disc-gesem.data";
 import { DISC_CONTEXTS, DISC_ITEM_ROWS } from "./disc-gesem.data";
+import {
+  DISC_CONTEXTS_CA,
+  DISC_ITEM_ROWS_CA,
+  DISC_DIMENSION_NAMES_CA,
+} from "./disc-gesem.data.ca";
 
 // Colores base DISC (color sólido representativo de cada degradado GESEM).
 export const DISC_DIMENSIONS: Dimension[] = [
@@ -39,24 +45,26 @@ const SCORING: ScoringConfig = {
 /** Orden fijo de las opciones de cada ítem: D, I, S, C. */
 const OPTION_DIMENSIONS = ["D", "I", "S", "C"] as const;
 
-const contexts: EvaluationContext[] = DISC_CONTEXTS.map((c, idx) => ({
-  code: c.code,
-  name: c.name,
-  description: c.description,
-  order: idx + 1,
-}));
+const buildContexts = (rows: ContextRow[]): EvaluationContext[] =>
+  rows.map((c, idx) => ({
+    code: c.code,
+    name: c.name,
+    description: c.description,
+    order: idx + 1,
+  }));
 
-const items: Item[] = DISC_ITEM_ROWS.map((row, idx) => ({
-  code: row.code,
-  contextCode: row.context,
-  order: idx + 1,
-  prompt: row.prompt,
-  options: OPTION_DIMENSIONS.map((dim, i) => ({
-    code: dim.toLowerCase(),
-    text: row.options[i],
-    dimensionCode: dim,
-  })),
-}));
+const buildItems = (rows: ItemRow[]): Item[] =>
+  rows.map((row, idx) => ({
+    code: row.code,
+    contextCode: row.context,
+    order: idx + 1,
+    prompt: row.prompt,
+    options: OPTION_DIMENSIONS.map((dim, i) => ({
+      code: dim.toLowerCase(),
+      text: row.options[i],
+      dimensionCode: dim,
+    })),
+  }));
 
 export const DISC_GESEM_V1: InstrumentDefinition = {
   instrumentCode: "DISC_GESEM",
@@ -67,7 +75,21 @@ export const DISC_GESEM_V1: InstrumentDefinition = {
     "Instrumento de autoconocimiento conductual GESEM. 7 contextos, 35 ítems, " +
     "respuesta forzada Más/Menos sobre las dimensiones D, I, S y C.",
   dimensions: DISC_DIMENSIONS,
-  contexts,
-  items,
+  contexts: buildContexts(DISC_CONTEXTS),
+  items: buildItems(DISC_ITEM_ROWS),
   scoring: SCORING,
+};
+
+/**
+ * Versión catalana (mismos códigos y orden; solo cambian los textos). El cálculo
+ * usa los códigos, así que es intercambiable con la versión española.
+ */
+export const DISC_GESEM_V1_CA: InstrumentDefinition = {
+  ...DISC_GESEM_V1,
+  dimensions: DISC_DIMENSIONS.map((d) => ({
+    ...d,
+    name: DISC_DIMENSION_NAMES_CA[d.code] ?? d.name,
+  })),
+  contexts: buildContexts(DISC_CONTEXTS_CA),
+  items: buildItems(DISC_ITEM_ROWS_CA),
 };

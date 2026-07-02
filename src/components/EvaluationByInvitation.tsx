@@ -72,7 +72,7 @@ export async function EvaluationByInvitation({
         />
       );
     }
-    const def = getActiveInstrument();
+    const def = getActiveInstrument(lang);
     const narrative = await buildProfileNarrativeDb(data.result);
     const blocks = await loadProfileBlocks(data.result.profileCode);
     const graphs = (await participantDiscGraphs(data.participant.id)) ?? undefined;
@@ -133,7 +133,7 @@ export async function EvaluationByInvitation({
     );
   }
 
-  const def = getActiveInstrument();
+  const def = getActiveInstrument(lang);
   return (
     <Questionnaire
       def={def}
