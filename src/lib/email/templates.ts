@@ -13,7 +13,7 @@ const BRAND = "#00a1e0";
 function shell(title: string, body: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f6f7fb;padding:24px;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0f172a;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-    <div style="background:linear-gradient(120deg,#00a1e0,#5ac3dd);padding:24px 28px;color:#ffffff;">
+    <div style="background-color:#00a1e0;background-image:linear-gradient(120deg,#00a1e0,#5ac3dd);padding:24px 28px;color:#ffffff;">
       <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85;">DISC GESEM</div>
       <div style="font-size:20px;font-weight:800;margin-top:4px;">${title}</div>
     </div>
@@ -52,15 +52,26 @@ export function invitationEmail(input: {
 }
 
 function bar(label: string, percent: number, color: string): string {
-  const w = Math.max(0, Math.min(100, percent));
+  const w = Math.max(0, Math.min(100, Math.round(percent)));
+  // Barra "bulletproof": tabla anidada con celdas bgcolor (Outlook no pinta
+  // divs vacíos con altura fija). Cada celda lleva contenido invisible para
+  // forzar su alto en el motor de Word.
+  const fill =
+    w > 0
+      ? `<td width="${w}%" bgcolor="${color}" style="background-color:${color};font-size:1px;line-height:12px;height:12px;border-radius:9999px;">&nbsp;</td>`
+      : "";
+  const track =
+    w < 100
+      ? `<td bgcolor="#e2e8f0" style="background-color:#e2e8f0;font-size:1px;line-height:12px;height:12px;border-radius:9999px;">&nbsp;</td>`
+      : "";
   return `<tr>
     <td style="padding:4px 8px 4px 0;font-size:13px;font-weight:600;color:#334155;white-space:nowrap;">${label}</td>
     <td style="width:100%;padding:4px 0;">
-      <div style="background:#e2e8f0;border-radius:9999px;height:12px;">
-        <div style="background:${color};width:${w}%;height:12px;border-radius:9999px;"></div>
-      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;">
+        <tr>${fill}${track}</tr>
+      </table>
     </td>
-    <td style="padding:4px 0 4px 8px;font-size:13px;font-weight:700;color:#0f172a;">${Math.round(percent)}</td>
+    <td style="padding:4px 0 4px 8px;font-size:13px;font-weight:700;color:#0f172a;">${w}</td>
   </tr>`;
 }
 
@@ -150,7 +161,7 @@ export function reportEmail(input: {
 
   const body = `
     <p style="margin:0 0 12px;font-size:13px;color:#64748b;line-height:1.5;">Hola ${first}. Este informe describe los recursos que sueles utilizar con más frecuencia y cómo pueden influir en tu forma de comunicarte, coordinarte y colaborar. Describe tendencias, según tus respuestas, no una clasificación.</p>
-    <div style="background:linear-gradient(135deg,${dimColor(result.primaryDimension)},${dimColor(result.secondaryDimension)});color:#fff;border-radius:14px;padding:18px 20px;margin:0 0 20px;">
+    <div style="background-color:${dimColor(result.primaryDimension)};background-image:linear-gradient(135deg,${dimColor(result.primaryDimension)},${dimColor(result.secondaryDimension)});color:#fff;border-radius:14px;padding:18px 20px;margin:0 0 20px;">
       <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.85;">Tu tendencia predominante</div>
       <div style="font-size:24px;font-weight:800;margin-top:4px;">${narrative.resourceHeadline}</div>
       <div style="font-size:14px;font-weight:600;opacity:.95;margin-top:2px;">${narrative.title}</div>
