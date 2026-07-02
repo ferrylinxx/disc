@@ -5,7 +5,13 @@ import { login, type LoginState } from "@/app/actions/auth";
 
 const initial: LoginState = {};
 
-export default function LoginForm() {
+export default function LoginForm({
+  defaultEmail = "",
+  defaultPassword = "",
+}: {
+  defaultEmail?: string;
+  defaultPassword?: string;
+}) {
   const [state, action, pending] = useActionState(login, initial);
 
   return (
@@ -20,6 +26,7 @@ export default function LoginForm() {
           type="email"
           autoComplete="email"
           required
+          defaultValue={defaultEmail}
           placeholder="tu@empresa.com"
           className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
         />
@@ -35,6 +42,7 @@ export default function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
+          defaultValue={defaultPassword}
           placeholder="••••••••"
           className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
         />

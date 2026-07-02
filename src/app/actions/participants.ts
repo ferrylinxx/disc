@@ -76,11 +76,18 @@ async function sendAccountInvite(input: {
   if (!isMailConfigured()) return false;
   try {
     const token = await createPasswordSetToken(input.userId);
+    // El enlace de acceso lleva las credenciales para autocompletar el login
+    // (el usuario solo pulsa "Entrar"). Van codificadas en la query.
+    const loginParams = new URLSearchParams({
+      next: "/evaluacion",
+      email: input.to,
+    });
+    if (input.tempPassword) loginParams.set("pw", input.tempPassword);
     const email = invitationEmail({
       participantName: input.fullName,
       accountEmail: input.to,
       password: input.tempPassword,
-      loginUrl: absoluteUrl("/login?next=/evaluacion"),
+      loginUrl: absoluteUrl(`/login?${loginParams.toString()}`),
       setPasswordUrl: absoluteUrl(`/restablecer/${token}`),
     });
     await sendMail({
