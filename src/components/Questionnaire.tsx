@@ -9,6 +9,7 @@ import { clearDraft, saveDraft } from "@/app/actions/drafts";
 import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 import { Report } from "./Report";
 import { GlossaryButton } from "./GlossaryDrawer";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /** Hash FNV-1a de una cadena → entero 32 bits (semilla estable de barajado). */
 function hashStr(s: string): number {
@@ -313,6 +314,9 @@ export function Questionnaire({
         }
         subtitle={t.introSubtitle}
       >
+        <div className="mb-4 flex justify-end">
+          <LanguageSwitcher lang={lang} />
+        </div>
         {hasDraft && (
           <div className="mb-5 rounded-2xl border-2 border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-semibold text-sky-900">{t.draftTitle}</p>

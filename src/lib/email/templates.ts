@@ -58,8 +58,11 @@ export function invitationEmail(input: {
   password?: string;
   /** Idioma del correo (catalán por defecto). */
   lang?: Lang;
+  /** Modo "cuenta" (creación de usuario): sin el onboarding del cuestionario. */
+  account?: boolean;
 }): { subject: string; html: string; text: string } {
   const lang = input.lang ?? "ca";
+  const account = input.account ?? false;
   const first = input.participantName.split(" ")[0] || "";
   const ca = lang === "ca";
 
@@ -70,6 +73,8 @@ export function invitationEmail(input: {
         hello: first ? `Hola ${first},` : "Hola,",
         intro:
           "Et convidem a completar el teu qüestionari <strong>DISC GESEM</strong>. Hem creat un compte per a tu; accedeix amb aquestes dades per començar:",
+        introAccount:
+          "S'ha creat el teu compte a <strong>DISC GESEM</strong>. Accedeix amb aquestes dades:",
         correo: "Correu:",
         pwd: "Contrasenya:",
         pwWith: "Pots canviar aquesta contrasenya quan vulguis amb l'enllaç de sota.",
@@ -96,6 +101,8 @@ export function invitationEmail(input: {
         hello: first ? `Hola ${first},` : "Hola,",
         intro:
           "Te invitamos a completar tu cuestionario <strong>DISC GESEM</strong>. Hemos creado una cuenta para ti; accede con estos datos para empezar:",
+        introAccount:
+          "Se ha creado tu cuenta en <strong>DISC GESEM</strong>. Accede con estos datos:",
         correo: "Correo:",
         pwd: "Contraseña:",
         pwWith: "Puedes cambiar esta contraseña cuando quieras con el enlace de abajo.",
@@ -138,9 +145,18 @@ export function invitationEmail(input: {
     )
     .join("");
 
+  const onboardingBlock = account
+    ? ""
+    : `
+    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
+      <div style="font-size:13px;font-weight:800;color:#075985;margin:0 0 8px;">${T.onboardingTitle}</div>
+      <ul style="margin:0;padding:0;">${onboarding}</ul>
+    </div>
+    <p style="margin:0 0 20px;color:#94a3b8;font-size:12px;">${T.expiry}</p>`;
+
   const body = `
     <p style="margin:0 0 12px;">${T.hello}</p>
-    <p style="margin:0 0 16px;line-height:1.6;color:#475569;">${T.intro}</p>
+    <p style="margin:0 0 16px;line-height:1.6;color:#475569;">${account ? T.introAccount : T.intro}</p>
     <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
       ${creds}
     </div>
@@ -150,11 +166,7 @@ export function invitationEmail(input: {
         ${T.loginBtn}
       </a>
     </p>
-    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
-      <div style="font-size:13px;font-weight:800;color:#075985;margin:0 0 8px;">${T.onboardingTitle}</div>
-      <ul style="margin:0;padding:0;">${onboarding}</ul>
-    </div>
-    <p style="margin:0 0 20px;color:#94a3b8;font-size:12px;">${T.expiry}</p>
+    ${onboardingBlock}
     <p style="margin:0 0 20px;font-size:14px;">
       <a href="${input.setPasswordUrl}" style="color:${BRAND};font-weight:600;text-decoration:none;">${T.changePwd}</a>
     </p>

@@ -1,4 +1,6 @@
 import LoginForm from "@/components/LoginForm";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getLang } from "@/lib/i18n/server";
 
 export const metadata = { title: "Acceso · DISC GESEM" };
 
@@ -13,9 +15,13 @@ export default async function LoginPage({
   }>;
 }) {
   const { reset, email, pw, next } = await searchParams;
+  const lang = await getLang();
 
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-md flex-col justify-center px-6 py-12">
+      <div className="animate-fade-up mb-3 flex justify-end">
+        <LanguageSwitcher lang={lang} />
+      </div>
       <div className="animate-fade-up glass ring-brand rounded-3xl p-8">
         <div className="mb-7 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}

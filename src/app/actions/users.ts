@@ -5,6 +5,10 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
+import { absoluteUrl, isMailConfigured, sendMail } from "@/lib/email/mailer";
+import { invitationEmail } from "@/lib/email/templates";
+import { createPasswordSetToken } from "@/lib/auth/password";
+import type { Lang } from "@/lib/i18n/dictionaries";
 import type { ActionState } from "./org";
 
 /**
@@ -38,7 +42,45 @@ const CreateSchema = z.object({
   globalRole: z.enum(["SUPERADMIN", "USER"]),
   organizationId: z.string().min(1).optional(),
   membershipRole: z.enum(["ADMIN", "FACILITATOR"]).optional(),
+  lang: z.enum(["ca", "es"]).optional(),
 });
+
+/**
+ * Envía (best-effort) el correo de credenciales a un usuario recién creado.
+ * Usa la plantilla de invitación en modo "cuenta" (sin onboarding de test).
+ */
+async function sendNewUserEmail(input: {
+  to: string;
+  name: string | null;
+  userId: string;
+  password: string;
+  lang: Lang;
+}): Promise<boolean> {
+  if (!isMailConfigured()) return false;
+  try {
+    const token = await createPasswordSetToken(input.userId);
+    const params = new URLSearchParams({ email: input.to, pw: input.password });
+    const email = invitationEmail({
+      participantName: input.name ?? input.to,
+      accountEmail: input.to,
+      password: input.password,
+      loginUrl: absoluteUrl(`/login?${params.toString()}`),
+      setPasswordUrl: absoluteUrl(`/restablecer/${token}`),
+      lang: input.lang,
+      account: true,
+    });
+    await sendMail({
+      to: input.to,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    });
+    return true;
+  } catch (e) {
+    console.error("[sendNewUserEmail] envío fallido:", e);
+    return false;
+  }
+}
 
 /** Crea un usuario con credenciales y, opcionalmente, una membership inicial. */
 export async function createUser(
@@ -53,6 +95,7 @@ export async function createUser(
     globalRole: formData.get("globalRole"),
     organizationId: formData.get("organizationId") || undefined,
     membershipRole: formData.get("membershipRole") || undefined,
+    lang: formData.get("lang") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Revisa los datos." };
@@ -68,7 +111,7 @@ export async function createUser(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       name: name ?? null,
@@ -82,9 +125,22 @@ export async function createUser(
           }
         : {}),
     },
+    select: { id: true },
   });
+
+  const emailed = await sendNewUserEmail({
+    to: email,
+    name: name ?? null,
+    userId: user.id,
+    password,
+    lang: parsed.data.lang ?? "ca",
+  });
+
   revalidatePath("/admin", "layout");
-  return { ok: true };
+  const message = emailed
+    ? "Usuario creado. Le hemos enviado sus credenciales por email."
+    : "Usuario creado. Configura el SMTP para enviarle las credenciales por email.";
+  return { ok: true, message };
 }
 
 /** Edita nombre y rol global de un usuario. */

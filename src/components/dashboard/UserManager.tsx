@@ -304,6 +304,13 @@ function CreateUserForm({
             <option value="FACILITATOR">Facilitador</option>
           </select>
         </label>
+        <label className="text-xs font-medium text-slate-500">
+          Idioma del correo
+          <select name="lang" defaultValue="ca" className={`${inputCls} mt-1 block`}>
+            <option value="ca">Catalán</option>
+            <option value="es">Español</option>
+          </select>
+        </label>
         <button
           type="submit"
           disabled={pending}
