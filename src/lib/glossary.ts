@@ -16,11 +16,13 @@ export interface GlossaryGroup {
   entries: GlossaryEntry[];
 }
 export interface Glossary {
+  title: string;
   intro: string;
   groups: GlossaryGroup[];
 }
 
 const ES: Glossary = {
+  title: "Glosario",
   intro:
     "Estos términos describen tendencias de estilo conductual, no un diagnóstico. Te ayudan a leer tu informe DISC GESEM con más claridad.",
   groups: [
@@ -70,6 +72,7 @@ const ES: Glossary = {
 };
 
 const CA: Glossary = {
+  title: "Glossari",
   intro:
     "Aquests termes descriuen tendències d'estil conductual, no un diagnòstic. T'ajuden a llegir el teu informe DISC GESEM amb més claredat.",
   groups: [

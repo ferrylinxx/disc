@@ -5,6 +5,7 @@ import { getDict } from "@/lib/i18n/dictionaries";
 import { logout } from "@/app/actions/auth";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PanelTabs } from "@/components/PanelTabs";
+import { GlossaryButton } from "@/components/GlossaryDrawer";
 import { panelParticipant } from "@/lib/data/panel";
 
 export const metadata = { title: "Tu espacio · DISC GESEM" };
@@ -40,6 +41,7 @@ export default async function PanelLayout({
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <GlossaryButton lang={lang} />
           <LanguageSwitcher lang={lang} />
           <form action={logout}>
             <button

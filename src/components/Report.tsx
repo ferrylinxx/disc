@@ -12,6 +12,7 @@ import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
 import { discGrad, discGradStops } from "@/lib/disc-gradient";
 import { ScoreBars } from "./ScoreBars";
 import { PositionBars } from "./PositionBars";
+import { GlossaryButton } from "./GlossaryDrawer";
 
 interface Props {
   result: ScoringResult;
@@ -135,9 +136,14 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
 
       {/* Página 2 — Cómo interpretar este informe */}
       <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          {t.howToRead}
-        </h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            {t.howToRead}
+          </h3>
+          <span className="no-print">
+            <GlossaryButton lang={lang} />
+          </span>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           {t.howToReadPre}
           <strong>{t.howToReadResources}</strong>

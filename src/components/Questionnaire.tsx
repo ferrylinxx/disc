@@ -8,6 +8,7 @@ import { evaluate } from "@/app/actions/evaluate";
 import { clearDraft, saveDraft } from "@/app/actions/drafts";
 import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 import { Report } from "./Report";
+import { GlossaryButton } from "./GlossaryDrawer";
 
 /** Hash FNV-1a de una cadena → entero 32 bits (semilla estable de barajado). */
 function hashStr(s: string): number {
@@ -392,6 +393,9 @@ export function Questionnaire({
               </button>
             );
           })}
+        </div>
+        <div className="mt-4 flex justify-center">
+          <GlossaryButton lang={lang} />
         </div>
         <Primary disabled={!self} onClick={() => setStep("quiz")}>
           {t.selfStart}
