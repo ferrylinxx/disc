@@ -25,25 +25,32 @@ export default async function AdminLayout({
   const greetName = (session.name ?? session.email).split(" ")[0];
 
   return (
-    <div className="min-h-screen bg-slate-50/60">
+    <div className="relative min-h-screen bg-slate-50">
+      {/* Tinte de marca suave en la parte superior */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-72 bg-gradient-to-b from-sky-100/50 via-sky-50/30 to-transparent"
+      />
       <CommandPalette />
       <Toaster />
-      <main className="mx-auto w-full max-w-[1480px] px-4 py-5 sm:px-6">
+      <main className="relative mx-auto w-full max-w-[1480px] px-4 py-5 sm:px-6">
         {/* Topbar */}
         <div className="animate-fade-up mb-5 flex items-center gap-3">
           <div className="flex-1">
             <CommandTrigger />
           </div>
-          <span className="hidden text-xs font-medium text-slate-500 sm:inline">
-            Hola, <span className="font-semibold text-slate-800">{greetName}</span>
-          </span>
-          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
-            Superadmin
-          </span>
+          <div className="hidden items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 py-1 pl-3 pr-1 shadow-sm backdrop-blur sm:flex">
+            <span className="text-xs font-medium text-slate-500">
+              Hola, <span className="font-semibold text-slate-800">{greetName}</span>
+            </span>
+            <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
+              Superadmin
+            </span>
+          </div>
           <form action={logout}>
             <button
               type="submit"
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+              className="rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur transition hover:border-slate-300 hover:text-slate-900"
             >
               Salir
             </button>

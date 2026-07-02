@@ -116,24 +116,25 @@ export function AdminSidebar({
 
   return (
     <nav
-      className={`animate-fade-up flex gap-1 overflow-x-auto rounded-2xl bg-slate-900 p-3 text-slate-300 shadow-xl shadow-slate-900/10 transition-[width] md:sticky md:top-5 md:max-h-[calc(100vh-2.5rem)] md:shrink-0 md:flex-col md:overflow-y-auto ${
+      className={`animate-fade-up flex gap-1 overflow-x-auto rounded-2xl border border-slate-200/70 bg-white/85 p-3 text-slate-600 shadow-sm shadow-slate-200/50 backdrop-blur transition-[width] md:sticky md:top-5 md:max-h-[calc(100vh-2.5rem)] md:shrink-0 md:flex-col md:overflow-y-auto ${
         collapsed ? "md:w-[68px]" : "md:w-60"
       }`}
     >
       {/* Marca + colapsar (escritorio) */}
-      <div className="mb-1 hidden items-center justify-between px-2 md:flex">
+      <div className="mb-2 hidden items-center justify-between px-2 md:flex">
         {!collapsed && (
           <Link href="/admin" className="flex items-center gap-2 px-1 py-1">
-            <span className="text-sm font-bold tracking-tight text-white">GESEM</span>
-            <span className="h-4 w-px bg-white/25" />
-            <span className="text-sm font-bold tracking-tight text-sky-300">DISC</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-7 w-auto" />
+            <span className="h-4 w-px bg-slate-200" />
+            <span className="text-sm font-bold tracking-tight text-slate-800">DISC</span>
           </Link>
         )}
         <button
           type="button"
           onClick={toggle}
           aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
         >
           <span className={`transition-transform ${collapsed ? "rotate-180" : ""}`}>
             {Icons.collapse}
@@ -145,7 +146,7 @@ export function AdminSidebar({
         <div key={group.label} className="flex shrink-0 gap-1 md:block">
           {!collapsed && (
             <p
-              className={`hidden px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 md:block ${gi > 0 ? "pt-4" : "pt-1"}`}
+              className={`hidden px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 md:block ${gi > 0 ? "pt-4" : "pt-1"}`}
             >
               {group.label}
             </p>
@@ -157,20 +158,25 @@ export function AdminSidebar({
                 key={item.href}
                 href={item.href}
                 title={collapsed ? item.label : undefined}
-                className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition md:mb-0.5 ${
+                className={`group relative flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition md:mb-0.5 ${
                   collapsed ? "md:justify-center md:px-0" : ""
                 } ${
                   active
-                    ? "bg-brand text-white shadow-lg shadow-sky-900/40"
-                    : "hover:bg-white/[0.07] hover:text-white"
+                    ? "bg-sky-50 text-sky-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <span className={active ? "" : "text-slate-400"}>{item.icon}</span>
+                {active && !collapsed && (
+                  <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-sky-500" />
+                )}
+                <span className={active ? "text-sky-600" : "text-slate-400 group-hover:text-slate-500"}>
+                  {item.icon}
+                </span>
                 {!collapsed && <span>{item.label}</span>}
                 {!collapsed && typeof item.badge === "number" && (
                   <span
                     className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                      active ? "bg-white/25 text-white" : "bg-white/10 text-slate-400"
+                      active ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-400"
                     }`}
                   >
                     {item.badge}
@@ -183,8 +189,8 @@ export function AdminSidebar({
       ))}
 
       {!collapsed && (
-        <div className="hidden md:mt-5 md:block md:border-t md:border-white/10 md:pt-4">
-          <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+        <div className="hidden md:mt-5 md:block md:border-t md:border-slate-100 md:pt-4">
+          <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
             Otros paneles
           </p>
           {[
@@ -194,9 +200,9 @@ export function AdminSidebar({
             <Link
               key={l.href}
               href={l.href}
-              className="mb-0.5 flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-[13px] font-medium text-slate-400 transition hover:bg-white/[0.07] hover:text-white"
+              className="mb-0.5 flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-[13px] font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
             >
-              <span>{Icons.external}</span>
+              <span className="text-slate-400">{Icons.external}</span>
               {l.label}
             </Link>
           ))}

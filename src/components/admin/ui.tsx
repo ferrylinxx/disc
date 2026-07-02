@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 /** Clases de botón reutilizables (una sola fuente de verdad). */
 export const btn = {
   primary:
-    "inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60",
+    "inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/25 transition hover:-translate-y-0.5 hover:shadow-md hover:shadow-sky-500/30 disabled:opacity-60 disabled:hover:translate-y-0",
   secondary:
     "inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-60",
   danger:
@@ -106,24 +106,30 @@ export function StatCard({
         ? "text-rose-600"
         : "text-slate-400";
   return (
-    <div className="animate-scale-in rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-200/40 transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <div className="animate-scale-in group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-200/40 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/60">
+      {/* Acento de color muy suave en la esquina */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full opacity-[0.10] blur-xl transition group-hover:opacity-20"
+        style={{ backgroundColor: accent }}
+      />
+      <div className="relative flex items-start justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
           {label}
         </span>
         {icon && (
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `${accent}14`, color: accent }}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl ring-1"
+            style={{ backgroundColor: `${accent}14`, color: accent, borderColor: `${accent}22` }}
           >
             {icon}
           </span>
         )}
       </div>
-      <div className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+      <div className="relative mt-2 text-[2rem] font-bold leading-none tracking-tight text-slate-900">
         {value}
       </div>
-      <div className="mt-1 flex items-center gap-2 text-xs">
+      <div className="relative mt-2 flex items-center gap-2 text-xs">
         {trend && (
           <span className={`font-semibold ${trendCls}`}>
             {trend.dir === "up" ? "↑" : trend.dir === "down" ? "↓" : "→"}{" "}
