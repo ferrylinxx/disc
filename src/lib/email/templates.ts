@@ -41,10 +41,14 @@ export function invitationEmail(input: {
   password?: string;
 }): { subject: string; html: string; text: string } {
   const first = input.participantName.split(" ")[0] || "Hola";
+  // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
+  // un clic en los clientes que lo soportan (resto: triple clic).
+  const val = (v: string) =>
+    `<span style="display:inline-block;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:3px 9px;font-family:Consolas,Menlo,monospace;font-size:14px;font-weight:700;color:#0f172a;-webkit-user-select:all;user-select:all;">${v}</span>`;
   const row = (k: string, v: string) =>
     `<tr>
-      <td style="padding:6px 12px 6px 0;font-size:13px;color:#64748b;white-space:nowrap;">${k}</td>
-      <td style="padding:6px 0;font-size:14px;font-weight:700;color:#0f172a;font-family:Consolas,Menlo,monospace;">${v}</td>
+      <td style="padding:6px 12px 6px 0;font-size:13px;color:#64748b;white-space:nowrap;vertical-align:middle;">${k}</td>
+      <td style="padding:6px 0;vertical-align:middle;">${val(v)}</td>
     </tr>`;
   const creds = `
     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">

@@ -14,6 +14,8 @@ export interface ActionState {
   invitePath?: string;
   /** Mensaje informativo de resultado (p. ej. resumen de una carga masiva). */
   message?: string;
+  /** Credenciales recién generadas, para copiarlas desde el panel. */
+  credentials?: { email: string; password: string };
 }
 
 function slugify(input: string): string {

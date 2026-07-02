@@ -17,10 +17,62 @@ const initial: ActionState = {};
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
+/** Caja de credenciales recién creadas con botón para copiarlas. */
+function CredentialsBox({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const text = `Correo: ${email}\nContraseña: ${password}`;
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard no disponible */
+    }
+  }
+  return (
+    <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+      <div className="grid gap-0.5 font-mono text-xs text-slate-700">
+        <div>
+          <span className="text-slate-400">Correo:</span> {email}
+        </div>
+        <div>
+          <span className="text-slate-400">Contraseña:</span> {password}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={copy}
+        className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        {copied ? "Copiado ✓" : "⎘ Copiar datos"}
+      </button>
+    </div>
+  );
+}
+
 function Feedback({ state }: { state: ActionState }) {
   if (state.error)
     return (
       <p className="text-xs font-medium text-rose-600">{state.error}</p>
+    );
+  if (state.credentials)
+    return (
+      <div className="space-y-2">
+        {state.message && (
+          <p className="text-xs font-medium text-emerald-600">{state.message}</p>
+        )}
+        <CredentialsBox
+          email={state.credentials.email}
+          password={state.credentials.password}
+        />
+      </div>
     );
   if (state.message)
     return (

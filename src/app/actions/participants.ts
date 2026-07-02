@@ -219,7 +219,11 @@ export async function inviteParticipant(
   const message = emailed
     ? "Participante añadido. Le hemos enviado sus credenciales de acceso por email."
     : "Participante añadido. Configura el SMTP para enviarle las credenciales por email.";
-  return { ok: true, message };
+  return {
+    ok: true,
+    message,
+    credentials: { email: parsed.data.email, password: account.tempPassword },
+  };
 }
 
 /**
