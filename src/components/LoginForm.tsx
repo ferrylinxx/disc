@@ -8,14 +8,17 @@ const initial: LoginState = {};
 export default function LoginForm({
   defaultEmail = "",
   defaultPassword = "",
+  next,
 }: {
   defaultEmail?: string;
   defaultPassword?: string;
+  next?: string;
 }) {
   const [state, action, pending] = useActionState(login, initial);
 
   return (
     <form action={action} className="space-y-5">
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium text-slate-700">
           Email

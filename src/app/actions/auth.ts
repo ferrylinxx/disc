@@ -68,7 +68,12 @@ export async function login(
       expiresAt: "",
     }),
   );
-  redirect(dest);
+  // Respeta ?next si es una ruta interna segura (p. ej. el enlace del email
+  // apunta a /evaluacion). Evita redirecciones abiertas (// o URLs absolutas).
+  const next = String(formData.get("next") ?? "");
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") ? next : null;
+  redirect(safeNext ?? dest);
 }
 
 /** Cierra la sesión y vuelve al login. */

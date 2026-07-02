@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth/dal";
 import { consumePasswordSetToken, hashPassword } from "@/lib/auth/password";
 
 export interface SetPasswordState {
@@ -51,4 +52,42 @@ export async function setPassword(
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 
   redirect("/login?reset=ok");
+}
+
+export interface ChangePasswordState {
+  error?: string;
+  ok?: boolean;
+}
+
+const ChangeSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, { error: "La contraseña debe tener al menos 8 caracteres." }),
+    confirm: z.string().min(1),
+  })
+  .refine((d) => d.password === d.confirm, {
+    error: "Las contraseñas no coinciden.",
+    path: ["confirm"],
+  });
+
+/** Cambia la contraseña del usuario autenticado (desde su panel). */
+export async function changeOwnPassword(
+  _state: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const session = await requireAuth();
+  const parsed = ChangeSchema.safeParse({
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Revisa los datos." };
+  }
+  const passwordHash = await hashPassword(parsed.data.password);
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: { passwordHash },
+  });
+  return { ok: true };
 }

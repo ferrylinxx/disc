@@ -65,7 +65,7 @@ export function homePathForRole(role: EffectiveRole): string {
     case "FACILITATOR":
       return "/facilitador";
     default:
-      return "/evaluacion";
+      return "/panel";
   }
 }
 
@@ -77,6 +77,11 @@ export const ROUTE_GUARDS: { prefix: string; roles: EffectiveRole[] }[] = [
   // La evaluación requiere cuenta: cualquier usuario autenticado.
   {
     prefix: "/evaluacion",
+    roles: ["SUPERADMIN", "ORG_ADMIN", "FACILITATOR", "PARTICIPANT"],
+  },
+  // Panel del participante: cualquier usuario autenticado.
+  {
+    prefix: "/panel",
     roles: ["SUPERADMIN", "ORG_ADMIN", "FACILITATOR", "PARTICIPANT"],
   },
 ];

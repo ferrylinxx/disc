@@ -5,9 +5,14 @@ export const metadata = { title: "Acceso · DISC GESEM" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reset?: string; email?: string; pw?: string }>;
+  searchParams: Promise<{
+    reset?: string;
+    email?: string;
+    pw?: string;
+    next?: string;
+  }>;
 }) {
-  const { reset, email, pw } = await searchParams;
+  const { reset, email, pw, next } = await searchParams;
 
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-md flex-col justify-center px-6 py-12">
@@ -33,7 +38,7 @@ export default async function LoginPage({
           </p>
         )}
 
-        <LoginForm defaultEmail={email} defaultPassword={pw} />
+        <LoginForm defaultEmail={email} defaultPassword={pw} next={next} />
       </div>
 
       <p className="mt-6 text-center text-sm text-slate-500">
