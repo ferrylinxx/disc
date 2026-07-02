@@ -23,7 +23,6 @@ export default async function PanelLayout({
 
   const tabs = [
     { href: "/panel", label: t.tabOverview },
-    { href: "/panel/glosario", label: t.tabGlossary },
     { href: "/panel/cuenta", label: t.tabAccount },
     { href: "/panel/seguridad", label: t.tabSecurity },
     { href: "/panel/privacidad", label: t.tabPrivacy },

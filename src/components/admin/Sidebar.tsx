@@ -49,6 +49,11 @@ const Icons = {
       <path d="M7 7.5h.01M7 16.5h.01" />
     </svg>
   ),
+  glossary: (
+    <svg viewBox="0 0 24 24" className={ic} {...svg}>
+      <path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2zM17 21a2 2 0 0 0 2-2V6M8 7h6M8 11h6" />
+    </svg>
+  ),
   external: (
     <svg viewBox="0 0 24 24" className={ic} {...svg}>
       <path d="M14 5h5v5M19 5l-8 8M19 13v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
@@ -106,6 +111,7 @@ export function AdminSidebar({
       label: "Plataforma",
       items: [
         { href: "/admin/catalogo", label: "Contenido", icon: Icons.catalog },
+        { href: "/admin/glosario", label: "Glosario", icon: Icons.glossary },
         { href: "/admin/sistema", label: "Sistema", icon: Icons.system },
       ],
     },
