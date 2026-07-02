@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getGlossary } from "@/lib/glossary";
-import { Glossary } from "@/components/Glossary";
+import { getGlossary, type Glossary as GlossaryData } from "@/lib/glossary";
+import { GlossaryView } from "@/components/GlossaryView";
 import type { Lang } from "@/lib/i18n/dictionaries";
 
 const chipCls =
@@ -22,8 +22,10 @@ export function GlossaryButton({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const g = getGlossary(lang);
-  const text = label ?? g.title;
+  // Arranca con el glosario por defecto y lo actualiza con la versión editada
+  // (guardada desde admin) al abrir el drawer.
+  const [data, setData] = useState<GlossaryData>(() => getGlossary(lang));
+  const text = label ?? data.title;
 
   useEffect(() => {
     if (!open) return;
@@ -33,11 +35,21 @@ export function GlossaryButton({
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    let alive = true;
+    fetch(`/api/glosario?lang=${lang}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d && Array.isArray(d.groups)) setData(d as GlossaryData);
+      })
+      .catch(() => {});
+
     return () => {
+      alive = false;
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, lang]);
 
   return (
     <>
@@ -69,7 +81,7 @@ export function GlossaryButton({
           <div className="animate-fade-up relative ml-auto flex h-full w-full max-w-lg flex-col bg-slate-50 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
               <h2 className="text-lg font-bold tracking-tight text-slate-900">
-                {g.title}
+                {data.title}
               </h2>
               <button
                 type="button"
@@ -90,7 +102,7 @@ export function GlossaryButton({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
-              <Glossary lang={lang} />
+              <GlossaryView data={data} />
             </div>
           </div>
         </div>

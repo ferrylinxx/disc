@@ -1,15 +1,15 @@
-import { getGlossary } from "@/lib/glossary";
 import { discGradStops } from "@/lib/disc-gradient";
-import type { Lang } from "@/lib/i18n/dictionaries";
+import type { Glossary } from "@/lib/glossary";
 
-/** Glosario DISC GESEM: términos agrupados con chip de color por recurso. */
-export function Glossary({ lang }: { lang: Lang }) {
-  const g = getGlossary(lang);
+/** Render presentacional del glosario (recibe los datos ya resueltos). */
+export function GlossaryView({ data }: { data: Glossary }) {
   return (
     <div className="space-y-5">
-      <p className="text-sm leading-relaxed text-slate-500">{g.intro}</p>
+      {data.intro && (
+        <p className="text-sm leading-relaxed text-slate-500">{data.intro}</p>
+      )}
 
-      {g.groups.map((group) => (
+      {data.groups.map((group) => (
         <section
           key={group.title}
           className="animate-fade-up rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm shadow-slate-200/40"

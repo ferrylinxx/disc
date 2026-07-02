@@ -115,3 +115,57 @@ export async function saveBlock(
   revalidatePath("/admin/catalogo/bloques");
   return { ok: true, message: `Guardado (v${(existing?.version ?? 0) + 1}).` };
 }
+
+/**
+ * Guarda (upsert) el glosario DISC GESEM de un idioma. scope "GLOSSARY",
+ * key "v1", locale ca/es, contenido = { title, intro, groups[] }. SUPERADMIN.
+ */
+export async function saveGlossary(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireRole("SUPERADMIN");
+  const locale = String(formData.get("locale") ?? "");
+  const contentRaw = String(formData.get("content") ?? "");
+  if (locale !== "ca" && locale !== "es") {
+    return { error: "Idioma no válido." };
+  }
+
+  let content: unknown;
+  try {
+    content = JSON.parse(contentRaw);
+  } catch {
+    return { error: "El contenido no es un JSON válido." };
+  }
+  const c = content as { groups?: unknown };
+  if (!c || typeof c !== "object" || !Array.isArray(c.groups)) {
+    return { error: "El glosario debe tener un array 'groups'." };
+  }
+
+  const author = session.name ?? session.email ?? "admin";
+  const existing = await prisma.narrativeEntry.findUnique({
+    where: { scope_key_locale: { scope: "GLOSSARY", key: "v1", locale } },
+    select: { version: true },
+  });
+  await prisma.narrativeEntry.upsert({
+    where: { scope_key_locale: { scope: "GLOSSARY", key: "v1", locale } },
+    update: {
+      content: content as Prisma.InputJsonValue,
+      status: "PUBLISHED",
+      author,
+      version: (existing?.version ?? 0) + 1,
+    },
+    create: {
+      scope: "GLOSSARY",
+      key: "v1",
+      locale,
+      content: content as Prisma.InputJsonValue,
+      status: "PUBLISHED",
+      author,
+      version: 1,
+    },
+  });
+
+  revalidatePath("/admin/glosario");
+  return { ok: true, message: `Guardado (v${(existing?.version ?? 0) + 1}).` };
+}
