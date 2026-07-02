@@ -557,14 +557,7 @@ function TeamDiscGrid({
         {/* Personas (numeradas; ver leyenda) */}
         {spread.map((p) => (
           <g key={p.n} filter="url(#tm-shadow)">
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r="10"
-              fill="#222222"
-              stroke="#ffffff"
-              strokeWidth="1.8"
-            />
+            <circle cx={p.x} cy={p.y} r="10" fill="#222222" />
             <text
               x={p.x}
               y={p.y}
@@ -613,7 +606,7 @@ function Radar({
 
   return (
     <div className="flex justify-center">
-      <svg viewBox={`0 0 ${size} ${size}`} className="h-56 w-56" role="img" aria-label="Radar de recursos del equipo">
+      <svg viewBox={`-44 -22 ${size + 88} ${size + 44}`} className="h-auto w-72 max-w-full" role="img" aria-label="Radar de recursos del equipo">
         {rings.map((f) => (
           <polygon
             key={f}

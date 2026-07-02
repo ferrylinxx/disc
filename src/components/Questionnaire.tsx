@@ -9,6 +9,34 @@ import { clearDraft, saveDraft } from "@/app/actions/drafts";
 import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 import { Report } from "./Report";
 
+/** Hash FNV-1a de una cadena → entero 32 bits (semilla estable de barajado). */
+function hashStr(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Baraja determinista (Fisher-Yates con PRNG por semilla). No muta el original.
+ * Se usa para que el orden de las opciones no revele la dimensión (D/I/S/C).
+ */
+function seededShuffle<T>(arr: readonly T[], seed: number): T[] {
+  const a = [...arr];
+  let s = (seed >>> 0) || 1;
+  const rnd = () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 0x100000000;
+  };
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 type Step = "intro" | "self" | "quiz" | "reflect" | "video" | "result";
 type Picks = Record<string, { most?: string; least?: string }>;
 export type DraftState = {
@@ -68,6 +96,18 @@ export function Questionnaire({
     () => def.items.filter((i) => picks[i.code]?.most && picks[i.code]?.least).length,
     [picks, def.items],
   );
+
+  // Orden de opciones barajado por ítem y estable por participante: evita que la
+  // posición delate la dimensión. Se conserva el mapeo opción→dimensión (código).
+  const seedBase = invite?.token ?? "anon";
+  const orderedByItem = useMemo(() => {
+    const m = new Map<string, InstrumentDefinition["items"][number]["options"]>();
+    for (const it of def.items) {
+      m.set(it.code, seededShuffle(it.options, hashStr(`${seedBase}:${it.code}`)));
+    }
+    return m;
+  }, [def.items, seedBase]);
+  const displayOptions = item ? (orderedByItem.get(item.code) ?? item.options) : [];
 
   // Fase de la elección dentro del bloque actual: primero "Más", luego "Menos".
   const phase: "most" | "least" | "done" = !current.most
@@ -252,9 +292,9 @@ export function Questionnaire({
     if (step !== "quiz" || !item) return;
     function onKey(e: KeyboardEvent) {
       const n = Number(e.key);
-      if (n >= 1 && n <= item.options.length) {
+      if (n >= 1 && n <= displayOptions.length) {
         e.preventDefault();
-        pick(item.options[n - 1].code);
+        pick(displayOptions[n - 1].code);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -386,7 +426,7 @@ export function Questionnaire({
           {item.prompt}
         </p>
         <div className="mt-5 space-y-2.5">
-          {item.options.map((opt, i) => {
+          {displayOptions.map((opt, i) => {
             const isMost = current.most === opt.code;
             const isLeast = current.least === opt.code;
             return (
