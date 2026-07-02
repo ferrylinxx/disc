@@ -8,6 +8,11 @@ import { adminOrganizationIds, effectiveRoles } from "@/lib/auth/rbac";
 import type { SessionPayload } from "@/lib/auth/jwt";
 import { absoluteUrl, isMailConfigured, sendMail } from "@/lib/email/mailer";
 import { invitationEmail } from "@/lib/email/templates";
+import {
+  createPasswordSetToken,
+  hashPassword,
+  randomPassword,
+} from "@/lib/auth/password";
 import type { ActionState } from "./org";
 
 function assertOrgAccess(session: SessionPayload, orgId: string): boolean {
@@ -16,30 +21,60 @@ function assertOrgAccess(session: SessionPayload, orgId: string): boolean {
 }
 
 /**
- * Envía (best-effort) el email de invitación. No lanza: si el SMTP no está
- * configurado o falla, se registra y se continúa (el enlace siempre queda
- * disponible para copiar manualmente desde el panel).
+ * Garantiza una cuenta de usuario para el participante. Si el email ya tiene
+ * cuenta, la reutiliza (no toca su contraseña). Si no, crea una con contraseña
+ * aleatoria y rol USER (sin membresías → participante). Devuelve el userId y,
+ * solo cuando la cuenta es nueva, la contraseña temporal en claro.
  */
-async function sendInvitationEmail(
-  to: string,
+async function ensureParticipantAccount(
+  email: string,
   fullName: string,
-  token: string,
-): Promise<boolean> {
+): Promise<{ userId: string; tempPassword?: string }> {
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (existing) return { userId: existing.id };
+
+  const tempPassword = randomPassword();
+  const passwordHash = await hashPassword(tempPassword);
+  const user = await prisma.user.create({
+    data: { email, name: fullName, passwordHash, globalRole: "USER" },
+    select: { id: true },
+  });
+  return { userId: user.id, tempPassword };
+}
+
+/**
+ * Envía (best-effort) el email con las credenciales de acceso. No lanza: si el
+ * SMTP no está configurado o falla, se registra y se continúa. Genera un token
+ * de un solo uso para cambiar la contraseña.
+ */
+async function sendAccountInvite(input: {
+  to: string;
+  fullName: string;
+  userId: string;
+  tempPassword?: string;
+}): Promise<boolean> {
   if (!isMailConfigured()) return false;
   try {
+    const token = await createPasswordSetToken(input.userId);
     const email = invitationEmail({
-      participantName: fullName,
-      url: absoluteUrl(`/evaluacion/${token}`),
+      participantName: input.fullName,
+      accountEmail: input.to,
+      password: input.tempPassword,
+      loginUrl: absoluteUrl("/login?next=/evaluacion"),
+      setPasswordUrl: absoluteUrl(`/restablecer/${token}`),
     });
     await sendMail({
-      to,
+      to: input.to,
       subject: email.subject,
       html: email.html,
       text: email.text,
     });
     return true;
   } catch (e) {
-    console.error("[sendInvitationEmail] envío fallido:", e);
+    console.error("[sendAccountInvite] envío fallido:", e);
     return false;
   }
 }
@@ -120,10 +155,16 @@ export async function inviteParticipant(
     projectId = team?.projectId ?? null;
   }
 
+  const account = await ensureParticipantAccount(
+    parsed.data.email,
+    parsed.data.fullName,
+  );
+
   const participant = await prisma.participant.create({
     data: {
       organizationId: parsed.data.organizationId,
       teamId,
+      userId: account.userId,
       email: parsed.data.email,
       fullName: parsed.data.fullName,
       status: "INVITED",
@@ -148,12 +189,20 @@ export async function inviteParticipant(
     },
   });
 
-  await sendInvitationEmail(parsed.data.email, parsed.data.fullName, token);
+  const emailed = await sendAccountInvite({
+    to: parsed.data.email,
+    fullName: parsed.data.fullName,
+    userId: account.userId,
+    tempPassword: account.tempPassword,
+  });
 
   if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);
   revalidatePath("/cliente");
   revalidatePath("/facilitador");
-  return { ok: true, invitePath: `/evaluacion/${token}` };
+  const message = emailed
+    ? "Participante añadido. Le hemos enviado sus credenciales de acceso por email."
+    : "Participante añadido. Configura el SMTP para enviarle las credenciales por email.";
+  return { ok: true, message };
 }
 
 /**
@@ -177,30 +226,36 @@ export async function resendInvitation(
       organizationId: true,
       fullName: true,
       email: true,
-      invitations: {
-        where: {
-          status: { in: ["PENDING", "SENT", "OPENED"] },
-          expiresAt: { gt: new Date() },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: { token: true },
-      },
+      userId: true,
     },
   });
   if (!participant || !assertOrgAccess(session, participant.organizationId)) {
     return { error: "Sin permiso o participante no encontrado." };
   }
-  const token = participant.invitations[0]?.token;
-  if (!token) {
-    return { error: "No hay una invitación activa para reenviar." };
+
+  // Cuenta ya existente → reenvía acceso sin contraseña (el usuario la conoce o
+  // la restablece). Participante antiguo sin cuenta → la crea ahora.
+  let userId = participant.userId;
+  let tempPassword: string | undefined;
+  if (!userId) {
+    const account = await ensureParticipantAccount(
+      participant.email,
+      participant.fullName,
+    );
+    userId = account.userId;
+    tempPassword = account.tempPassword;
+    await prisma.participant.update({
+      where: { id: participantId },
+      data: { userId },
+    });
   }
 
-  const sent = await sendInvitationEmail(
-    participant.email,
-    participant.fullName,
-    token,
-  );
+  const sent = await sendAccountInvite({
+    to: participant.email,
+    fullName: participant.fullName,
+    userId,
+    tempPassword,
+  });
   if (!sent) {
     return { error: "No se pudo enviar el correo. Revisa la configuración SMTP." };
   }
@@ -293,10 +348,15 @@ export async function bulkInviteParticipants(
       skipped += 1;
       continue;
     }
+    const account = await ensureParticipantAccount(
+      valid.data.email,
+      valid.data.fullName,
+    );
     const participant = await prisma.participant.create({
       data: {
         organizationId: parsed.data.organizationId,
         teamId,
+        userId: account.userId,
         email: valid.data.email,
         fullName: valid.data.fullName,
         status: "INVITED",
@@ -313,9 +373,13 @@ export async function bulkInviteParticipants(
       },
     });
     created += 1;
-    if (await sendInvitationEmail(valid.data.email, valid.data.fullName, token)) {
-      emailed += 1;
-    }
+    const sent = await sendAccountInvite({
+      to: valid.data.email,
+      fullName: valid.data.fullName,
+      userId: account.userId,
+      tempPassword: account.tempPassword,
+    });
+    if (sent) emailed += 1;
   }
 
   if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);
@@ -351,15 +415,7 @@ export async function bulkParticipantAction(
       organizationId: true,
       fullName: true,
       email: true,
-      invitations: {
-        where: {
-          status: { in: ["PENDING", "SENT", "OPENED"] },
-          expiresAt: { gt: new Date() },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: { token: true },
-      },
+      userId: true,
     },
   });
   const allowed = targets.filter((t) => assertOrgAccess(session, t.organizationId));
@@ -379,17 +435,25 @@ export async function bulkParticipantAction(
     return { error: "SMTP no configurado. Define SMTP_PASS en .env.local." };
   }
   let sent = 0;
-  let noToken = 0;
   for (const t of allowed) {
-    const token = t.invitations[0]?.token;
-    if (!token) {
-      noToken += 1;
-      continue;
+    let userId = t.userId;
+    let tempPassword: string | undefined;
+    if (!userId) {
+      const account = await ensureParticipantAccount(t.email, t.fullName);
+      userId = account.userId;
+      tempPassword = account.tempPassword;
+      await prisma.participant.update({
+        where: { id: t.id },
+        data: { userId },
+      });
     }
-    const ok = await sendInvitationEmail(t.email, t.fullName, token);
+    const ok = await sendAccountInvite({
+      to: t.email,
+      fullName: t.fullName,
+      userId,
+      tempPassword,
+    });
     if (ok) sent += 1;
   }
-  const parts = [`${sent} invitaciones reenviadas`];
-  if (noToken > 0) parts.push(`${noToken} sin invitación activa`);
-  return { ok: true, message: parts.join(" · ") + "." };
+  return { ok: true, message: `${sent} invitaciones reenviadas.` };
 }

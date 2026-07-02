@@ -74,6 +74,11 @@ export const ROUTE_GUARDS: { prefix: string; roles: EffectiveRole[] }[] = [
   { prefix: "/admin", roles: ["SUPERADMIN"] },
   { prefix: "/cliente", roles: ["SUPERADMIN", "ORG_ADMIN"] },
   { prefix: "/facilitador", roles: ["SUPERADMIN", "ORG_ADMIN", "FACILITATOR"] },
+  // La evaluación requiere cuenta: cualquier usuario autenticado.
+  {
+    prefix: "/evaluacion",
+    roles: ["SUPERADMIN", "ORG_ADMIN", "FACILITATOR", "PARTICIPANT"],
+  },
 ];
 
 /** ¿La ruta requiere autenticación? (cualquier prefijo protegido). */

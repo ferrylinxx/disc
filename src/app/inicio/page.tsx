@@ -82,7 +82,7 @@ export default async function Home() {
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
-                href="/evaluacion"
+                href="/login"
                 className="bg-brand-animated group inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-bold text-white shadow-2xl shadow-sky-500/40 transition hover:scale-[1.04] hover:shadow-cyan-500/30"
               >
                 {t.ctaTry}
@@ -620,7 +620,7 @@ export default async function Home() {
           </p>
           <div className="relative mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/evaluacion"
+              href="/login"
               className="rounded-full bg-white px-9 py-4 text-sm font-black text-sky-700 shadow-2xl transition hover:scale-[1.05]"
             >
               {t.ctaStart}
@@ -656,7 +656,7 @@ export default async function Home() {
                 </p>
                 <ul className="mt-3 space-y-2 text-[13px] font-medium text-slate-600">
                   <li>
-                    <Link href="/evaluacion" className="transition hover:text-sky-600">
+                    <Link href="/login" className="transition hover:text-sky-600">
                       {t.footerEval}
                     </Link>
                   </li>

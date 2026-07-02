@@ -24,30 +24,71 @@ function shell(title: string, body: string): string {
   </div></body></html>`;
 }
 
-/** Email de invitación a la evaluación. */
+/**
+ * Email de invitación: se ha creado una cuenta para el participante. Incluye
+ * las credenciales de acceso (email y, en el alta inicial, la contraseña
+ * temporal), el botón para acceder y un enlace para cambiar la contraseña.
+ */
 export function invitationEmail(input: {
   participantName: string;
-  url: string;
+  /** URL de acceso (login). */
+  loginUrl: string;
+  /** URL para establecer/cambiar la contraseña (token de un solo uso). */
+  setPasswordUrl: string;
+  /** Email de la cuenta (usuario). */
+  accountEmail: string;
+  /** Contraseña temporal en claro; solo en el alta inicial (no en reenvíos). */
+  password?: string;
 }): { subject: string; html: string; text: string } {
   const first = input.participantName.split(" ")[0] || "Hola";
+  const row = (k: string, v: string) =>
+    `<tr>
+      <td style="padding:6px 12px 6px 0;font-size:13px;color:#64748b;white-space:nowrap;">${k}</td>
+      <td style="padding:6px 0;font-size:14px;font-weight:700;color:#0f172a;font-family:Consolas,Menlo,monospace;">${v}</td>
+    </tr>`;
+  const creds = `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      ${row("Correo:", input.accountEmail)}
+      ${input.password ? row("Contraseña:", input.password) : ""}
+    </table>`;
+  const passwordNote = input.password
+    ? `Por seguridad, te recomendamos cambiar esta contraseña temporal la primera vez que entres.`
+    : `Usa tu contraseña actual. Si no la recuerdas, puedes crear una nueva.`;
+
   const body = `
     <p style="margin:0 0 12px;">Hola ${first},</p>
     <p style="margin:0 0 16px;line-height:1.6;color:#475569;">
-      Te invitamos a completar tu cuestionario <strong>DISC GESEM</strong>. Solo te
-      llevará unos minutos y te ayudará a conocer mejor tu estilo conductual.
+      Te invitamos a completar tu cuestionario <strong>DISC GESEM</strong>. Hemos
+      creado una cuenta para ti; accede con estos datos para empezar:
     </p>
-    <p style="margin:0 0 24px;">
-      <a href="${input.url}" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:9999px;">
-        Empezar el cuestionario
+    <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
+      ${creds}
+    </div>
+    <p style="margin:0 0 20px;color:#64748b;font-size:13px;line-height:1.5;">${passwordNote}</p>
+    <p style="margin:0 0 12px;">
+      <a href="${input.loginUrl}" style="display:inline-block;background-color:${BRAND};color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:9999px;">
+        Acceder a mi cuenta
       </a>
     </p>
-    <p style="margin:0;color:#94a3b8;font-size:13px;word-break:break-all;">
-      Si el botón no funciona, copia este enlace: ${input.url}
+    <p style="margin:0 0 20px;font-size:14px;">
+      <a href="${input.setPasswordUrl}" style="color:${BRAND};font-weight:600;text-decoration:none;">Cambiar mi contraseña →</a>
+    </p>
+    <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;word-break:break-all;">
+      Si los botones no funcionan, copia estos enlaces:<br/>
+      Acceso: ${input.loginUrl}<br/>
+      Cambiar contraseña: ${input.setPasswordUrl}
     </p>`;
+  const textLines = [
+    `Hola ${first}, te invitamos a completar tu cuestionario DISC GESEM.`,
+    `Correo: ${input.accountEmail}`,
+    input.password ? `Contraseña temporal: ${input.password}` : "",
+    `Acceder: ${input.loginUrl}`,
+    `Cambiar contraseña: ${input.setPasswordUrl}`,
+  ].filter(Boolean);
   return {
-    subject: "Tu cuestionario DISC GESEM",
-    html: shell("Tu evaluación te espera", body),
-    text: `Hola ${first}, completa tu cuestionario DISC GESEM aquí: ${input.url}`,
+    subject: "Tu acceso a DISC GESEM",
+    html: shell("Tu cuenta DISC GESEM", body),
+    text: textLines.join("\n"),
   };
 }
 

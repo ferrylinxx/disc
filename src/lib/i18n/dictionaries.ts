@@ -199,6 +199,12 @@ const es = {
     expiredBody:
       "Este enlace ha expirado. Solicita uno nuevo a tu facilitador para continuar.",
     goHome: "Ir al inicio",
+    noneTitle: "No tienes evaluaciones pendientes",
+    noneBody:
+      "Tu cuenta no tiene ninguna evaluación asignada por ahora. Si crees que es un error, contacta con tu facilitador.",
+    wrongAccountTitle: "Inicia sesión con tu cuenta",
+    wrongAccountBody:
+      "Esta invitación pertenece a otra cuenta. Cierra sesión e inicia con el correo al que llegó la invitación.",
   },
   inicio: {
     badge: "basado en el modelo DISC",
@@ -506,6 +512,12 @@ const ca: typeof es = {
     expiredBody:
       "Aquest enllaç ha caducat. Demana'n un de nou al teu facilitador per continuar.",
     goHome: "Vés a l'inici",
+    noneTitle: "No tens avaluacions pendents",
+    noneBody:
+      "El teu compte no té cap avaluació assignada de moment. Si creus que és un error, contacta amb el teu facilitador.",
+    wrongAccountTitle: "Inicia sessió amb el teu compte",
+    wrongAccountBody:
+      "Aquesta invitació pertany a un altre compte. Tanca la sessió i inicia amb el correu al qual va arribar la invitació.",
   },
   inicio: {
     badge: "basat en el model DISC",

@@ -1,9 +1,14 @@
-import Link from "next/link";
 import LoginForm from "@/components/LoginForm";
 
 export const metadata = { title: "Acceso · DISC GESEM" };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reset?: string }>;
+}) {
+  const { reset } = await searchParams;
+
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-md flex-col justify-center px-6 py-12">
       <div className="animate-fade-up glass ring-brand rounded-3xl p-8">
@@ -22,14 +27,18 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {reset === "ok" && (
+          <p className="mb-5 rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700">
+            Contraseña actualizada. Ya puedes iniciar sesión.
+          </p>
+        )}
+
         <LoginForm />
       </div>
 
       <p className="mt-6 text-center text-sm text-slate-500">
-        ¿Eres participante con una invitación?{" "}
-        <Link href="/" className="font-semibold text-sky-600 hover:text-sky-700">
-          Empieza aquí
-        </Link>
+        ¿Eres participante? Usa el correo y la contraseña que te enviamos en el
+        email de invitación.
       </p>
     </div>
   );

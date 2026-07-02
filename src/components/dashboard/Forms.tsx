@@ -11,7 +11,6 @@ import {
   bulkInviteParticipants,
   inviteParticipant,
 } from "@/app/actions/participants";
-import { InviteLink } from "./InviteLink";
 
 const initial: ActionState = {};
 
@@ -23,14 +22,9 @@ function Feedback({ state }: { state: ActionState }) {
     return (
       <p className="text-xs font-medium text-rose-600">{state.error}</p>
     );
-  if (state.invitePath)
+  if (state.message)
     return (
-      <div className="space-y-1.5">
-        <p className="text-xs font-medium text-emerald-600">
-          Invitación creada ✓ Comparte este enlace:
-        </p>
-        <InviteLink path={state.invitePath} />
-      </div>
+      <p className="text-xs font-medium text-emerald-600">{state.message}</p>
     );
   if (state.ok)
     return (
