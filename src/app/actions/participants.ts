@@ -21,10 +21,35 @@ function assertOrgAccess(session: SessionPayload, orgId: string): boolean {
 }
 
 /**
+ * (Re)genera la contraseña de una cuenta de participante y devuelve la nueva en
+ * claro para incluirla en el email. Protege las cuentas de staff (SUPERADMIN o
+ * con membresías): NO les toca la contraseña y devuelve undefined.
+ */
+async function issueParticipantPassword(
+  userId: string,
+): Promise<string | undefined> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { globalRole: true, _count: { select: { memberships: true } } },
+  });
+  if (!user) return undefined;
+  if (user.globalRole === "SUPERADMIN" || user._count.memberships > 0) {
+    return undefined; // cuenta de staff: no se resetea
+  }
+  const tempPassword = randomPassword();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await hashPassword(tempPassword) },
+  });
+  return tempPassword;
+}
+
+/**
  * Garantiza una cuenta de usuario para el participante. Si el email ya tiene
- * cuenta, la reutiliza (no toca su contraseña). Si no, crea una con contraseña
- * aleatoria y rol USER (sin membresías → participante). Devuelve el userId y,
- * solo cuando la cuenta es nueva, la contraseña temporal en claro.
+ * cuenta de participante, le genera una contraseña nueva (para enviarla en el
+ * email); si es cuenta de staff, la reutiliza sin tocarla. Si no existe, la crea
+ * con contraseña aleatoria y rol USER. Devuelve el userId y la contraseña en
+ * claro cuando corresponde.
  */
 async function ensureParticipantAccount(
   email: string,
@@ -34,7 +59,10 @@ async function ensureParticipantAccount(
     where: { email },
     select: { id: true },
   });
-  if (existing) return { userId: existing.id };
+  if (existing) {
+    const tempPassword = await issueParticipantPassword(existing.id);
+    return { userId: existing.id, tempPassword };
+  }
 
   const tempPassword = randomPassword();
   const passwordHash = await hashPassword(tempPassword);
@@ -233,8 +261,8 @@ export async function resendInvitation(
     return { error: "Sin permiso o participante no encontrado." };
   }
 
-  // Cuenta ya existente → reenvía acceso sin contraseña (el usuario la conoce o
-  // la restablece). Participante antiguo sin cuenta → la crea ahora.
+  // Participante antiguo sin cuenta → la crea ahora. Cuenta ya enlazada →
+  // genera una contraseña nueva para reenviarla (salvo cuentas de staff).
   let userId = participant.userId;
   let tempPassword: string | undefined;
   if (!userId) {
@@ -248,6 +276,8 @@ export async function resendInvitation(
       where: { id: participantId },
       data: { userId },
     });
+  } else {
+    tempPassword = await issueParticipantPassword(userId);
   }
 
   const sent = await sendAccountInvite({
@@ -446,6 +476,8 @@ export async function bulkParticipantAction(
         where: { id: t.id },
         data: { userId },
       });
+    } else {
+      tempPassword = await issueParticipantPassword(userId);
     }
     const ok = await sendAccountInvite({
       to: t.email,

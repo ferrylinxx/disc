@@ -52,7 +52,7 @@ export function invitationEmail(input: {
       ${input.password ? row("Contraseña:", input.password) : ""}
     </table>`;
   const passwordNote = input.password
-    ? `Por seguridad, te recomendamos cambiar esta contraseña temporal la primera vez que entres.`
+    ? `Puedes cambiar esta contraseña cuando quieras con el enlace de abajo.`
     : `Usa tu contraseña actual. Si no la recuerdas, puedes crear una nueva.`;
 
   const body = `
