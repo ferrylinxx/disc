@@ -197,6 +197,10 @@ export function InviteParticipantForm({
             </option>
           ))}
         </select>
+        <select name="lang" className={`${inputCls} min-w-[120px]`} title="Idioma del correo" defaultValue="ca">
+          <option value="ca">Correo: CAT</option>
+          <option value="es">Correo: ESP</option>
+        </select>
         <Submit pending={pending} label="Invitar" />
       </div>
       <Feedback state={state} />

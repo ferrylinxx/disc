@@ -13,6 +13,7 @@ import {
   hashPassword,
   randomPassword,
 } from "@/lib/auth/password";
+import type { Lang } from "@/lib/i18n/dictionaries";
 import type { ActionState } from "./org";
 
 function assertOrgAccess(session: SessionPayload, orgId: string): boolean {
@@ -72,6 +73,7 @@ async function sendAccountInvite(input: {
   fullName: string;
   userId: string;
   tempPassword?: string;
+  lang?: Lang;
 }): Promise<boolean> {
   if (!isMailConfigured()) return false;
   try {
@@ -89,6 +91,7 @@ async function sendAccountInvite(input: {
       password: input.tempPassword,
       loginUrl: absoluteUrl(`/login?${loginParams.toString()}`),
       setPasswordUrl: absoluteUrl(`/restablecer/${token}`),
+      lang: input.lang,
     });
     await sendMail({
       to: input.to,
@@ -213,11 +216,13 @@ export async function inviteParticipant(
     },
   });
 
+  const lang: Lang = formData.get("lang") === "es" ? "es" : "ca";
   const emailed = await sendAccountInvite({
     to: parsed.data.email,
     fullName: parsed.data.fullName,
     userId: account.userId,
     tempPassword: account.tempPassword,
+    lang,
   });
 
   if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);

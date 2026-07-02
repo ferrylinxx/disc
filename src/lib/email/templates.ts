@@ -7,21 +7,38 @@ import {
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
 const BRAND = "#00a1e0";
 
-function shell(title: string, body: string): string {
-  return `<!doctype html><html><body style="margin:0;background:#f6f7fb;padding:24px;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0f172a;">
-  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-    <div style="background-color:#00a1e0;background-image:linear-gradient(120deg,#00a1e0,#5ac3dd);padding:24px 28px;color:#ffffff;">
-      <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85;">DISC GESEM</div>
-      <div style="font-size:20px;font-weight:800;margin-top:4px;">${title}</div>
-    </div>
-    <div style="padding:24px 28px;">${body}</div>
-    <div style="padding:16px 28px;border-top:1px solid #f1f5f9;color:#94a3b8;font-size:12px;">
-      Cuestionario de estilos conductuales DISC GESEM. Los resultados describen tendencias y no constituyen un diagnóstico.
-    </div>
-  </div></body></html>`;
+/**
+ * Marco del correo: banda blanca con el logo (PNG hospedado), franja de marca
+ * con el título, cuerpo y pie con el aviso legal. Maquetado con tablas para que
+ * Outlook lo centre y limite bien el ancho.
+ */
+function shell(title: string, body: string, lang: Lang = "es"): string {
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(
+    /\/+$/,
+    "",
+  );
+  const footer =
+    lang === "ca"
+      ? "Qüestionari d'estils conductuals DISC GESEM. Els resultats descriuen tendències i no constitueixen un diagnòstic."
+      : "Cuestionario de estilos conductuales DISC GESEM. Los resultados describen tendencias y no constituyen un diagnóstico.";
+  return `<!doctype html><html><body style="margin:0;background:#f6f7fb;padding:24px 0;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;"><tr><td align="center" style="padding:0 16px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <tr><td style="padding:18px 28px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
+        <img src="${appUrl}/brand/gesem-logo-email.png" alt="GESEM DISC" width="120" style="display:block;border:0;height:auto;width:120px;" />
+      </td></tr>
+      <tr><td style="background-color:#00a1e0;background-image:linear-gradient(120deg,#00a1e0,#5ac3dd);padding:22px 28px;color:#ffffff;">
+        <div style="font-size:20px;font-weight:800;">${title}</div>
+      </td></tr>
+      <tr><td style="padding:24px 28px;">${body}</td></tr>
+      <tr><td style="padding:16px 28px;border-top:1px solid #f1f5f9;color:#94a3b8;font-size:12px;line-height:1.5;">${footer}</td></tr>
+    </table>
+  </td></tr></table>
+  </body></html>`;
 }
 
 /**
@@ -39,8 +56,67 @@ export function invitationEmail(input: {
   accountEmail: string;
   /** Contraseña temporal en claro; solo en el alta inicial (no en reenvíos). */
   password?: string;
+  /** Idioma del correo (catalán por defecto). */
+  lang?: Lang;
 }): { subject: string; html: string; text: string } {
-  const first = input.participantName.split(" ")[0] || "Hola";
+  const lang = input.lang ?? "ca";
+  const first = input.participantName.split(" ")[0] || "";
+  const ca = lang === "ca";
+
+  const T = ca
+    ? {
+        subject: "El teu accés a DISC GESEM",
+        shellTitle: "El teu compte DISC GESEM",
+        hello: first ? `Hola ${first},` : "Hola,",
+        intro:
+          "Et convidem a completar el teu qüestionari <strong>DISC GESEM</strong>. Hem creat un compte per a tu; accedeix amb aquestes dades per començar:",
+        correo: "Correu:",
+        pwd: "Contrasenya:",
+        pwWith: "Pots canviar aquesta contrasenya quan vulguis amb l'enllaç de sota.",
+        pwWithout: "Fes servir la teva contrasenya actual. Si no la recordes, pots crear-ne una de nova.",
+        loginBtn: "Accedir al meu compte",
+        onboardingTitle: "Abans de començar",
+        onboarding: [
+          "És un qüestionari d'estils conductuals (DISC): no hi ha respostes correctes ni incorrectes.",
+          "Durada: uns 10–15 minuts, millor del tiró i sense interrupcions.",
+          "Confidencial: els teus resultats només els veu el teu facilitador/a.",
+          "Respon amb sinceritat, pensant en com ets habitualment.",
+          "En acabar veuràs el teu perfil; el treballareu a la sessió.",
+        ],
+        expiry: "Aquest accés caduca d'aquí a 30 dies.",
+        changePwd: "Canviar la meva contrasenya →",
+        fallback: "Si els botons no funcionen, copia aquests enllaços:",
+        fAccess: "Accés:",
+        fChange: "Canviar contrasenya:",
+        tPwd: "Contrasenya temporal:",
+      }
+    : {
+        subject: "Tu acceso a DISC GESEM",
+        shellTitle: "Tu cuenta DISC GESEM",
+        hello: first ? `Hola ${first},` : "Hola,",
+        intro:
+          "Te invitamos a completar tu cuestionario <strong>DISC GESEM</strong>. Hemos creado una cuenta para ti; accede con estos datos para empezar:",
+        correo: "Correo:",
+        pwd: "Contraseña:",
+        pwWith: "Puedes cambiar esta contraseña cuando quieras con el enlace de abajo.",
+        pwWithout: "Usa tu contraseña actual. Si no la recuerdas, puedes crear una nueva.",
+        loginBtn: "Acceder a mi cuenta",
+        onboardingTitle: "Antes de empezar",
+        onboarding: [
+          "Es un cuestionario de estilos conductuales (DISC): no hay respuestas correctas ni incorrectas.",
+          "Duración: unos 10–15 minutos, mejor del tirón y sin interrupciones.",
+          "Confidencial: tus resultados solo los ve tu facilitador/a.",
+          "Responde con sinceridad, pensando en cómo eres habitualmente.",
+          "Al terminar verás tu perfil; lo trabajaréis en la sesión.",
+        ],
+        expiry: "Este acceso caduca dentro de 30 días.",
+        changePwd: "Cambiar mi contraseña →",
+        fallback: "Si los botones no funcionan, copia estos enlaces:",
+        fAccess: "Acceso:",
+        fChange: "Cambiar contraseña:",
+        tPwd: "Contraseña temporal:",
+      };
+
   // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
   // un clic en los clientes que lo soportan (resto: triple clic).
   const val = (v: string) =>
@@ -52,46 +128,51 @@ export function invitationEmail(input: {
     </tr>`;
   const creds = `
     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-      ${row("Correo:", input.accountEmail)}
-      ${input.password ? row("Contraseña:", input.password) : ""}
+      ${row(T.correo, input.accountEmail)}
+      ${input.password ? row(T.pwd, input.password) : ""}
     </table>`;
-  const passwordNote = input.password
-    ? `Puedes cambiar esta contraseña cuando quieras con el enlace de abajo.`
-    : `Usa tu contraseña actual. Si no la recuerdas, puedes crear una nueva.`;
+  const onboarding = T.onboarding
+    .map(
+      (x) =>
+        `<li style="margin:0 0 6px;list-style:none;color:#475569;font-size:13px;line-height:1.5;">• ${x}</li>`,
+    )
+    .join("");
 
   const body = `
-    <p style="margin:0 0 12px;">Hola ${first},</p>
-    <p style="margin:0 0 16px;line-height:1.6;color:#475569;">
-      Te invitamos a completar tu cuestionario <strong>DISC GESEM</strong>. Hemos
-      creado una cuenta para ti; accede con estos datos para empezar:
-    </p>
+    <p style="margin:0 0 12px;">${T.hello}</p>
+    <p style="margin:0 0 16px;line-height:1.6;color:#475569;">${T.intro}</p>
     <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
       ${creds}
     </div>
-    <p style="margin:0 0 20px;color:#64748b;font-size:13px;line-height:1.5;">${passwordNote}</p>
-    <p style="margin:0 0 12px;">
+    <p style="margin:0 0 18px;color:#64748b;font-size:13px;line-height:1.5;">${input.password ? T.pwWith : T.pwWithout}</p>
+    <p style="margin:0 0 20px;">
       <a href="${input.loginUrl}" style="display:inline-block;background-color:${BRAND};color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:9999px;">
-        Acceder a mi cuenta
+        ${T.loginBtn}
       </a>
     </p>
+    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
+      <div style="font-size:13px;font-weight:800;color:#075985;margin:0 0 8px;">${T.onboardingTitle}</div>
+      <ul style="margin:0;padding:0;">${onboarding}</ul>
+    </div>
+    <p style="margin:0 0 20px;color:#94a3b8;font-size:12px;">${T.expiry}</p>
     <p style="margin:0 0 20px;font-size:14px;">
-      <a href="${input.setPasswordUrl}" style="color:${BRAND};font-weight:600;text-decoration:none;">Cambiar mi contraseña →</a>
+      <a href="${input.setPasswordUrl}" style="color:${BRAND};font-weight:600;text-decoration:none;">${T.changePwd}</a>
     </p>
     <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;word-break:break-all;">
-      Si los botones no funcionan, copia estos enlaces:<br/>
-      Acceso: ${input.loginUrl}<br/>
-      Cambiar contraseña: ${input.setPasswordUrl}
+      ${T.fallback}<br/>
+      ${T.fAccess} ${input.loginUrl}<br/>
+      ${T.fChange} ${input.setPasswordUrl}
     </p>`;
   const textLines = [
-    `Hola ${first}, te invitamos a completar tu cuestionario DISC GESEM.`,
-    `Correo: ${input.accountEmail}`,
-    input.password ? `Contraseña temporal: ${input.password}` : "",
-    `Acceder: ${input.loginUrl}`,
-    `Cambiar contraseña: ${input.setPasswordUrl}`,
+    `${T.hello} ${T.intro.replace(/<[^>]+>/g, "")}`,
+    `${T.correo} ${input.accountEmail}`,
+    input.password ? `${T.tPwd} ${input.password}` : "",
+    `${T.fAccess} ${input.loginUrl}`,
+    `${T.fChange} ${input.setPasswordUrl}`,
   ].filter(Boolean);
   return {
-    subject: "Tu acceso a DISC GESEM",
-    html: shell("Tu cuenta DISC GESEM", body),
+    subject: T.subject,
+    html: shell(T.shellTitle, body, lang),
     text: textLines.join("\n"),
   };
 }
@@ -242,7 +323,7 @@ export function reportEmail(input: {
 
   return {
     subject: `Tu informe DISC GESEM · ${narrative.resourceHeadline}`,
-    html: shell("Tu informe DISC GESEM", body),
+    html: shell("Tu informe DISC GESEM", body, "es"),
     text: `Hola ${first}, tu informe DISC GESEM destaca recursos orientados a ${narrative.resourceHeadline} (${narrative.title}). EQ ${result.eq}.`,
   };
 }
