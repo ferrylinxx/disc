@@ -18,8 +18,13 @@ export const metadata: Metadata = {
  * Evaluación del participante autenticado. Resuelve su invitación (la más
  * reciente de su cuenta) y entrega el cuestionario o el informe. Requiere login.
  */
-export default async function EvaluacionPage() {
+export default async function EvaluacionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ print?: string }>;
+}) {
   const session = await requireAuth();
+  const { print } = await searchParams;
   const lang = await getLang();
   const d = getDict(lang);
 
@@ -55,6 +60,7 @@ export default async function EvaluacionPage() {
       draft={(invitation.draft as DraftState | null) ?? null}
       participantName={participant.fullName}
       lang={lang}
+      autoPrint={print === "1"}
     />
   );
 }

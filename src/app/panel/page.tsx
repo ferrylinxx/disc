@@ -10,7 +10,10 @@ import { buildProfileNarrativeDb } from "@/lib/narratives/library";
 import { resolveEqBand } from "@/lib/narratives/disc-gesem.narratives";
 import { intensityLabel } from "@/lib/narratives/disc-gesem.catalog";
 import { discGrad, discGradStops } from "@/lib/disc-gradient";
+import { logout } from "@/app/actions/auth";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+import { EditNameForm, DeleteAccount } from "@/components/PanelClient";
 
 export const metadata: Metadata = { title: "Tu espacio · DISC GESEM" };
 
@@ -41,12 +44,25 @@ export default async function PanelPage() {
         take: 1,
         select: { token: true },
       },
+      results: {
+        orderBy: { computedAt: "desc" },
+        take: 1,
+        select: { computedAt: true },
+      },
     },
   });
 
   const name = participant?.fullName ?? session.name ?? session.email;
   const token = participant?.invitations[0]?.token;
   const completed = participant?.status === "COMPLETED" && Boolean(token);
+  const completedOn = participant?.results[0]?.computedAt;
+  const completedOnStr = completedOn
+    ? completedOn.toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   const rich = completed && token ? await participantReportByToken(token) : null;
   const result = rich?.result ?? null;
@@ -74,8 +90,49 @@ export default async function PanelPage() {
     { label: t.team, value: participant?.team?.name ?? t.none },
   ];
 
+  const accountCard = (
+    <Card title={t.accountTitle}>
+      <dl className="space-y-3 text-sm">
+        {accountRows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between gap-3">
+            <dt className="text-slate-400">{r.label}</dt>
+            <dd className="truncate text-right font-semibold text-slate-800">
+              {r.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          {t.editName}
+        </p>
+        <EditNameForm
+          defaultName={name}
+          labels={{
+            placeholder: t.namePlaceholder,
+            save: t.saveName,
+            saved: t.nameSaved,
+          }}
+        />
+      </div>
+    </Card>
+  );
+
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
+      {/* Barra: idioma + cerrar sesión */}
+      <div className="animate-fade-up mb-4 flex items-center justify-end gap-2">
+        <LanguageSwitcher lang={lang} />
+        <form action={logout}>
+          <button
+            type="submit"
+            className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+          >
+            {t.logout}
+          </button>
+        </form>
+      </div>
+
       {/* Hero */}
       <section
         className="animate-fade-up relative overflow-hidden rounded-3xl p-7 text-white shadow-xl sm:p-9"
@@ -115,6 +172,7 @@ export default async function PanelPage() {
                 {completed && (
                   <span className="rounded-full bg-white/25 px-3 py-1 font-semibold backdrop-blur">
                     ✓ {t.completedBadge}
+                    {completedOnStr ? ` · ${t.completedOn} ${completedOnStr}` : ""}
                   </span>
                 )}
               </div>
@@ -249,46 +307,30 @@ export default async function PanelPage() {
 
               {/* Acciones */}
               <Card title={t.actionsTitle}>
-                <Link
-                  href="/evaluacion"
-                  className="bg-brand flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5"
-                >
-                  {t.viewReport} →
-                </Link>
+                <div className="space-y-2">
+                  <Link
+                    href="/evaluacion"
+                    className="bg-brand flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5"
+                  >
+                    {t.viewReport} →
+                  </Link>
+                  <Link
+                    href="/evaluacion?print=1"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    ↓ {t.downloadPdf}
+                  </Link>
+                </div>
               </Card>
 
               {/* Cuenta */}
-              <Card title={t.accountTitle}>
-                <dl className="space-y-3 text-sm">
-                  {accountRows.map((r) => (
-                    <div key={r.label} className="flex items-center justify-between gap-3">
-                      <dt className="text-slate-400">{r.label}</dt>
-                      <dd className="truncate text-right font-semibold text-slate-800">
-                        {r.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </Card>
+              {accountCard}
             </div>
           </div>
         </>
       ) : (
         // Sin completar: solo cuenta
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          <Card title={t.accountTitle}>
-            <dl className="space-y-3 text-sm">
-              {accountRows.map((r) => (
-                <div key={r.label} className="flex items-center justify-between gap-3">
-                  <dt className="text-slate-400">{r.label}</dt>
-                  <dd className="truncate text-right font-semibold text-slate-800">
-                    {r.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </Card>
-        </div>
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">{accountCard}</div>
       )}
 
       {/* Seguridad */}
@@ -302,6 +344,30 @@ export default async function PanelPage() {
               saved: t.saved,
             }}
           />
+        </Card>
+      </div>
+
+      {/* Privacidad (RGPD) */}
+      <div className="mt-5">
+        <Card title={t.privacyTitle} hint={t.privacyHint}>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href="/api/mis-datos"
+              download
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            >
+              ↓ {t.downloadData}
+            </a>
+            <DeleteAccount
+              labels={{
+                button: t.deleteButton,
+                confirmPlaceholder: t.deleteConfirmPlaceholder,
+                confirmWord: "ELIMINAR",
+                cancel: t.deleteCancel,
+                warning: t.deleteWarning,
+              }}
+            />
+          </div>
         </Card>
       </div>
 

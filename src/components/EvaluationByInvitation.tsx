@@ -5,6 +5,7 @@ import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/lib
 import { Questionnaire, type DraftState } from "@/components/Questionnaire";
 import { Report } from "@/components/Report";
 import { PrintButton } from "@/components/PrintButton";
+import { AutoPrint } from "@/components/PanelClient";
 import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 
 /** Aviso a pantalla completa con vuelta al inicio. */
@@ -40,6 +41,8 @@ interface Props {
   draft: DraftState | null;
   participantName: string;
   lang: Lang;
+  /** Abre el diálogo de impresión automáticamente al mostrar el informe. */
+  autoPrint?: boolean;
 }
 
 /**
@@ -54,6 +57,7 @@ export async function EvaluationByInvitation({
   draft,
   participantName,
   lang,
+  autoPrint = false,
 }: Props) {
   const d = getDict(lang);
 
@@ -78,6 +82,7 @@ export async function EvaluationByInvitation({
     );
     return (
       <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+        {autoPrint && <AutoPrint />}
         <div className="animate-fade-up mb-6 flex flex-col items-center text-center">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
             ✓

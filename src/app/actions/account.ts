@@ -2,8 +2,10 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/dal";
+import { deleteSession } from "@/lib/auth/session";
 import { consumePasswordSetToken, hashPassword } from "@/lib/auth/password";
 
 export interface SetPasswordState {
@@ -90,4 +92,64 @@ export async function changeOwnPassword(
     data: { passwordHash },
   });
   return { ok: true };
+}
+
+export interface UpdateNameState {
+  error?: string;
+  ok?: boolean;
+}
+
+const NameSchema = z.object({
+  name: z.string().min(2, { error: "El nombre es demasiado corto." }).trim(),
+});
+
+/** Actualiza el nombre del usuario autenticado (y sus fichas de participante). */
+export async function updateOwnName(
+  _state: UpdateNameState,
+  formData: FormData,
+): Promise<UpdateNameState> {
+  const session = await requireAuth();
+  const parsed = NameSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Revisa el nombre." };
+  }
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: { name: parsed.data.name },
+  });
+  await prisma.participant.updateMany({
+    where: { userId: session.userId },
+    data: { fullName: parsed.data.name },
+  });
+  revalidatePath("/panel");
+  return { ok: true };
+}
+
+export interface DeleteAccountState {
+  error?: string;
+}
+
+/**
+ * Borra la cuenta del usuario autenticado y todos sus datos de participante
+ * (RGPD: derecho de supresión). Requiere confirmación escrita. Protege las
+ * cuentas SUPERADMIN. Al terminar cierra sesión y vuelve al inicio.
+ */
+export async function deleteOwnAccount(
+  _state: DeleteAccountState,
+  formData: FormData,
+): Promise<DeleteAccountState> {
+  const session = await requireAuth();
+  if (session.globalRole === "SUPERADMIN") {
+    return { error: "Las cuentas de administrador no se pueden eliminar aquí." };
+  }
+  const confirm = String(formData.get("confirm") ?? "").trim();
+  if (confirm !== "ELIMINAR") {
+    return { error: "Escribe ELIMINAR para confirmar." };
+  }
+  // Borra fichas de participante (cascada: resultados, respuestas, invitaciones)
+  // y luego la cuenta (cascada: membresías, cuentas OAuth, sesiones).
+  await prisma.participant.deleteMany({ where: { userId: session.userId } });
+  await prisma.user.delete({ where: { id: session.userId } }).catch(() => {});
+  await deleteSession();
+  redirect("/");
 }
