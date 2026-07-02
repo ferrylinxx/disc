@@ -83,7 +83,7 @@ export function invitationEmail(input: {
         onboardingTitle: "Abans de començar",
         onboarding: [
           "És un qüestionari d'estils conductuals (DISC): no hi ha respostes correctes ni incorrectes.",
-          "Durada: uns 10–15 minuts, millor del tiró i sense interrupcions.",
+          "Durada: uns 10–15 minuts, millor d'una tirada i sense interrupcions.",
           "Confidencial: els teus resultats només els veu el teu facilitador/a.",
           "Respon amb sinceritat, pensant en com ets habitualment.",
           "En acabar veuràs el teu perfil; el treballareu a la sessió.",
@@ -111,7 +111,7 @@ export function invitationEmail(input: {
         onboardingTitle: "Antes de empezar",
         onboarding: [
           "Es un cuestionario de estilos conductuales (DISC): no hay respuestas correctas ni incorrectas.",
-          "Duración: unos 10–15 minutos, mejor del tirón y sin interrupciones.",
+          "Duración: unos 10–15 minutos, mejor de una vez y sin interrupciones.",
           "Confidencial: tus resultados solo los ve tu facilitador/a.",
           "Responde con sinceridad, pensando en cómo eres habitualmente.",
           "Al terminar verás tu perfil; lo trabajaréis en la sesión.",
