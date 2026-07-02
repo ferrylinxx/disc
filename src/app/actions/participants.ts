@@ -21,21 +21,12 @@ function assertOrgAccess(session: SessionPayload, orgId: string): boolean {
 }
 
 /**
- * (Re)genera la contraseña de una cuenta de participante y devuelve la nueva en
- * claro para incluirla en el email. Protege las cuentas de staff (SUPERADMIN o
- * con membresías): NO les toca la contraseña y devuelve undefined.
+ * (Re)genera la contraseña de una cuenta y devuelve la nueva en claro para
+ * incluirla en el email. Se aplica siempre: cada invitación/reenvío entrega
+ * credenciales válidas, así que nadie queda bloqueado (la contraseña va en el
+ * correo). El usuario puede cambiarla después con el enlace del email.
  */
-async function issueParticipantPassword(
-  userId: string,
-): Promise<string | undefined> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { globalRole: true, _count: { select: { memberships: true } } },
-  });
-  if (!user) return undefined;
-  if (user.globalRole === "SUPERADMIN" || user._count.memberships > 0) {
-    return undefined; // cuenta de staff: no se resetea
-  }
+async function issueParticipantPassword(userId: string): Promise<string> {
   const tempPassword = randomPassword();
   await prisma.user.update({
     where: { id: userId },
@@ -45,16 +36,14 @@ async function issueParticipantPassword(
 }
 
 /**
- * Garantiza una cuenta de usuario para el participante. Si el email ya tiene
- * cuenta de participante, le genera una contraseña nueva (para enviarla en el
- * email); si es cuenta de staff, la reutiliza sin tocarla. Si no existe, la crea
- * con contraseña aleatoria y rol USER. Devuelve el userId y la contraseña en
- * claro cuando corresponde.
+ * Garantiza una cuenta de usuario para el participante y devuelve una contraseña
+ * en claro para el email. Si el email ya tiene cuenta, le genera una contraseña
+ * nueva; si no, la crea con contraseña aleatoria y rol USER.
  */
 async function ensureParticipantAccount(
   email: string,
   fullName: string,
-): Promise<{ userId: string; tempPassword?: string }> {
+): Promise<{ userId: string; tempPassword: string }> {
   const existing = await prisma.user.findUnique({
     where: { email },
     select: { id: true },
