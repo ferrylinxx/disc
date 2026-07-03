@@ -7,7 +7,7 @@ import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
 import { getActiveInstrument } from "@/lib/instruments";
 import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import { reportEmail } from "@/lib/email/templates";
-import { isMailConfigured, sendMail } from "@/lib/email/mailer";
+import { absoluteUrl, isMailConfigured, sendMail } from "@/lib/email/mailer";
 import type { ActionState } from "./org";
 
 /** IDs de organización autorizados para la sesión (SUPERADMIN ve todas). */
@@ -48,6 +48,9 @@ export async function sendParticipantReport(
     def,
     narrative,
     blocks,
+    reportUrl: absoluteUrl(
+      `/login?next=/evaluacion&email=${encodeURIComponent(data.participant.email)}`,
+    ),
   });
   try {
     await sendMail({
