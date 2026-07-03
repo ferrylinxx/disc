@@ -92,6 +92,20 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
       : t.interpDiff(styleShort(pub), styleShort(priv), styleShort(result.primaryDimension));
   })();
 
+  // "Tu combinación personal" (#10): datos que varían por persona aunque el
+  // código de perfil coincida (recurso principal/apoyo, intensidad, EQ).
+  const shareOf = (code: string) =>
+    Math.round(result.percentages.find((p) => p.dimensionCode === code)?.share ?? 0);
+  const pStyle = styleShort(result.primaryDimension);
+  const sStyle = styleShort(result.secondaryDimension);
+  const nuanceGap = Math.max(0, shareOf(result.primaryDimension) - shareOf(result.secondaryDimension));
+  const nuanceTiles = [
+    { label: t.primaryLabel, value: pStyle, color: pColor },
+    ...(result.isEq ? [] : [{ label: t.secondaryLabel, value: sStyle, color: sColor }]),
+    { label: t.intensity, value: intensityLabel(result.intensity), color: "#475569" },
+    { label: t.eq, value: `${result.eq} · ${eqBand.label}`, color: "#00a1e0" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Página 1 — Portada */}
@@ -164,6 +178,19 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             </div>
           ))}
         </div>
+        <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            {t.howGeneratedTitle}
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {t.howGenerated.map((h) => (
+              <li key={h} className="flex gap-2 text-sm leading-relaxed text-slate-600">
+                <span className="text-sky-400">•</span>
+                <span>{h}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <ReadingIndex title={t.readingIndexTitle} items={t.index} />
       </section>
 
@@ -211,6 +238,31 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
       {/* Cierre común del bloque "Tendencia predominante" (Entregable 10) */}
       <p className="px-1 text-xs leading-relaxed text-slate-400">{t.tendencyClose}</p>
 
+      {/* Tu combinación personal — matices que varían por persona (#10) */}
+      <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          {t.nuanceTitle}
+        </h3>
+        <p className="mt-2 text-sm text-slate-600">{t.nuanceLead}</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {nuanceTiles.map((tile) => (
+            <div key={tile.label} className="rounded-xl border border-slate-100 bg-white px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {tile.label}
+              </div>
+              <div className="mt-1 text-base font-bold leading-tight" style={{ color: tile.color }}>
+                {tile.value}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          {result.isEq || nuanceGap < 3
+            ? t.nuanceBalanced
+            : t.nuanceGap(pStyle, sStyle, nuanceGap)}
+        </p>
+      </section>
+
       {/* Tu posición dentro del modelo DISC (cuadrícula clásica + intensidad) */}
       <section id="r-posicion" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
@@ -221,6 +273,25 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
         </div>
         {graphs ? (
           <div className="mt-4">
+            {/* Explicación de las tres lecturas antes del gráfico (#2) */}
+            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {t.graphsHow}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {[
+                  { n: t.graphPublic, d: t.graphPublicDesc, s: t.graphPublicSrc, c: "#0ea5e9" },
+                  { n: t.graphPrivate, d: t.graphPrivateDesc, s: t.graphPrivateSrc, c: "#f59e0b" },
+                  { n: t.graphMirror, d: t.graphMirrorDesc, s: t.graphMirrorSrc, c: "#10b981" },
+                ].map((r) => (
+                  <li key={r.n} className="text-sm leading-relaxed text-slate-600">
+                    <span className="font-bold" style={{ color: r.c }}>{r.n}:</span> {r.d}{" "}
+                    <span className="text-slate-400">({r.s})</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs font-medium text-slate-500">{t.graphsNotThree}</p>
+            </div>
             <PositionBars
               lead={t.graphsLead}
               interp={interpText}

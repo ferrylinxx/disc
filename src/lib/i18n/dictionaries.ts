@@ -176,6 +176,28 @@ const es = {
       `Te muestras y actúas de forma parecida: tu estilo ${style} aparece tanto de cara a los demás como en tu forma más instintiva.`,
     interpDiff: (pub: string, priv: string, perc: string) =>
       `De cara a los demás sueles apoyarte más en ${pub}; tu estilo más instintivo, bajo presión, tiende a ${priv}. Tu resultado integrado se apoya sobre todo en ${perc}.`,
+    howGeneratedTitle: "Cómo se genera tu resultado",
+    howGenerated: [
+      "Se calcula a partir del patrón global de todas tus respuestas.",
+      "El sistema identifica la combinación de recursos que predomina.",
+      "Describe tendencias de comportamiento, no etiquetas permanentes.",
+      "Es un punto de partida para el autoconocimiento y el desarrollo.",
+    ],
+    graphsHow: "Cómo se construye cada lectura:",
+    graphPublicSrc: "a partir de tus elecciones «Más».",
+    graphPrivateSrc: "a partir de tus elecciones «Menos».",
+    graphMirrorSrc: "de la integración de ambas.",
+    graphsNotThree:
+      "No son tres personalidades distintas: son tres perspectivas del mismo estilo.",
+    nuanceTitle: "Tu combinación personal",
+    nuanceLead:
+      "Aunque compartas código de perfil con otras personas, tu combinación de matices es propia:",
+    primaryLabel: "Recurso principal",
+    secondaryLabel: "Recurso de apoyo",
+    nuanceGap: (a: string, b: string, n: number) =>
+      `Tu recurso principal (${a}) destaca ${n} puntos sobre el de apoyo (${b}).`,
+    nuanceBalanced:
+      "Tus recursos están muy equilibrados, sin una diferencia marcada entre ellos.",
     index: [
       "Tu posición dentro del modelo DISC",
       "Recursos predominantes",
@@ -552,6 +574,28 @@ const ca: typeof es = {
       `Et mostres i actues de manera semblant: el teu estil ${style} apareix tant de cara als altres com en la teva forma més instintiva.`,
     interpDiff: (pub: string, priv: string, perc: string) =>
       `De cara als altres sols recolzar-te més en ${pub}; el teu estil més instintiu, sota pressió, tendeix a ${priv}. El teu resultat integrat es recolza sobretot en ${perc}.`,
+    howGeneratedTitle: "Com es genera el teu resultat",
+    howGenerated: [
+      "Es calcula a partir del patró global de totes les teves respostes.",
+      "El sistema identifica la combinació de recursos que predomina.",
+      "Descriu tendències de comportament, no etiquetes permanents.",
+      "És un punt de partida per a l'autoconeixement i el desenvolupament.",
+    ],
+    graphsHow: "Com es construeix cada lectura:",
+    graphPublicSrc: "a partir de les teves eleccions «Més».",
+    graphPrivateSrc: "a partir de les teves eleccions «Menys».",
+    graphMirrorSrc: "de la integració de totes dues.",
+    graphsNotThree:
+      "No són tres personalitats diferents: són tres perspectives del mateix estil.",
+    nuanceTitle: "La teva combinació personal",
+    nuanceLead:
+      "Encara que comparteixis codi de perfil amb altres persones, la teva combinació de matisos és pròpia:",
+    primaryLabel: "Recurs principal",
+    secondaryLabel: "Recurs de suport",
+    nuanceGap: (a: string, b: string, n: number) =>
+      `El teu recurs principal (${a}) destaca ${n} punts sobre el de suport (${b}).`,
+    nuanceBalanced:
+      "Els teus recursos estan molt equilibrats, sense una diferència marcada entre ells.",
     index: [
       "La teva posició dins del model DISC",
       "Recursos predominants",
