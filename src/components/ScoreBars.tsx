@@ -1,5 +1,5 @@
 import type { DimensionScore, Dimension } from "@/lib/engine/types";
-import { discGrad } from "@/lib/disc-gradient";
+import { discGrad, discGradStrong } from "@/lib/disc-gradient";
 
 interface Props {
   scores: DimensionScore[];
@@ -31,7 +31,7 @@ export function ScoreBars({ scores, compact }: Props) {
               className="animate-fade-up h-full rounded-full"
               style={{
                 width: `${s.percent}%`,
-                backgroundImage: discGrad(s.dimensionCode, 90),
+                backgroundImage: discGradStrong(s.dimensionCode, 90),
                 animationDelay: `${i * 90}ms`,
               }}
             />

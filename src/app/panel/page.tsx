@@ -7,7 +7,7 @@ import { participantReportByToken } from "@/lib/data/dashboard";
 import { buildProfileNarrativeDb } from "@/lib/narratives/library";
 import { resolveEqBand } from "@/lib/narratives/disc-gesem.narratives";
 import { intensityLabel } from "@/lib/narratives/disc-gesem.catalog";
-import { discGrad, discGradStops } from "@/lib/disc-gradient";
+import { discGradStrong, discGradStops } from "@/lib/disc-gradient";
 import { panelParticipant } from "@/lib/data/panel";
 import { Card, Tile, Blurb } from "@/components/PanelUI";
 
@@ -182,7 +182,7 @@ export default async function PanelOverviewPage() {
                             className="h-full rounded-full"
                             style={{
                               width: `${share}%`,
-                              backgroundImage: discGrad(dim.code, 90),
+                              backgroundImage: discGradStrong(dim.code, 90),
                             }}
                           />
                         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { discGrad } from "@/lib/disc-gradient";
+import { discGrad, discGradStrong } from "@/lib/disc-gradient";
 import type { DimensionShare } from "@/lib/engine/types";
 
 type Key = "publico" | "privado" | "percibido";
@@ -67,7 +67,7 @@ export function PositionBars({ readings, labels, dims, lead, interp }: Props) {
               <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(0, v))}%`, backgroundImage: discGrad(d.code, 90) }}
+                  style={{ width: `${Math.min(100, Math.max(0, v))}%`, backgroundImage: discGradStrong(d.code, 90) }}
                 />
               </div>
               <span className="w-9 text-right text-xs font-bold text-slate-700">{v}%</span>
