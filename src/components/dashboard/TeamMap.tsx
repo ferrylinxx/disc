@@ -481,7 +481,7 @@ function TeamDiscGrid({
   return (
     <div className="flex justify-center">
       <svg
-        viewBox="-30 -26 260 252"
+        viewBox="-6 -6 212 212"
         className="h-80 w-80 max-w-full"
         role="img"
         aria-label="Mapa conductual del equipo (cuadrantes DISC)"
@@ -540,19 +540,6 @@ function TeamDiscGrid({
           </g>
         ))}
 
-        {/* Rótulos de ejes */}
-        <text x="100" y="-12" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">
-          Orientado a tareas
-        </text>
-        <text x="100" y="214" textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" className="uppercase">
-          Orientado a personas
-        </text>
-        <text transform="translate(-16,100) rotate(-90)" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">
-          Indirecto · ritmo lento
-        </text>
-        <text transform="translate(216,100) rotate(90)" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">
-          Directo · ritmo rápido
-        </text>
 
         {/* Personas (numeradas; ver leyenda) */}
         {spread.map((p) => (

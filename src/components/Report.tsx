@@ -823,22 +823,12 @@ function DiscMap({
   return (
     <div className="mx-auto max-w-[300px]">
       <p className={`mb-1 text-center ${axisCls}`}>{t.axisTop}</p>
-      <div className="flex items-center gap-1.5">
-        <p className={`shrink-0 [writing-mode:vertical-rl] rotate-180 ${axisCls}`}>
-          {t.axisLeft}
-        </p>
-        <div className="min-w-0 flex-1">
-          <DiscGrid
-            shares={shares}
-            markerCode={markerCode}
-            gid={gid}
-            label={(code) => t.dimensionItems[code]?.recurso ?? code}
-          />
-        </div>
-        <p className={`shrink-0 [writing-mode:vertical-rl] ${axisCls}`}>
-          {t.axisRight}
-        </p>
-      </div>
+      <DiscGrid
+        shares={shares}
+        markerCode={markerCode}
+        gid={gid}
+        label={(code) => t.dimensionItems[code]?.recurso ?? code}
+      />
       <p className={`mt-1 text-center ${axisCls}`}>{t.axisBottom}</p>
     </div>
   );
