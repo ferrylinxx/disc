@@ -20,10 +20,16 @@ export default async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = await decryptSession(token);
 
-  // Usuario autenticado que visita /login → llevar a su panel.
+  // Usuario autenticado que visita /login → respeta ?next (p. ej. el enlace de
+  // invitación lleva next=/evaluacion) y, si no, va a su panel por rol. Evita
+  // que un admin invitado a hacer el test acabe en /admin.
   if (pathname === "/login" && session) {
     const url = req.nextUrl.clone();
-    url.pathname = homePathForRole(primaryRole(session));
+    const next = req.nextUrl.searchParams.get("next");
+    const safeNext =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+    url.pathname = safeNext ?? homePathForRole(primaryRole(session));
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
