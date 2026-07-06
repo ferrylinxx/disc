@@ -275,6 +275,16 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             {t.posicion}
           </h3>
         </div>
+        {/* Esquema del cuadrante DISC + cómo leerlo (doc1 #5) */}
+        <p className="mt-2 text-sm text-slate-500">{t.mapIntro}</p>
+        <div className="mt-3">
+          <DiscMap
+            gid="pos"
+            shares={result.percentages}
+            markerCode={result.primaryDimension}
+            t={t}
+          />
+        </div>
         {graphs ? (
           <div className="mt-4">
             {/* Explicación de las tres lecturas antes del gráfico (#2) */}
@@ -311,14 +321,11 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             />
           </div>
         ) : (
-          <div className="mt-4 grid items-center gap-6 lg:grid-cols-2">
-            <DiscGrid gid="mir" shares={result.percentages} markerCode={result.primaryDimension} />
-            <div>
-              <p className="mb-3 text-xs font-medium text-slate-400">
-                {t.posicionCaption}
-              </p>
-              <ScoreBars scores={result.global} dimensions={def.dimensions} />
-            </div>
+          <div className="mt-6">
+            <p className="mb-3 text-xs font-medium text-slate-400">
+              {t.posicionCaption}
+            </p>
+            <ScoreBars scores={result.global} dimensions={def.dimensions} />
           </div>
         )}
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
@@ -557,6 +564,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             {t.repertorio}
           </h3>
         </div>
+        <p className="mt-2 text-sm text-slate-500">{t.repertorioLead}</p>
         {b.ampliacion ? (
           <div className="mt-2">
             <Prose text={b.ampliacion} tone="sky" />
@@ -606,6 +614,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             {t.reflexion}
           </h3>
         </div>
+        <p className="mt-2 text-sm leading-relaxed text-white/70">{t.reflexionLead}</p>
         <ol className="mt-3 space-y-3">
           {narrative.reflection.map((q, i) => (
             <li key={q} className="flex gap-3 text-base font-medium leading-relaxed">
@@ -743,6 +752,39 @@ function DiscGrid({
         <circle cx={cx} cy={cy} r="9" fill={`url(#${gid}-${marker})`} />
         <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
       </svg>
+    </div>
+  );
+}
+
+/** Cuadrante DISC (esquema con ejes) + marcador de posición del participante. */
+function DiscMap({
+  shares,
+  markerCode,
+  gid,
+  t,
+}: {
+  shares: DimensionShare[];
+  markerCode?: string;
+  gid: string;
+  t: Dict["report"];
+}) {
+  const axisCls =
+    "text-[10px] font-bold uppercase tracking-wide text-slate-400";
+  return (
+    <div className="mx-auto max-w-[300px]">
+      <p className={`mb-1 text-center ${axisCls}`}>{t.axisTop}</p>
+      <div className="flex items-center gap-1.5">
+        <p className={`shrink-0 [writing-mode:vertical-rl] rotate-180 ${axisCls}`}>
+          {t.axisLeft}
+        </p>
+        <div className="min-w-0 flex-1">
+          <DiscGrid shares={shares} markerCode={markerCode} gid={gid} />
+        </div>
+        <p className={`shrink-0 [writing-mode:vertical-rl] ${axisCls}`}>
+          {t.axisRight}
+        </p>
+      </div>
+      <p className={`mt-1 text-center ${axisCls}`}>{t.axisBottom}</p>
     </div>
   );
 }

@@ -156,8 +156,14 @@ const es = {
     contextosCaption: "Recurso que sueles activar en cada situación, según tus respuestas:",
     contextosHeatmap: "Intensidad de cada recurso por situación:",
     repertorio: "Ampliación de repertorio",
+    repertorioLead:
+      "Recursos menos habituales que puedes desarrollar para responder con más flexibilidad en distintas situaciones:",
     eq: "Equilibrio entre recursos (EQ)",
     reflexion: "Preguntas para la reflexión",
+    reflexionLead:
+      "Preguntas para llevarte a la conversación y trabajar en la sesión; no tienen respuesta correcta.",
+    mapIntro:
+      "El mapa sitúa los cuatro recursos en dos ejes: arriba/abajo (activo ↔ reflexivo) e izquierda/derecha (orientado a tareas ↔ a personas). Tu punto refleja la mezcla de tus recursos.",
     closing:
       "El autoconocimiento es el punto de partida. La comprensión mutua es el puente. La adaptación consciente es la competencia. La colaboración eficaz es el resultado.",
     methodNote:
@@ -570,8 +576,14 @@ const ca: typeof es = {
     contextosCaption: "Recurs que sols activar en cada situació, segons les teves respostes:",
     contextosHeatmap: "Intensitat de cada recurs per situació:",
     repertorio: "Ampliació del repertori",
+    repertorioLead:
+      "Recursos menys habituals que pots desenvolupar per respondre amb més flexibilitat en diferents situacions:",
     eq: "Equilibri entre recursos (EQ)",
     reflexion: "Preguntes per a la reflexió",
+    reflexionLead:
+      "Preguntes per endur-te a la conversa i treballar a la sessió; no tenen resposta correcta.",
+    mapIntro:
+      "El mapa situa els quatre recursos en dos eixos: amunt/avall (actiu ↔ reflexiu) i esquerra/dreta (orientat a tasques ↔ a persones). El teu punt reflecteix la barreja dels teus recursos.",
     closing:
       "L'autoconeixement és el punt de partida. La comprensió mútua és el pont. L'adaptació conscient és la competència. La col·laboració eficaç és el resultat.",
     methodNote:
