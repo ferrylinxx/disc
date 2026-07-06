@@ -127,6 +127,7 @@ const es = {
     intModerada: "Moderada",
     intDefinida: "Definida",
     intMuyDefinida: "Muy definida",
+    intAdaptable: "Adaptable",
     adaptableNote:
       "Perfil adaptable: repartes tu energía entre varios recursos, sin una tendencia marcada.",
     posicionNote:
@@ -556,6 +557,7 @@ const ca: typeof es = {
     intModerada: "Moderada",
     intDefinida: "Definida",
     intMuyDefinida: "Molt definida",
+    intAdaptable: "Adaptable",
     adaptableNote:
       "Perfil adaptable: reparteixes la teva energia entre diversos recursos, sense una tendència marcada.",
     posicionNote:

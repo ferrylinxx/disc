@@ -1,6 +1,6 @@
 import type { InstrumentDefinition, ScoringResult, DiscGraphs, DimensionShare } from "@/lib/engine/types";
 import { resolveEqBand } from "@/lib/narratives/disc-gesem.narratives";
-import { intensityLabel, styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
 import {
   buildProfileNarrative,
   contextLeaders,
@@ -73,7 +73,19 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
   // Color base de cada dimensión = primera parada del degradado DISC oficial,
   // para que toda la paleta del informe sea consistente con los degradados.
   const dimColor = (code: string) => discGradStops(code)[0];
-  const eqBand = resolveEqBand(result.eq);
+  // Nombre de recurso (Impulsar/Conectar…) e intensidad, desde el diccionario
+  // (bilingüe), para no dejar etiquetas en castellano en la versión catalana.
+  const recurso = (code: string) => t.dimensionItems[code]?.recurso ?? code;
+  const intLabel = result.intensity
+    ? result.intensity === "MUY_DEFINIDA"
+      ? t.intMuyDefinida
+      : result.intensity === "DEFINIDA"
+        ? t.intDefinida
+        : result.intensity === "MODERADA"
+          ? t.intModerada
+          : t.intFlexible
+    : t.intAdaptable;
+  const eqBand = resolveEqBand(result.eq, lang);
   const narrative = narrativeProp ?? buildProfileNarrative(result);
   const contexts = contextLeaders(result);
   const insights = generateInsights(result);
@@ -88,21 +100,21 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
     const pub = dom(graphs.publico);
     const priv = dom(graphs.privado);
     return pub === priv
-      ? t.interpSame(styleShort(pub))
-      : t.interpDiff(styleShort(pub), styleShort(priv), styleShort(result.primaryDimension));
+      ? t.interpSame(recurso(pub))
+      : t.interpDiff(recurso(pub), recurso(priv), recurso(result.primaryDimension));
   })();
 
   // "Tu combinación personal" (#10): datos que varían por persona aunque el
   // código de perfil coincida (recurso principal/apoyo, intensidad, EQ).
   const shareOf = (code: string) =>
     Math.round(result.percentages.find((p) => p.dimensionCode === code)?.share ?? 0);
-  const pStyle = styleShort(result.primaryDimension);
-  const sStyle = styleShort(result.secondaryDimension);
+  const pStyle = recurso(result.primaryDimension);
+  const sStyle = recurso(result.secondaryDimension);
   const nuanceGap = Math.max(0, shareOf(result.primaryDimension) - shareOf(result.secondaryDimension));
   const nuanceTiles = [
     { label: t.primaryLabel, value: pStyle, color: pColor },
     ...(result.isEq ? [] : [{ label: t.secondaryLabel, value: sStyle, color: sColor }]),
-    { label: t.intensity, value: intensityLabel(result.intensity), color: "#475569" },
+    { label: t.intensity, value: intLabel, color: "#475569" },
     { label: t.eq, value: `${result.eq} · ${eqBand.label}`, color: "#00a1e0" },
   ];
 
@@ -249,7 +261,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
             <span className="opacity-80">{t.intensity}</span>
-            <span>{intensityLabel(result.intensity)}</span>
+            <span>{intLabel}</span>
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-white/70 backdrop-blur">
             <span className="opacity-70">{t.internalCode}</span>
@@ -351,7 +363,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
               }}
               dims={[...def.dimensions]
                 .sort((a, c) => a.order - c.order)
-                .map((d) => ({ code: d.code, name: styleShort(d.code) }))}
+                .map((d) => ({ code: d.code, name: recurso(d.code) }))}
             />
           </div>
         ) : (
@@ -584,7 +596,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             </div>
             <div className="mt-5">
               <p className="mb-2 text-xs font-medium text-slate-400">{t.contextosHeatmap}</p>
-              <ContextHeatmap result={result} def={def} dimColor={dimColor} situacion={t.situacion} />
+              <ContextHeatmap result={result} def={def} dimColor={dimColor} situacion={t.situacion} recurso={recurso} />
             </div>
           </>
         )}
@@ -728,10 +740,12 @@ function DiscGrid({
   shares,
   markerCode,
   gid,
+  label = styleShort,
 }: {
   shares: DimensionShare[];
   markerCode?: string;
   gid: string;
+  label?: (code: string) => string;
 }) {
   const get = (code: string) =>
     shares.find((p) => p.dimensionCode === code)?.share ?? 0;
@@ -756,7 +770,7 @@ function DiscGrid({
         {code}
       </text>
       <text x={qx + 12} y={qy + 50} fontSize="10.5" fontWeight="700" fill={discGradStops(code)[0]}>
-        {styleShort(code)}
+        {label(code)}
       </text>
     </g>
   );
@@ -812,7 +826,12 @@ function DiscMap({
           {t.axisLeft}
         </p>
         <div className="min-w-0 flex-1">
-          <DiscGrid shares={shares} markerCode={markerCode} gid={gid} />
+          <DiscGrid
+            shares={shares}
+            markerCode={markerCode}
+            gid={gid}
+            label={(code) => t.dimensionItems[code]?.recurso ?? code}
+          />
         </div>
         <p className={`shrink-0 [writing-mode:vertical-rl] ${axisCls}`}>
           {t.axisRight}
@@ -870,11 +889,13 @@ function ContextHeatmap({
   def,
   dimColor,
   situacion,
+  recurso,
 }: {
   result: ScoringResult;
   def: InstrumentDefinition;
   dimColor: (c: string) => string;
   situacion: string;
+  recurso: (c: string) => string;
 }) {
   const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
   const rows = REPORT_CONTEXTS.map(({ label, code }) => ({
@@ -892,7 +913,7 @@ function ContextHeatmap({
             <th className="p-1.5 text-left font-semibold text-slate-400">{situacion}</th>
             {dims.map((d) => (
               <th key={d.code} className="p-1.5 text-center font-semibold" style={{ color: dimColor(d.code) }}>
-                {styleShort(d.code)}
+                {recurso(d.code)}
               </th>
             ))}
           </tr>
@@ -911,7 +932,7 @@ function ContextHeatmap({
                         backgroundImage: discGrad(d.code, 135),
                         opacity: 0.14 + (Math.min(100, Math.max(0, v)) / 100) * 0.86,
                       }}
-                      title={`${row.label} · ${styleShort(d.code)}`}
+                      title={`${row.label} · ${recurso(d.code)}`}
                     />
                   </td>
                 );

@@ -100,7 +100,33 @@ export const EQ_BANDS: EqBand[] = [
   },
 ];
 
-/** Resuelve la banda EQ aplicable a un valor 0-100. */
-export function resolveEqBand(eq: number): EqBand {
-  return EQ_BANDS.find((b) => eq >= b.min) ?? EQ_BANDS[EQ_BANDS.length - 1];
+/** Bandas EQ en catalán (mismos umbrales). */
+const EQ_BANDS_CA: EqBand[] = [
+  {
+    min: 70,
+    label: "Perfil equilibrat",
+    description:
+      "El teu perfil reparteix l'energia entre diverses dimensions. Sols " +
+      "adaptar-te amb facilitat a diferents contextos i persones.",
+  },
+  {
+    min: 40,
+    label: "Perfil amb accents",
+    description:
+      "Tens estils clarament marcats, amb bona capacitat d'ajust quan la " +
+      "situació ho requereix.",
+  },
+  {
+    min: 0,
+    label: "Perfil molt definit",
+    description:
+      "El teu estil és nítid i predictible. És una gran fortalesa en el seu " +
+      "terreny; el desenvolupament passa per flexibilitzar en contextos menys naturals.",
+  },
+];
+
+/** Resuelve la banda EQ aplicable a un valor 0-100, en el idioma indicado. */
+export function resolveEqBand(eq: number, lang: "ca" | "es" = "es"): EqBand {
+  const bands = lang === "ca" ? EQ_BANDS_CA : EQ_BANDS;
+  return bands.find((b) => eq >= b.min) ?? bands[bands.length - 1];
 }
