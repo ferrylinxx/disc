@@ -46,12 +46,18 @@ export const loadNarrativeLibrary = cache(async (): Promise<NarrativeLibrary> =>
   return { resources, profiles };
 });
 
-/** Compone la narrativa de un resultado usando la biblioteca cargada de BD. */
+/**
+ * Compone la narrativa de un resultado usando la biblioteca cargada de BD.
+ * La biblioteca editable de BD está en español; en catalán se compone desde la
+ * base catalana del código (RESOURCE_NARRATIVES_CA) sin fusión de BD.
+ */
 export async function buildProfileNarrativeDb(
   result: ScoringResult,
+  lang: "ca" | "es" = "es",
 ): Promise<ProfileNarrative> {
+  if (lang === "ca") return buildProfileNarrative(result, "ca");
   const library = await loadNarrativeLibrary();
-  return buildProfileNarrative(result, library);
+  return buildProfileNarrative(result, "es", library);
 }
 
 /**
@@ -61,8 +67,11 @@ export async function buildProfileNarrativeDb(
  * El informe usa estos textos cuando existen y compone el resto por defecto.
  */
 export const loadProfileBlocks = cache(
-  async (profileCode: string): Promise<Record<string, string>> => {
+  async (profileCode: string, lang: "ca" | "es" = "es"): Promise<Record<string, string>> => {
     const out: Record<string, string> = {};
+    // Los bloques editoriales de BD están en español. En catalán no hay bloques,
+    // así que el informe compone todo desde la base catalana del código.
+    if (lang === "ca") return out;
     try {
       const rows = await prisma.narrativeEntry.findMany({
         where: {

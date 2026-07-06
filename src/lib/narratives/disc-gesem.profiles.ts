@@ -13,6 +13,9 @@
  */
 import type { ScoringResult } from "@/lib/engine/types";
 import { resolveProfile, styleShort, type ProfileEntry } from "./disc-gesem.catalog";
+import { RESOURCE_NARRATIVES_CA, REPORT_CONTEXTS_CA } from "./disc-gesem.profiles.ca";
+
+type Lang = "ca" | "es";
 
 /**
  * Biblioteca de narrativas (recursos + perfiles). Puede provenir de BD (editable
@@ -366,22 +369,30 @@ function pickStrings(primary: string[] = [], secondary: string[] = [], n = 6): s
  */
 export function buildProfileNarrative(
   result: ScoringResult,
+  lang: Lang = "es",
   library?: NarrativeLibrary,
 ): ProfileNarrative {
-  const resources = library?.resources ?? RESOURCE_NARRATIVES;
-  const profile = library?.profiles?.[result.profileCode] ?? resolveProfile(result.profileCode);
-  const primary = resources[result.primaryDimension] ?? RESOURCE_NARRATIVES.D;
+  const base = lang === "ca" ? RESOURCE_NARRATIVES_CA : RESOURCE_NARRATIVES;
+  const resources = library?.resources ?? base;
+  const profile = library?.profiles?.[result.profileCode] ?? resolveProfile(result.profileCode, lang);
+  const primary = resources[result.primaryDimension] ?? base.D;
   const secondary = result.isEq
     ? null
     : resources[result.secondaryDimension] ?? null;
 
   const resourceHeadline = result.isEq
-    ? "Recursos equilibrados"
-    : `${styleShort(result.primaryDimension)} + ${styleShort(result.secondaryDimension)}`;
+    ? lang === "ca"
+      ? "Recursos equilibrats"
+      : "Recursos equilibrados"
+    : `${styleShort(result.primaryDimension, lang)} + ${styleShort(result.secondaryDimension, lang)}`;
 
   const combo = result.isEq
-    ? "Según tus respuestas, sueles repartir tu energía entre varios recursos y adaptar tu forma de actuar al contexto y a las personas."
-    : `Según tus respuestas, sueles apoyarte sobre todo en recursos orientados a ${styleShort(result.primaryDimension)} y a ${styleShort(result.secondaryDimension)}.`;
+    ? lang === "ca"
+      ? "Segons les teves respostes, sols repartir la teva energia entre diversos recursos i adaptar la teva manera d'actuar al context i a les persones."
+      : "Según tus respuestas, sueles repartir tu energía entre varios recursos y adaptar tu forma de actuar al contexto y a las personas."
+    : lang === "ca"
+      ? `Segons les teves respostes, sols recolzar-te sobretot en recursos orientats a ${styleShort(result.primaryDimension, lang)} i a ${styleShort(result.secondaryDimension, lang)}.`
+      : `Según tus respuestas, sueles apoyarte sobre todo en recursos orientados a ${styleShort(result.primaryDimension, lang)} y a ${styleShort(result.secondaryDimension, lang)}.`;
 
   return {
     title: profile.name,
@@ -443,16 +454,17 @@ export const REPORT_CONTEXTS: { label: string; code: string }[] = [
 ];
 
 /** Deriva el recurso predominante para cada uno de los 5 contextos del informe. */
-export function contextLeaders(result: ScoringResult): ContextLeader[] {
+export function contextLeaders(result: ScoringResult, lang: Lang = "es"): ContextLeader[] {
+  const contexts = lang === "ca" ? REPORT_CONTEXTS_CA : REPORT_CONTEXTS;
   const leaders: ContextLeader[] = [];
-  for (const { label, code } of REPORT_CONTEXTS) {
+  for (const { label, code } of contexts) {
     const scores = result.byContext[code];
     if (!scores || scores.length === 0) continue;
     const top = [...scores].sort((a, b) => b.percent - a.percent)[0];
     leaders.push({
       label,
       dimensionCode: top.dimensionCode,
-      resource: styleShort(top.dimensionCode),
+      resource: styleShort(top.dimensionCode, lang),
     });
   }
   return leaders;

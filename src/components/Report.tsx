@@ -7,6 +7,7 @@ import {
   REPORT_CONTEXTS,
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
+import { REPORT_CONTEXTS_CA } from "@/lib/narratives/disc-gesem.profiles.ca";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
 import { discGrad, discGradStops } from "@/lib/disc-gradient";
@@ -86,8 +87,8 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
           : t.intFlexible
     : t.intAdaptable;
   const eqBand = resolveEqBand(result.eq, lang);
-  const narrative = narrativeProp ?? buildProfileNarrative(result);
-  const contexts = contextLeaders(result);
+  const narrative = narrativeProp ?? buildProfileNarrative(result, lang);
+  const contexts = contextLeaders(result, lang);
   const insights = generateInsights(result);
   const pColor = dimColor(result.primaryDimension);
   const sColor = result.isEq ? pColor : dimColor(result.secondaryDimension);
@@ -596,7 +597,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             </div>
             <div className="mt-5">
               <p className="mb-2 text-xs font-medium text-slate-400">{t.contextosHeatmap}</p>
-              <ContextHeatmap result={result} def={def} dimColor={dimColor} situacion={t.situacion} recurso={recurso} />
+              <ContextHeatmap result={result} def={def} dimColor={dimColor} situacion={t.situacion} recurso={recurso} lang={lang} />
             </div>
           </>
         )}
@@ -890,15 +891,18 @@ function ContextHeatmap({
   dimColor,
   situacion,
   recurso,
+  lang,
 }: {
   result: ScoringResult;
   def: InstrumentDefinition;
   dimColor: (c: string) => string;
   situacion: string;
   recurso: (c: string) => string;
+  lang: "ca" | "es";
 }) {
   const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
-  const rows = REPORT_CONTEXTS.map(({ label, code }) => ({
+  const contexts = lang === "ca" ? REPORT_CONTEXTS_CA : REPORT_CONTEXTS;
+  const rows = contexts.map(({ label, code }) => ({
     label,
     scores: result.byContext[code] ?? [],
   })).filter((r) => r.scores.length > 0);

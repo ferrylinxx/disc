@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getActiveInstrument } from "@/lib/instruments";
+import { getLang } from "@/lib/i18n/server";
 import { score, discGraphShares } from "@/lib/engine/scoring";
 import type { ScoringResult, DiscGraphs } from "@/lib/engine/types";
 import { buildProfileNarrativeDb } from "@/lib/narratives/library";
@@ -55,7 +56,8 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
     return { ok: false, error: "Datos de respuesta inválidos." };
   }
 
-  const def = getActiveInstrument();
+  const lang = await getLang();
+  const def = getActiveInstrument(lang);
   const validItems = new Set(def.items.map((i) => i.code));
 
   for (const r of parsed.data.responses) {
@@ -72,7 +74,7 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
     return { ok: false, error: "Debes responder todos los ítems." };
   }
 
-  const narrative = await buildProfileNarrativeDb(result);
+  const narrative = await buildProfileNarrativeDb(result, lang);
   const graphs = discGraphShares(def, parsed.data.responses);
 
   if (parsed.data.token) {

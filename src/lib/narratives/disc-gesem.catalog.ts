@@ -24,8 +24,17 @@ export const STYLE_NAMES: Record<string, StyleInfo> = {
   C: { short: "Estructurar", description: "Orientación al análisis, la calidad y el método." },
 };
 
-/** Nombre corto del estilo (verbo) por código; cae al código si no existe. */
-export function styleShort(code: string): string {
+/** Nombres cortos de recurso en catalán (por código de dimensión). */
+export const STYLE_SHORT_CA: Record<string, string> = {
+  D: "Impulsar",
+  I: "Connectar",
+  S: "Sostenir",
+  C: "Estructurar",
+};
+
+/** Nombre corto del estilo (verbo) por código, en el idioma indicado. */
+export function styleShort(code: string, lang: "ca" | "es" = "es"): string {
+  if (lang === "ca") return STYLE_SHORT_CA[code] ?? STYLE_NAMES[code]?.short ?? code;
   return STYLE_NAMES[code]?.short ?? code;
 }
 
@@ -59,12 +68,41 @@ export const PROFILE_CATALOG: Record<string, ProfileEntry> = {
   },
 };
 
-/** Resuelve la entrada de catálogo para un código de perfil (con respaldo). */
-export function resolveProfile(profileCode: string): ProfileEntry {
+/** Catálogo de perfiles en catalán (nombre + resumen). */
+export const PROFILE_CATALOG_CA: Record<string, ProfileEntry> = {
+  DI: { name: "Impulsar i mobilitzar", summary: "Tendeix a generar moviment, energia i orientació a objectius." },
+  ID: { name: "Connectar i impulsar", summary: "Tendeix a mobilitzar persones a través de la relació i la influència." },
+  DC: { name: "Impulsar amb rigor", summary: "Tendeix a combinar decisió, exigència i orientació a resultats." },
+  CD: { name: "Analitzar per avançar", summary: "Tendeix a comprendre abans d'actuar i busca decisions fonamentades." },
+  IS: { name: "Connectar i cohesionar", summary: "Tendeix a crear relacions de confiança i col·laboració." },
+  SI: { name: "Sostenir relacions", summary: "Tendeix a generar estabilitat, suport i continuïtat." },
+  SC: { name: "Generar estabilitat", summary: "Tendeix a aportar ordre, fiabilitat i seguiment." },
+  CS: { name: "Estructurar amb sensibilitat", summary: "Tendeix a combinar mètode, qualitat i atenció a les persones." },
+  DS: { name: "Liderar des del compromís", summary: "Tendeix a impulsar objectius mantenint proximitat i responsabilitat." },
+  SD: { name: "Consolidar abans d'actuar", summary: "Tendeix a assegurar estabilitat abans d'impulsar canvis." },
+  IC: { name: "Comunicar i organitzar", summary: "Tendeix a combinar comunicació, creativitat i estructura." },
+  CI: { name: "Organitzar amb criteri", summary: "Tendeix a aportar anàlisi, ordre i coherència." },
+  EQ: {
+    name: "Perfil adaptable",
+    summary:
+      "No mostra una predominança clara i presenta una elevada flexibilitat conductual.",
+  },
+};
+
+/** Resuelve la entrada de catálogo para un código de perfil (con respaldo), por idioma. */
+export function resolveProfile(
+  profileCode: string,
+  lang: "ca" | "es" = "es",
+): ProfileEntry {
+  const catalog = lang === "ca" ? PROFILE_CATALOG_CA : PROFILE_CATALOG;
   return (
+    catalog[profileCode] ??
     PROFILE_CATALOG[profileCode] ?? {
       name: profileCode,
-      summary: "Combinación de tendencias conductuales.",
+      summary:
+        lang === "ca"
+          ? "Combinació de tendències conductuals."
+          : "Combinación de tendencias conductuales.",
     }
   );
 }
@@ -75,6 +113,14 @@ export const INTENSITY_LABELS: Record<Intensity, string> = {
   MODERADA: "Moderada",
   DEFINIDA: "Definida",
   MUY_DEFINIDA: "Muy definida",
+};
+
+/** Etiqueta de intensidad en catalán. */
+export const INTENSITY_LABELS_CA: Record<Intensity, string> = {
+  FLEXIBLE: "Flexible",
+  MODERADA: "Moderada",
+  DEFINIDA: "Definida",
+  MUY_DEFINIDA: "Molt definida",
 };
 
 /** Mensajes automáticos de resultado por intensidad (texto oficial del PDF). */
@@ -95,9 +141,10 @@ export const EQ_MESSAGE =
   "Tu resultado no muestra una predominancia clara: sueles adaptar tu estilo al contexto " +
   "y a las personas con las que trabajas.";
 
-/** Etiqueta de intensidad o "Adaptable" cuando el perfil es EQ. */
-export function intensityLabel(intensity: Intensity | null): string {
-  return intensity ? INTENSITY_LABELS[intensity] : "Adaptable";
+/** Etiqueta de intensidad o "Adaptable" cuando el perfil es EQ, por idioma. */
+export function intensityLabel(intensity: Intensity | null, lang: "ca" | "es" = "es"): string {
+  const labels = lang === "ca" ? INTENSITY_LABELS_CA : INTENSITY_LABELS;
+  return intensity ? labels[intensity] : "Adaptable";
 }
 
 /** Mensaje automático de intensidad, o el mensaje EQ cuando no hay intensidad. */

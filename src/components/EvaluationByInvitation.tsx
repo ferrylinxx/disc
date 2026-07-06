@@ -73,8 +73,8 @@ export async function EvaluationByInvitation({
       );
     }
     const def = getActiveInstrument(lang);
-    const narrative = await buildProfileNarrativeDb(data.result);
-    const blocks = await loadProfileBlocks(data.result.profileCode);
+    const narrative = await buildProfileNarrativeDb(data.result, lang);
+    const blocks = await loadProfileBlocks(data.result.profileCode, lang);
     const graphs = (await participantDiscGraphs(data.participant.id)) ?? undefined;
     const reportDate = new Date().toLocaleDateString(
       lang === "ca" ? "ca-ES" : "es-ES",

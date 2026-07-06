@@ -39,9 +39,9 @@ export default async function PanelOverviewPage() {
 
   const rich = completed && token ? await participantReportByToken(token) : null;
   const result = rich?.result ?? null;
-  const narrative = result ? await buildProfileNarrativeDb(result) : null;
+  const narrative = result ? await buildProfileNarrativeDb(result, lang) : null;
 
-  const def = getActiveInstrument();
+  const def = getActiveInstrument(lang);
   const dimByCode = new Map(def.dimensions.map((d) => [d.code, d]));
   const orderedDims = [...def.dimensions].sort((a, b) => a.order - b.order);
   const shareByCode = new Map(
@@ -53,7 +53,7 @@ export default async function PanelOverviewPage() {
   const secondaryColor = result
     ? (dimByCode.get(result.secondaryDimension)?.color ?? "#5ac3dd")
     : "#5ac3dd";
-  const eqBand = result ? resolveEqBand(result.eq) : null;
+  const eqBand = result ? resolveEqBand(result.eq, lang) : null;
 
   return (
     <div className="space-y-6">
@@ -149,7 +149,7 @@ export default async function PanelOverviewPage() {
             <Tile label={t.eqTitle} value={eqBand.label} color="#00a1e0" sub={`EQ ${result.eq}`} />
             <Tile
               label={t.intensityLabel}
-              value={intensityLabel(result.intensity)}
+              value={intensityLabel(result.intensity, lang)}
               color="#6f7bf7"
             />
           </div>

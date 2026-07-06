@@ -42,7 +42,7 @@ async function main() {
     isEq: false,
   } as never;
 
-  const n = buildProfileNarrative(result, library);
+  const n = buildProfileNarrative(result, "es", library);
   const checks: [string, boolean][] = [
     ["title", !!n.title],
     ["resourceHeadline", n.resourceHeadline === "Impulsar + Conectar"],
