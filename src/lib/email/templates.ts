@@ -188,6 +188,56 @@ export function invitationEmail(input: {
 }
 
 /**
+ * Email de restablecimiento de contraseña (autoservicio). Enlace de un solo uso
+ * a /restablecer. Bilingüe (catalán por defecto).
+ */
+export function passwordResetEmail(input: {
+  name: string;
+  resetUrl: string;
+  lang?: Lang;
+}): { subject: string; html: string; text: string } {
+  const lang = input.lang ?? "ca";
+  const first = input.name.split(" ")[0] || "";
+  const ca = lang === "ca";
+  const T = ca
+    ? {
+        subject: "Restableix la teva contrasenya · DISC GESEM",
+        shellTitle: "Restablir la contrasenya",
+        hello: first ? `Hola ${first},` : "Hola,",
+        intro:
+          "Has demanat restablir la contrasenya del teu compte <strong>DISC GESEM</strong>. Fes clic per crear-ne una de nova:",
+        btn: "Restablir la contrasenya",
+        expire: "L'enllaç caduca d'aquí a 14 dies.",
+        ignore: "Si no ho has demanat tu, pots ignorar aquest correu.",
+        fallback: "Si el botó no funciona, copia aquest enllaç:",
+      }
+    : {
+        subject: "Restablece tu contraseña · DISC GESEM",
+        shellTitle: "Restablecer la contraseña",
+        hello: first ? `Hola ${first},` : "Hola,",
+        intro:
+          "Has solicitado restablecer la contraseña de tu cuenta <strong>DISC GESEM</strong>. Haz clic para crear una nueva:",
+        btn: "Restablecer la contraseña",
+        expire: "El enlace caduca dentro de 14 días.",
+        ignore: "Si no lo has solicitado tú, puedes ignorar este correo.",
+        fallback: "Si el botón no funciona, copia este enlace:",
+      };
+  const body = `
+    <p style="margin:0 0 12px;">${T.hello}</p>
+    <p style="margin:0 0 20px;line-height:1.6;color:#475569;">${T.intro}</p>
+    <p style="margin:0 0 18px;">
+      <a href="${input.resetUrl}" style="display:inline-block;background-color:${BRAND};color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:9999px;">${T.btn}</a>
+    </p>
+    <p style="margin:0 0 18px;color:#94a3b8;font-size:12px;">${T.expire} ${T.ignore}</p>
+    <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;word-break:break-all;">${T.fallback}<br/>${input.resetUrl}</p>`;
+  return {
+    subject: T.subject,
+    html: shell(T.shellTitle, body, lang),
+    text: `${T.hello} ${T.intro.replace(/<[^>]+>/g, "")}\n${input.resetUrl}`,
+  };
+}
+
+/**
  * Email del informe (versión corta): resumen de la tendencia + EQ, cómo leer el
  * informe, preparación para la sesión y enlace para ver el informe completo
  * online. Evita volcar toda la narrativa (que se lee en la web).

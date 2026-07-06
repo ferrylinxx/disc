@@ -6,7 +6,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/dal";
 import { deleteSession } from "@/lib/auth/session";
-import { consumePasswordSetToken, hashPassword } from "@/lib/auth/password";
+import {
+  consumePasswordSetToken,
+  createPasswordSetToken,
+  hashPassword,
+} from "@/lib/auth/password";
+import { absoluteUrl, isMailConfigured, sendMail } from "@/lib/email/mailer";
+import { passwordResetEmail } from "@/lib/email/templates";
 
 export interface SetPasswordState {
   error?: string;
@@ -91,6 +97,51 @@ export async function changeOwnPassword(
     where: { id: session.userId },
     data: { passwordHash },
   });
+  return { ok: true };
+}
+
+export interface RequestResetState {
+  error?: string;
+  ok?: boolean;
+}
+
+const RequestResetSchema = z.object({
+  email: z.email({ error: "Introduce un email válido." }).trim().toLowerCase(),
+});
+
+/**
+ * Autoservicio: envía un enlace de restablecimiento de contraseña al email si
+ * existe una cuenta. Respuesta siempre genérica (no revela si el email existe).
+ */
+export async function requestPasswordReset(
+  _state: RequestResetState,
+  formData: FormData,
+): Promise<RequestResetState> {
+  const parsed = RequestResetSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Email no válido." };
+  }
+  const user = await prisma.user.findUnique({
+    where: { email: parsed.data.email },
+    select: { id: true, name: true },
+  });
+  if (user && isMailConfigured()) {
+    try {
+      const token = await createPasswordSetToken(user.id);
+      const email = passwordResetEmail({
+        name: user.name ?? parsed.data.email,
+        resetUrl: absoluteUrl(`/restablecer/${token}`),
+      });
+      await sendMail({
+        to: parsed.data.email,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+      });
+    } catch (e) {
+      console.error("[requestPasswordReset] envío fallido:", e);
+    }
+  }
   return { ok: true };
 }
 
