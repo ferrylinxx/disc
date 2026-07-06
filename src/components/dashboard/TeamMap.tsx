@@ -373,6 +373,11 @@ export function TeamMap({ insights, dimensions, header }: Props) {
 
       {/* Detalle ampliado · Mapa de contextos (solo PDF facilitador) */}
       <Screen id="contextos" n={14} title="Mapa de contextos" detail>
+        <p className="mb-3 text-sm leading-relaxed text-slate-600">
+          Cada situación muestra la tendencia del equipo a activar determinados
+          recursos. Son valores descriptivos —no niveles de competencia ni
+          rendimiento— y sirven para favorecer la reflexión y la conversación.
+        </p>
         {empty ? (
           <Muted />
         ) : (

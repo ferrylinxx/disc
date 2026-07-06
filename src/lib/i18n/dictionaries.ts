@@ -211,6 +211,15 @@ const es = {
     contextsIntro:
       "Cada contexto muestra tu tendencia a usar ciertos recursos en distintas situaciones profesionales. Son valores descriptivos, no niveles de desempeño.",
     aportacionLead: "Lo que sueles aportar de forma natural y puedes potenciar:",
+    dimensionsTitle: "Las cuatro dimensiones DISC",
+    dimensionsIntro:
+      "Todas las personas usamos los cuatro recursos en distinta medida. En DISC GESEM cada dimensión mantiene su letra DISC y su nombre en lenguaje de recursos:",
+    dimensionItems: {
+      D: { name: "Dominancia", recurso: "Impulsar", desc: "Acción y resultados: decidir con rapidez, asumir retos y hacer avanzar." },
+      I: { name: "Influencia", recurso: "Conectar", desc: "Personas y comunicación: buscar interacción, generar entusiasmo y crear relación." },
+      S: { name: "Estabilidad", recurso: "Sostener", desc: "Estabilidad y colaboración: mantener el ritmo, escuchar y dar continuidad." },
+      C: { name: "Cumplimiento", recurso: "Estructurar", desc: "Rigor y calidad: analizar, cuidar el detalle y buscar precisión." },
+    } as Record<string, { name: string; recurso: string; desc: string }>,
     nuanceTitle: "Tu combinación personal",
     nuanceLead:
       "Aunque compartas código de perfil con otras personas, tu combinación de matices es propia:",
@@ -631,6 +640,15 @@ const ca: typeof es = {
     contextsIntro:
       "Cada context mostra la teva tendència a fer servir certs recursos en diferents situacions professionals. Són valors descriptius, no nivells d'exercici.",
     aportacionLead: "El que sols aportar de manera natural i pots potenciar:",
+    dimensionsTitle: "Les quatre dimensions DISC",
+    dimensionsIntro:
+      "Totes les persones fem servir els quatre recursos en diferent mesura. A DISC GESEM cada dimensió manté la seva lletra DISC i el seu nom en llenguatge de recursos:",
+    dimensionItems: {
+      D: { name: "Dominància", recurso: "Impulsar", desc: "Acció i resultats: decidir amb rapidesa, assumir reptes i fer avançar." },
+      I: { name: "Influència", recurso: "Connectar", desc: "Persones i comunicació: buscar interacció, generar entusiasme i crear relació." },
+      S: { name: "Estabilitat", recurso: "Sostenir", desc: "Estabilitat i col·laboració: mantenir el ritme, escoltar i donar continuïtat." },
+      C: { name: "Compliment", recurso: "Estructurar", desc: "Rigor i qualitat: analitzar, cuidar el detall i buscar precisió." },
+    } as Record<string, { name: string; recurso: string; desc: string }>,
     nuanceTitle: "La teva combinació personal",
     nuanceLead:
       "Encara que comparteixis codi de perfil amb altres persones, la teva combinació de matisos és pròpia:",

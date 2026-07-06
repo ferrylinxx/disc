@@ -195,6 +195,40 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
         <ReadingIndex title={t.readingIndexTitle} items={t.index} />
       </section>
 
+      {/* Las cuatro dimensiones DISC (doble nomenclatura, primera aparición) */}
+      <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          {t.dimensionsTitle}
+        </h3>
+        <p className="mt-2 text-sm text-slate-500">{t.dimensionsIntro}</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {(["D", "I", "S", "C"] as const).map((code) => {
+            const it = t.dimensionItems[code];
+            return (
+              <div
+                key={code}
+                className="flex gap-3 rounded-xl border border-slate-100 bg-white p-3"
+              >
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-black text-white"
+                  style={{ backgroundColor: dimColor(code) }}
+                >
+                  {code}
+                </span>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-800">
+                    {it.name} ({code}) · {it.recurso}
+                  </div>
+                  <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                    {it.desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Tendencia predominante — protagonista: el recurso */}
       <header
         id="r-tendencia"
