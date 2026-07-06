@@ -267,9 +267,8 @@ export function computeTeamInsights(
   }
 
   // Mapa conductual del equipo: un punto por participante en el cuadrante.
-  // Orientación clásica DISC (mapa Bimind): eje vertical tareas(arriba)↔personas
-  // (abajo), eje horizontal indirecto/lento(izq)↔directo/rápido(der). Así
-  // C=arriba-izq, D=arriba-der, S=abajo-izq, I=abajo-der.
+  // Orden de cuadrantes igual que el informe individual: D↖ I↗ / S↙ C↘.
+  // Cada persona cae bajo la letra de sus recursos predominantes.
   const discPoints = participants
     .filter((p) => p.result)
     .map((p, idx) => {
@@ -277,8 +276,8 @@ export function computeTeamInsights(
       const sh: Record<string, number> = {};
       for (const s of proportionalShares(r.global)) sh[s.dimensionCode] = s.share;
       const dd = sh.D ?? 0, ii = sh.I ?? 0, ss = sh.S ?? 0, cc = sh.C ?? 0;
-      const x = (dd + ii - (cc + ss)) / 100; // + derecha: directo / ritmo rápido
-      const yUp = (dd + cc - (ii + ss)) / 100; // + arriba: orientado a tareas
+      const x = (ii + cc - (dd + ss)) / 100; // + derecha: columna I, C
+      const yUp = (dd + ii - (ss + cc)) / 100; // + arriba: fila D, I
       return {
         x: Math.max(22, Math.min(178, 100 + x * 74)),
         y: Math.max(22, Math.min(178, 100 - yUp * 74)),

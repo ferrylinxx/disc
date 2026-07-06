@@ -754,8 +754,9 @@ function DiscGrid({
   const i = get("I");
   const s = get("S");
   const c = get("C");
-  const x = (i + s - (d + c)) / 100; // + derecha (personas)
-  const y = (d + i - (s + c)) / 100; // + arriba (activo)
+  // Orden de cuadrantes D↖ I↗ / S↙ C↘: el marcador debe caer bajo su letra.
+  const x = (i + c - (d + s)) / 100; // + derecha (columna I, C)
+  const y = (d + i - (s + c)) / 100; // + arriba (fila D, I)
   const cx = Math.max(24, Math.min(176, 100 + x * 76));
   const cy = Math.max(24, Math.min(176, 100 - y * 76));
   const CODES = ["D", "I", "S", "C"];
@@ -793,8 +794,8 @@ function DiscGrid({
         <rect x="10" y="10" width="180" height="180" rx="14" fill="#ffffff" stroke="#e2e8f0" />
         {quad("D", 10, 10)}
         {quad("I", 100, 10)}
-        {quad("C", 10, 100)}
-        {quad("S", 100, 100)}
+        {quad("S", 10, 100)}
+        {quad("C", 100, 100)}
         <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
         <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
         <circle cx={cx} cy={cy} r="11" fill="#ffffff" />

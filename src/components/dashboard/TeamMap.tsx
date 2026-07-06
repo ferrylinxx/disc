@@ -444,14 +444,9 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Mapa DISC del equipo: cuadrícula clásica 2×2 con un punto por participante.
- * D arriba-izq, I arriba-der, C abajo-izq, S abajo-der.
- */
-/**
- * Mapa conductual del equipo: cuadrantes DISC clásicos (estilo "mapa Bimind").
- * Ejes: tareas (arriba) ↔ personas (abajo) · indirecto/lento (izq) ↔ directo/
- * rápido (der). C arriba-izq, D arriba-der, S abajo-izq, I abajo-der. Cada
- * burbuja es una persona del equipo, situada por sus recursos predominantes.
+ * Mapa conductual del equipo: cuadrantes DISC en el mismo orden que el informe
+ * individual: D↖ I↗ / S↙ C↘. Cada burbuja es una persona del equipo, situada
+ * por sus recursos predominantes.
  */
 function TeamDiscGrid({
   points,
@@ -478,10 +473,10 @@ function TeamDiscGrid({
   });
   // code → [x del cuadrante, y del cuadrante, ancla horizontal del rótulo]
   const QUADS: { code: string; x: number; y: number; lx: number; anchor: "start" | "end" }[] = [
-    { code: "C", x: 6, y: 6, lx: 16, anchor: "start" },
-    { code: "D", x: 100, y: 6, lx: 184, anchor: "end" },
+    { code: "D", x: 6, y: 6, lx: 16, anchor: "start" },
+    { code: "I", x: 100, y: 6, lx: 184, anchor: "end" },
     { code: "S", x: 6, y: 100, lx: 16, anchor: "start" },
-    { code: "I", x: 100, y: 100, lx: 184, anchor: "end" },
+    { code: "C", x: 100, y: 100, lx: 184, anchor: "end" },
   ];
   return (
     <div className="flex justify-center">
