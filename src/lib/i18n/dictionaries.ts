@@ -57,6 +57,8 @@ const es = {
     instrAuto: "avanza solo",
     instrKeys: "; en ordenador puedes usar las teclas ",
     continue: "Continuar",
+    howToAnswer:
+      "En cada situación encontrarás cuatro formas diferentes de actuar. No hay respuestas correctas o incorrectas. Elige solo la que MÁS se parece a cómo sueles actuar y la que MENOS se parece a ti; las otras dos no puntúan. Responde de forma espontánea, pensando en cómo actúas habitualmente.",
     selfTitle: "¿Cómo te ves? (evaluación inicial)",
     selfSubtitle:
       "Estos son los cuatro estilos del modelo DISC. Antes de empezar, elige a priori con cuál te identificas más; al terminar lo compararemos con tu resultado real. Es solo un punto de partida: ninguno es mejor que otro.",
@@ -159,15 +161,18 @@ const es = {
     closing:
       "El autoconocimiento es el punto de partida. La comprensión mutua es el puente. La adaptación consciente es la competencia. La colaboración eficaz es el resultado.",
     methodNote:
-      "Este informe describe tendencias de interacción según tus respuestas y puede variar con el contexto y el momento. No constituye un diagnóstico, sino un punto de partida para la conversación y el desarrollo.",
+      "DISC GESEM utiliza un modelo ipsativo de elección forzada inspirado en las cuatro dimensiones DISC. Describe tendencias de comportamiento en un momento determinado y constituye una herramienta de autoconocimiento y desarrollo. No es un diagnóstico clínico ni una evaluación de capacidades.",
     situacion: "Situación",
     graphsLead: "Tres lecturas de tu estilo, según tus respuestas:",
     graphPublic: "Yo público",
-    graphPublicDesc: "Cómo sueles mostrarte y adaptarte ante los demás.",
+    graphPublicDesc:
+      "Los comportamientos que eliges con más frecuencia al decidir cómo actuar ante los demás; la imagen conductual que tiendes a proyectar.",
     graphPrivate: "Yo privado",
-    graphPrivateDesc: "Tu estilo más instintivo, especialmente bajo presión.",
+    graphPrivateDesc:
+      "Los recursos que eliges con menos frecuencia; ayuda a ver qué estilos usas menos de forma espontánea.",
     graphMirror: "Yo percibido",
-    graphMirrorDesc: "La integración de ambos, según el resultado del test.",
+    graphMirrorDesc:
+      "El resultado neto del cuestionario; es la base de la interpretación narrativa del informe.",
     axisTop: "Activo · directo",
     axisBottom: "Reflexivo · sereno",
     axisLeft: "Orientado a tareas",
@@ -188,7 +193,18 @@ const es = {
     graphPrivateSrc: "a partir de tus elecciones «Menos».",
     graphMirrorSrc: "de la integración de ambas.",
     graphsNotThree:
-      "No son tres personalidades distintas: son tres perspectivas del mismo estilo.",
+      "Los tres resultados son complementarios: ofrecen perspectivas diferentes del mismo estilo conductual, no tres personalidades distintas.",
+    introNoEval:
+      "Muestra tus preferencias conductuales actuales; no evalúa capacidades, inteligencia ni rendimiento.",
+    profileIntro:
+      "Tu perfil combina tu recurso con mayor puntuación y el segundo predominante. No te etiqueta: describe una tendencia conductual.",
+    intensityExplain:
+      "La intensidad indica cuánto predomina tu recurso principal respecto al segundo. No expresa calidad, competencia ni rendimiento.",
+    eqExplain:
+      "Cuando las diferencias entre los cuatro recursos son muy pequeñas, el sistema identifica un Perfil Equilibrado (EQ): indica mayor flexibilidad para adaptarte a distintas situaciones, no un perfil mejor o peor.",
+    contextsIntro:
+      "Cada contexto muestra tu tendencia a usar ciertos recursos en distintas situaciones profesionales. Son valores descriptivos, no niveles de desempeño.",
+    aportacionLead: "Lo que sueles aportar de forma natural y puedes potenciar:",
     nuanceTitle: "Tu combinación personal",
     nuanceLead:
       "Aunque compartas código de perfil con otras personas, tu combinación de matices es propia:",
@@ -455,6 +471,8 @@ const ca: typeof es = {
     instrAuto: "avança sol",
     instrKeys: "; a l'ordinador pots fer servir les tecles ",
     continue: "Continuar",
+    howToAnswer:
+      "A cada situació trobaràs quatre maneres diferents d'actuar. No hi ha respostes correctes o incorrectes. Tria només la que MÉS s'assembla a com sols actuar i la que MENYS s'assembla a tu; les altres dues no puntuen. Respon de manera espontània, pensant en com actues habitualment.",
     selfTitle: "Com et veus? (avaluació inicial)",
     selfSubtitle:
       "Aquests són els quatre estils del model DISC. Abans de començar, tria a priori amb quin t'identifiques més; en acabar el compararem amb el teu resultat real. És només un punt de partida: cap no és millor que un altre.",
@@ -557,15 +575,18 @@ const ca: typeof es = {
     closing:
       "L'autoconeixement és el punt de partida. La comprensió mútua és el pont. L'adaptació conscient és la competència. La col·laboració eficaç és el resultat.",
     methodNote:
-      "Aquest informe descriu tendències d'interacció segons les teves respostes i pot variar amb el context i el moment. No constitueix un diagnòstic, sinó un punt de partida per a la conversa i el desenvolupament.",
+      "DISC GESEM utilitza un model ipsatiu d'elecció forçada inspirat en les quatre dimensions DISC. Descriu tendències de comportament en un moment determinat i és una eina d'autoconeixement i desenvolupament. No és un diagnòstic clínic ni una avaluació de capacitats.",
     situacion: "Situació",
     graphsLead: "Tres lectures del teu estil, segons les teves respostes:",
     graphPublic: "Jo públic",
-    graphPublicDesc: "Com sols mostrar-te i adaptar-te davant els altres.",
+    graphPublicDesc:
+      "Els comportaments que tries amb més freqüència en decidir com actuar davant els altres; la imatge conductual que tendeixes a projectar.",
     graphPrivate: "Jo privat",
-    graphPrivateDesc: "El teu estil més instintiu, especialment sota pressió.",
+    graphPrivateDesc:
+      "Els recursos que tries amb menys freqüència; ajuda a veure quins estils fas servir menys de manera espontània.",
     graphMirror: "Jo percebut",
-    graphMirrorDesc: "La integració de tots dos, segons el resultat del test.",
+    graphMirrorDesc:
+      "El resultat net del qüestionari; és la base de la interpretació narrativa de l'informe.",
     axisTop: "Actiu · directe",
     axisBottom: "Reflexiu · serè",
     axisLeft: "Orientat a tasques",
@@ -586,7 +607,18 @@ const ca: typeof es = {
     graphPrivateSrc: "a partir de les teves eleccions «Menys».",
     graphMirrorSrc: "de la integració de totes dues.",
     graphsNotThree:
-      "No són tres personalitats diferents: són tres perspectives del mateix estil.",
+      "Els tres resultats són complementaris: ofereixen perspectives diferents del mateix estil conductual, no tres personalitats diferents.",
+    introNoEval:
+      "Mostra les teves preferències conductuals actuals; no avalua capacitats, intel·ligència ni rendiment.",
+    profileIntro:
+      "El teu perfil combina el teu recurs amb més puntuació i el segon predominant. No t'etiqueta: descriu una tendència conductual.",
+    intensityExplain:
+      "La intensitat indica com de predominant és el teu recurs principal respecte al segon. No expressa qualitat, competència ni rendiment.",
+    eqExplain:
+      "Quan les diferències entre els quatre recursos són molt petites, el sistema identifica un Perfil Equilibrat (EQ): indica més flexibilitat per adaptar-te a diferents situacions, no un perfil millor o pitjor.",
+    contextsIntro:
+      "Cada context mostra la teva tendència a fer servir certs recursos en diferents situacions professionals. Són valors descriptius, no nivells d'exercici.",
+    aportacionLead: "El que sols aportar de manera natural i pots potenciar:",
     nuanceTitle: "La teva combinació personal",
     nuanceLead:
       "Encara que comparteixis codi de perfil amb altres persones, la teva combinació de matisos és pròpia:",

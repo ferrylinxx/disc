@@ -343,7 +343,10 @@ export function Questionnaire({
           src={introVideo}
           className="aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm"
         />
-        <p className="mt-5 leading-relaxed text-slate-600">
+        <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
+          <p className="text-sm leading-relaxed text-slate-700">{t.howToAnswer}</p>
+        </div>
+        <p className="mt-4 leading-relaxed text-slate-600">
           {t.instrPre}
           <strong className="text-emerald-700">{t.instrMost}</strong>
           {t.instrMid}

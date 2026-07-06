@@ -191,6 +191,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             ))}
           </ul>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">{t.introNoEval}</p>
         <ReadingIndex title={t.readingIndexTitle} items={t.index} />
       </section>
 
@@ -222,6 +223,9 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
           </span>
         </div>
       </header>
+
+      {/* Qué es el perfil (contextualiza antes de interpretar, #4) */}
+      <p className="px-1 text-sm leading-relaxed text-slate-600">{t.profileIntro}</p>
 
       {/* Tendencia predominante (texto editorial fijo V1, si existe) */}
       {b.tendencia && (
@@ -320,6 +324,9 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
           <p className="mb-4 text-sm font-semibold text-slate-500">{t.tendencyDef}</p>
           <IntensityScale intensity={result.intensity} t={t} />
+          <p className="mt-3 text-xs leading-relaxed text-slate-500">
+            {result.isEq ? t.eqExplain : t.intensityExplain}
+          </p>
         </div>
         <p className="mt-5 text-xs leading-relaxed text-slate-400">{t.posicionNote}</p>
       </section>
@@ -362,6 +369,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             {t.aportacion}
           </h3>
         </div>
+        <p className="mt-2 text-sm text-slate-500">{t.aportacionLead}</p>
         <div className="mt-2">
           {b.aportacion ? (
             <Prose text={b.aportacion} />
@@ -503,6 +511,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             {t.contextos}
           </h3>
         </div>
+        <p className="mt-2 text-sm text-slate-500">{t.contextsIntro}</p>
         <div className="mt-2">
           {b.contextos ? (
             <Prose text={b.contextos} />
