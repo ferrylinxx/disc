@@ -73,12 +73,16 @@ export function GlossaryButton({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
+          role="dialog"
+          aria-modal="true"
+        >
           <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="animate-fade-up relative ml-auto flex h-full w-full max-w-lg flex-col bg-slate-50 shadow-2xl">
+          <div className="animate-scale-in relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl ring-1 ring-black/5">
             <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
               <h2 className="text-lg font-bold tracking-tight text-slate-900">
                 {data.title}
@@ -101,7 +105,7 @@ export function GlossaryButton({
                 </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6">
               <GlossaryView data={data} />
             </div>
           </div>
