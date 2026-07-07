@@ -77,9 +77,10 @@ model Organization {
   // Personalización del correo de invitación (por organización). Todos opcionales:
   // si no hay programName, el correo usa el texto genérico por defecto.
   programName  String? // Nombre del proceso/programa (asunto y bienvenida).
-  sessionInfo  String? // Cuándo/dónde del taller, texto libre (p. ej. "15 de julio en vuestras instalaciones").
-  deadline     String? // Fecha límite para completar, texto libre (p. ej. "10 de julio").
-  welcomeIntro String? // Mensaje de bienvenida opcional; si está vacío se usa uno por defecto.
+  sessionDate  String? // Fecha del taller en ISO (YYYY-MM-DD), elegida con calendario.
+  sessionInfo  String? // Lugar del taller (p. ej. "vuestras instalaciones").
+  deadline     String? // Fecha límite en ISO (YYYY-MM-DD), elegida con calendario.
+  welcomeIntro String? // Mensaje de bienvenida (admite markdown); si está vacío se usa uno por defecto.
 
   members      Membership[]
   projects     Project[]

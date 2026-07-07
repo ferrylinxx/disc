@@ -9,6 +9,46 @@ import type { Lang } from "@/lib/i18n/dictionaries";
 
 const BRAND = "#00a1e0";
 
+/** Formatea una fecha ISO (YYYY-MM-DD) a texto legible; si no es ISO, la devuelve tal cual. */
+function fmtDate(value: string | null | undefined, lang: Lang): string {
+  const v = (value ?? "").trim();
+  if (!v) return "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = new Date(v + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return v;
+  return new Intl.DateTimeFormat(lang === "ca" ? "ca-ES" : "es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(d);
+}
+
+/** Markdown mínimo → HTML para el cuerpo del correo (negrita, cursiva, enlaces, listas). */
+function mdToHtml(src: string): string {
+  const inline = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/_([^_]+)_/g, "<em>$1</em>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" style="color:#00a1e0;">$1</a>');
+  return src
+    .trim()
+    .split(/\n\s*\n/)
+    .map((block) => {
+      const lines = block.split(/\n/);
+      if (lines.every((l) => /^\s*[-*]\s+/.test(l))) {
+        const items = lines
+          .map((l) => `<li style="margin:0 0 4px;">${inline(l.replace(/^\s*[-*]\s+/, ""))}</li>`)
+          .join("");
+        return `<ul style="margin:0 0 12px;padding-left:18px;color:#475569;font-size:14px;line-height:1.6;">${items}</ul>`;
+      }
+      return `<p style="margin:0 0 12px;line-height:1.6;color:#475569;">${inline(block).replace(/\n/g, "<br/>")}</p>`;
+    })
+    .join("");
+}
+
 /**
  * Marco del correo: banda blanca con el logo (PNG hospedado), franja de marca
  * con el título, cuerpo y pie con el aviso legal. Maquetado con tablas para que
@@ -61,8 +101,13 @@ export function invitationEmail(input: {
   /** Personalización por organización (opcional): programa, taller, fecha límite y bienvenida. */
   program?: {
     name?: string | null;
+    /** Fecha del taller en ISO (YYYY-MM-DD). */
+    sessionDate?: string | null;
+    /** Lugar del taller. */
     sessionInfo?: string | null;
+    /** Fecha límite en ISO (YYYY-MM-DD). */
     deadline?: string | null;
+    /** Mensaje de bienvenida (admite markdown). */
     welcomeIntro?: string | null;
   };
 }): { subject: string; html: string; text: string } {
@@ -142,29 +187,42 @@ export function invitationEmail(input: {
     : T.subject;
   const W = ca
     ? {
-        lead: (n: string, s: string) =>
-          `Et donem la benvinguda al procés <strong>${n}</strong>${s ? ` — ${s}` : ""}.`,
+        lead: (n: string) => `Et donem la benvinguda al procés <strong>${n}</strong>.`,
         reflective:
           "Més que respondre un qüestionari, regala't uns minuts per conèixer-te millor i arribar a la sessió amb una mirada més conscient sobre la teva manera de col·laborar.",
-        deadline: (d: string) =>
-          `Tens temps per completar el qüestionari fins al <strong>${d}</strong>.`,
+        lProgram: "Programa",
+        lSession: "Taller",
+        lDeadline: "Data límit",
       }
     : {
-        lead: (n: string, s: string) =>
-          `Te damos la bienvenida al proceso <strong>${n}</strong>${s ? ` — ${s}` : ""}.`,
+        lead: (n: string) => `Te damos la bienvenida al proceso <strong>${n}</strong>.`,
         reflective:
           "Más que responder un cuestionario, regálate unos minutos para conocerte mejor y llegar a la sesión con una mirada más consciente sobre tu forma de colaborar.",
-        deadline: (d: string) =>
-          `Tienes tiempo para completar el cuestionario hasta el <strong>${d}</strong>.`,
+        lProgram: "Programa",
+        lSession: "Taller",
+        lDeadline: "Fecha límite",
       };
-  const sInfo = prog?.sessionInfo?.trim() ? esc(prog.sessionInfo.trim()) : "";
-  const wIntro = prog?.welcomeIntro?.trim() ? esc(prog.welcomeIntro.trim()) : "";
-  const dLine = prog?.deadline?.trim() ? esc(prog.deadline.trim()) : "";
+  const sessionDateFmt = fmtDate(prog?.sessionDate, lang);
+  const location = prog?.sessionInfo?.trim() ? esc(prog.sessionInfo.trim()) : "";
+  const deadlineFmt = fmtDate(prog?.deadline, lang);
+  const sessionCell = [sessionDateFmt, location].filter(Boolean).join(" · ");
+  const infoRow = (k: string, v: string) =>
+    `<tr>
+      <td style="padding:5px 14px 5px 0;font-size:12px;color:#64748b;white-space:nowrap;vertical-align:top;">${k}</td>
+      <td style="padding:5px 0;font-size:14px;color:#0f172a;font-weight:600;vertical-align:top;">${v}</td>
+    </tr>`;
+  const infoRows = [
+    infoRow(W.lProgram, esc(programName)),
+    sessionCell ? infoRow(W.lSession, sessionCell) : "",
+    deadlineFmt ? infoRow(W.lDeadline, deadlineFmt) : "",
+  ].join("");
   const programBlock = hasProgram
     ? `
-    <p style="margin:0 0 12px;line-height:1.6;color:#334155;">${W.lead(esc(programName), sInfo)}</p>
-    <p style="margin:0 0 12px;line-height:1.6;color:#475569;">${wIntro || W.reflective}</p>
-    ${dLine ? `<p style="margin:0 0 16px;color:#64748b;font-size:13px;">${W.deadline(dLine)}</p>` : ""}`
+    <p style="margin:0 0 12px;line-height:1.6;color:#334155;">${W.lead(esc(programName))}</p>
+    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:12px 16px;margin:0 0 14px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${infoRows}</table>
+    </div>
+    <div style="margin:0 0 4px;">${mdToHtml(prog?.welcomeIntro?.trim() || W.reflective)}</div>`
     : "";
 
   // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
@@ -219,18 +277,17 @@ export function invitationEmail(input: {
       ${T.fAccess} ${input.loginUrl}<br/>
       ${T.fChange} ${input.setPasswordUrl}
     </p>`;
+  const sessionText = [sessionDateFmt, prog?.sessionInfo?.trim()].filter(Boolean).join(" · ");
   const textLines = [
     T.hello,
     hasProgram
       ? ca
-        ? `Benvingut/da al procés ${programName}${prog?.sessionInfo?.trim() ? ` — ${prog.sessionInfo.trim()}` : ""}.`
-        : `Bienvenido/a al proceso ${programName}${prog?.sessionInfo?.trim() ? ` — ${prog.sessionInfo.trim()}` : ""}.`
+        ? `Benvingut/da al procés ${programName}.`
+        : `Bienvenido/a al proceso ${programName}.`
       : "",
-    prog?.deadline?.trim()
-      ? ca
-        ? `Data límit: ${prog.deadline.trim()}`
-        : `Fecha límite: ${prog.deadline.trim()}`
-      : "",
+    hasProgram && sessionText ? `${W.lSession}: ${sessionText}` : "",
+    deadlineFmt ? `${W.lDeadline}: ${deadlineFmt}` : "",
+    hasProgram && prog?.welcomeIntro?.trim() ? prog.welcomeIntro.trim() : "",
     T.intro.replace(/<[^>]+>/g, ""),
     `${T.correo} ${input.accountEmail}`,
     input.password ? `${T.tPwd} ${input.password}` : "",

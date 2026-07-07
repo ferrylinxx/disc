@@ -23,12 +23,14 @@ const inputCls =
 export function OrgEmailForm({
   id,
   programName,
+  sessionDate,
   sessionInfo,
   deadline,
   welcomeIntro,
 }: {
   id: string;
   programName: string;
+  sessionDate: string;
   sessionInfo: string;
   deadline: string;
   welcomeIntro: string;
@@ -44,6 +46,7 @@ export function OrgEmailForm({
 
   // Campos controlados: la vista previa y la IA usan los valores sin guardar.
   const [prog, setProg] = useState(programName);
+  const [sDate, setSDate] = useState(sessionDate);
   const [sess, setSess] = useState(sessionInfo);
   const [dead, setDead] = useState(deadline);
   const [intro, setIntro] = useState(welcomeIntro);
@@ -57,6 +60,7 @@ export function OrgEmailForm({
     const r = await previewInvitationEmail({
       organizationId: id,
       programName: prog,
+      sessionDate: sDate,
       sessionInfo: sess,
       deadline: dead,
       welcomeIntro: intro,
@@ -84,35 +88,45 @@ export function OrgEmailForm({
     <>
       <form action={action} className="space-y-3">
         <input type="hidden" name="organizationId" value={id} />
+        <label className="block">
+          <span className={labelCls}>Nombre del programa</span>
+          <input
+            name="programName"
+            value={prog}
+            onChange={(e) => setProg(e.target.value)}
+            placeholder="CONECTAR PARA COLABORAR"
+            className={`${inputCls} w-full`}
+          />
+        </label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className={labelCls}>Nombre del programa</span>
+            <span className={labelCls}>Fecha del taller</span>
             <input
-              name="programName"
-              value={prog}
-              onChange={(e) => setProg(e.target.value)}
-              placeholder="CONECTAR PARA COLABORAR"
+              type="date"
+              name="sessionDate"
+              value={sDate}
+              onChange={(e) => setSDate(e.target.value)}
               className={`${inputCls} w-full`}
             />
           </label>
           <label className="block">
             <span className={labelCls}>Fecha límite</span>
             <input
+              type="date"
               name="deadline"
               value={dead}
               onChange={(e) => setDead(e.target.value)}
-              placeholder="10 de julio"
               className={`${inputCls} w-full`}
             />
           </label>
         </div>
         <label className="block">
-          <span className={labelCls}>Taller (cuándo / dónde)</span>
+          <span className={labelCls}>Lugar del taller</span>
           <input
             name="sessionInfo"
             value={sess}
             onChange={(e) => setSess(e.target.value)}
-            placeholder="15 de julio en vuestras instalaciones"
+            placeholder="vuestras instalaciones"
             className={`${inputCls} w-full`}
           />
         </label>
@@ -132,10 +146,13 @@ export function OrgEmailForm({
             name="welcomeIntro"
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
-            rows={3}
-            placeholder="Si lo dejas vacío se usa un texto por defecto."
+            rows={4}
+            placeholder="Si lo dejas vacío se usa un texto por defecto. Admite markdown: **negrita**, _cursiva_ y listas con guiones."
             className={`${inputCls} w-full resize-y`}
           />
+          <p className="mt-1 text-[11px] text-slate-400">
+            Admite markdown: **negrita**, _cursiva_, listas con “- ” y enlaces [texto](https://…).
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button

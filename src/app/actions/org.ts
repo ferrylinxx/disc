@@ -66,8 +66,9 @@ export async function createOrganization(
 const OrgEmailSchema = z.object({
   organizationId: z.string().min(1),
   programName: z.string().trim().max(120).optional(),
+  sessionDate: z.string().trim().max(40).optional(),
   sessionInfo: z.string().trim().max(240).optional(),
-  deadline: z.string().trim().max(120).optional(),
+  deadline: z.string().trim().max(40).optional(),
   welcomeIntro: z.string().trim().max(1200).optional(),
 });
 
@@ -84,6 +85,7 @@ export async function updateOrgEmailConfig(
   const parsed = OrgEmailSchema.safeParse({
     organizationId: formData.get("organizationId"),
     programName: formData.get("programName") ?? undefined,
+    sessionDate: formData.get("sessionDate") ?? undefined,
     sessionInfo: formData.get("sessionInfo") ?? undefined,
     deadline: formData.get("deadline") ?? undefined,
     welcomeIntro: formData.get("welcomeIntro") ?? undefined,
@@ -96,6 +98,7 @@ export async function updateOrgEmailConfig(
     where: { id: parsed.data.organizationId },
     data: {
       programName: parsed.data.programName || null,
+      sessionDate: parsed.data.sessionDate || null,
       sessionInfo: parsed.data.sessionInfo || null,
       deadline: parsed.data.deadline || null,
       welcomeIntro: parsed.data.welcomeIntro || null,
@@ -113,6 +116,7 @@ export async function updateOrgEmailConfig(
 export async function previewInvitationEmail(input: {
   organizationId: string;
   programName?: string;
+  sessionDate?: string;
   sessionInfo?: string;
   deadline?: string;
   welcomeIntro?: string;
@@ -134,6 +138,7 @@ export async function previewInvitationEmail(input: {
     program: name
       ? {
           name,
+          sessionDate: input.sessionDate,
           sessionInfo: input.sessionInfo,
           deadline: input.deadline,
           welcomeIntro: input.welcomeIntro,
@@ -168,8 +173,9 @@ export async function improveInvitationWelcome(input: {
   const system =
     "Eres redactor de GESEM y escribes el mensaje de bienvenida de un correo de invitación a un cuestionario de estilos conductuales DISC. " +
     "Reglas obligatorias: habla de tendencias y preferencias, nunca de diagnóstico; prohibido 'eres', 'siempre', 'nunca', 'trastorno', 'capacidad'; " +
-    "tono cálido, cercano y profesional; 2 a 4 frases; sin encabezados ni firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
-    "Responde SOLO con el texto del mensaje, sin comillas ni explicaciones.";
+    "tono cálido, cercano y profesional; 2 a 5 frases; sin encabezados ni firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
+    "Puedes usar markdown ligero para estructurar: **negrita** para 1-2 ideas clave y, si aporta, una lista breve con guiones. " +
+    "Responde SOLO con el texto del mensaje (markdown incluido), sin comillas ni explicaciones.";
   const user = current
     ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`
     : `Escribe un mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}, que invite a la persona a completar su cuestionario DISC con calma y una mirada reflexiva antes del taller.`;

@@ -305,6 +305,7 @@ export async function adminOrganizationDetail(id: string) {
       slug: true,
       createdAt: true,
       programName: true,
+      sessionDate: true,
       sessionInfo: true,
       deadline: true,
       welcomeIntro: true,
