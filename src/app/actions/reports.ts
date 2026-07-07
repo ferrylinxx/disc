@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAuth } from "@/lib/auth/dal";
+import { prisma } from "@/lib/db";
 import { adminOrganizationIds, effectiveRoles } from "@/lib/auth/rbac";
 import type { SessionPayload } from "@/lib/auth/jwt";
 import { allOrganizationIds, participantReport } from "@/lib/data/dashboard";
@@ -42,15 +43,25 @@ export async function sendParticipantReport(
   const def = getActiveInstrument();
   const narrative = await buildProfileNarrativeDb(data.result);
   const blocks = await loadProfileBlocks(data.result.profileCode);
+
+  // El enlace del correo de INFORME debe abrir el informe ya completado, no el
+  // cuestionario. Enlazamos a la invitación COMPLETED concreta (/evaluacion/<token>),
+  // así no depende de que sea la invitación más reciente del participante (una
+  // invitación posterior sin completar haría que /evaluacion mostrara el test).
+  const completed = await prisma.invitation.findFirst({
+    where: { participantId, status: "COMPLETED" },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+    select: { token: true },
+  });
+  const nextPath = completed ? `/evaluacion/${completed.token}` : "/evaluacion";
+  const loginParams = new URLSearchParams({ next: nextPath, email: data.participant.email });
   const email = reportEmail({
     participantName: data.participant.fullName,
     result: data.result,
     def,
     narrative,
     blocks,
-    reportUrl: absoluteUrl(
-      `/login?next=/evaluacion&email=${encodeURIComponent(data.participant.email)}`,
-    ),
+    reportUrl: absoluteUrl(`/login?${loginParams.toString()}`),
   });
   try {
     await sendMail({
