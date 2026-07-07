@@ -7,6 +7,7 @@
  */
 import type { DimensionScore, Dimension, EvaluationContext } from "@/lib/engine/types";
 import { proportionalShares } from "@/lib/engine/scoring";
+import { quadrantPoint } from "@/lib/disc-map";
 import { resolveProfile, styleShort } from "@/lib/narratives/disc-gesem.catalog";
 import { teamDimensionInsight } from "@/lib/narratives/disc-gesem.team";
 
@@ -266,21 +267,19 @@ export function computeTeamInsights(
     }
   }
 
-  // Mapa conductual del equipo: un punto por participante en el cuadrante.
-  // Orden de cuadrantes igual que el informe individual: D↖ I↗ / S↙ C↘.
-  // Cada persona cae bajo la letra de sus recursos predominantes.
+  // Mapa conductual del equipo: un punto por participante, anclado al cuadrante
+  // de su recurso DOMINANTE (orden D↖ I↗ / S↙ C↘). Así un perfil SI cae siempre
+  // en la zona S, aunque su I sea casi igual de alto.
   const discPoints = participants
     .filter((p) => p.result)
     .map((p, idx) => {
       const r = p.result!;
       const sh: Record<string, number> = {};
       for (const s of proportionalShares(r.global)) sh[s.dimensionCode] = s.share;
-      const dd = sh.D ?? 0, ii = sh.I ?? 0, ss = sh.S ?? 0, cc = sh.C ?? 0;
-      const x = (ii + cc - (dd + ss)) / 100; // + derecha: columna I, C
-      const yUp = (dd + ii - (ss + cc)) / 100; // + arriba: fila D, I
+      const { x, y } = quadrantPoint(sh, r.primary);
       return {
         x: Math.max(22, Math.min(178, 100 + x * 74)),
-        y: Math.max(22, Math.min(178, 100 - yUp * 74)),
+        y: Math.max(22, Math.min(178, 100 - y * 74)),
         code: r.primary,
         n: idx + 1,
         name: p.fullName ?? `Persona ${idx + 1}`,

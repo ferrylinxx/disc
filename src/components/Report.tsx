@@ -8,6 +8,7 @@ import {
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import { REPORT_CONTEXTS_CA } from "@/lib/narratives/disc-gesem.profiles.ca";
+import { quadrantPoint } from "@/lib/disc-map";
 import { generateInsights } from "@/lib/narratives/disc-gesem.insights";
 import { getDict, type Dict, type Lang } from "@/lib/i18n/dictionaries";
 import { discGrad, discGradStops } from "@/lib/disc-gradient";
@@ -750,20 +751,16 @@ function DiscGrid({
 }) {
   const get = (code: string) =>
     shares.find((p) => p.dimensionCode === code)?.share ?? 0;
-  const d = get("D");
-  const i = get("I");
-  const s = get("S");
-  const c = get("C");
-  // Orden de cuadrantes D↖ I↗ / S↙ C↘: el marcador debe caer bajo su letra.
-  const x = (i + c - (d + s)) / 100; // + derecha (columna I, C)
-  const y = (d + i - (s + c)) / 100; // + arriba (fila D, I)
-  const cx = Math.max(24, Math.min(176, 100 + x * 76));
-  const cy = Math.max(24, Math.min(176, 100 - y * 76));
   const CODES = ["D", "I", "S", "C"];
+  const shareMap: Record<string, number> = { D: get("D"), I: get("I"), S: get("S"), C: get("C") };
   const marker =
     markerCode ??
     shares.reduce((a, b) => (b.share > a.share ? b : a), shares[0])?.dimensionCode ??
     "D";
+  // Marcador anclado al cuadrante del recurso dominante (orden D↖ I↗ / S↙ C↘).
+  const { x, y } = quadrantPoint(shareMap, marker);
+  const cx = Math.max(24, Math.min(176, 100 + x * 76));
+  const cy = Math.max(24, Math.min(176, 100 - y * 76));
 
   const quad = (code: string, qx: number, qy: number) => (
     <g key={code}>
