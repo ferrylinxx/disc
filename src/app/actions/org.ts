@@ -144,9 +144,9 @@ export async function previewInvitationEmail(input: {
 }
 
 /**
- * Mejora (o redacta) el mensaje de bienvenida del correo con IA (Claude),
- * respetando las reglas de redacción (tendencia, no diagnóstico). Requiere
- * ANTHROPIC_API_KEY en el entorno del servidor.
+ * Mejora (o redacta) el mensaje de bienvenida del correo con IA (Groq, API
+ * compatible con OpenAI), respetando las reglas de redacción (tendencia, no
+ * diagnóstico). Requiere GROQ_API_KEY en el entorno del servidor.
  */
 export async function improveInvitationWelcome(input: {
   programName?: string;
@@ -154,11 +154,11 @@ export async function improveInvitationWelcome(input: {
   lang?: "ca" | "es";
 }): Promise<{ ok: boolean; text?: string; error?: string }> {
   await requireAuth();
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
     return {
       ok: false,
-      error: "Falta ANTHROPIC_API_KEY en el servidor. Añádela al .env para activar la mejora con IA.",
+      error: "Falta GROQ_API_KEY en el servidor. Añádela al .env para activar la mejora con IA.",
     };
   }
   const lang = input.lang === "es" ? "es" : "ca";
@@ -174,26 +174,30 @@ export async function improveInvitationWelcome(input: {
     ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`
     : `Escribe un mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}, que invite a la persona a completar su cuestionario DISC con calma y una mirada reflexiva antes del taller.`;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${key}`,
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-5",
+        model: "llama-3.3-70b-versatile",
         max_tokens: 400,
-        system,
-        messages: [{ role: "user", content: user }],
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
       }),
     });
     if (!res.ok) {
       console.error("[IA] respuesta no OK:", res.status, await res.text());
       return { ok: false, error: `La IA no respondió correctamente (${res.status}).` };
     }
-    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
-    const text = (data.content?.find((c) => c.type === "text")?.text ?? "").trim();
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const text = (data.choices?.[0]?.message?.content ?? "").trim();
     if (!text) return { ok: false, error: "La IA no devolvió texto." };
     return { ok: true, text };
   } catch (e) {
