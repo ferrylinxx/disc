@@ -128,8 +128,12 @@ export async function previewInvitationEmail(input: {
   }
   const lang = input.lang === "es" ? "es" : "ca";
   const name = (input.programName || "").trim();
+  const org = await prisma.organization.findUnique({
+    where: { id: input.organizationId },
+    select: { name: true },
+  });
   const email = invitationEmail({
-    participantName: "Nombre Apellido",
+    participantName: "Laura Ejemplo",
     accountEmail: "participante@ejemplo.com",
     password: "Ej3mplo-2026",
     loginUrl: absoluteUrl("/login?next=/evaluacion&email=participante@ejemplo.com"),
@@ -142,6 +146,7 @@ export async function previewInvitationEmail(input: {
           sessionInfo: input.sessionInfo,
           deadline: input.deadline,
           welcomeIntro: input.welcomeIntro,
+          orgName: org?.name ?? null,
         }
       : undefined,
   });
@@ -175,6 +180,7 @@ export async function improveInvitationWelcome(input: {
     "Reglas obligatorias: habla de tendencias y preferencias, nunca de diagnóstico; prohibido 'eres', 'siempre', 'nunca', 'trastorno', 'capacidad'; " +
     "tono cálido, cercano y profesional; 2 a 5 frases; sin encabezados ni firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
     "Puedes usar markdown ligero para estructurar: **negrita** para 1-2 ideas clave y, si aporta, una lista breve con guiones. " +
+    "Puedes usar la variable {{nombre}} para dirigirte a la persona (se sustituye por su nombre al enviar). " +
     "Responde SOLO con el texto del mensaje (markdown incluido), sin comillas ni explicaciones.";
   const user = current
     ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`

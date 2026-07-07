@@ -23,6 +23,17 @@ function fmtDate(value: string | null | undefined, lang: Lang): string {
   }).format(d);
 }
 
+/**
+ * Sustituye variables {{nombre}}, {{email}}, {{programa}}, {{organizacion}}… por
+ * los datos reales del participante. Las desconocidas o vacías se dejan tal cual.
+ */
+function fillVars(text: string, vars: Record<string, string>): string {
+  return text.replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (m, key: string) => {
+    const v = vars[key.toLowerCase()];
+    return v !== undefined && v !== "" ? v : m;
+  });
+}
+
 /** Markdown mínimo → HTML para el cuerpo del correo (negrita, cursiva, enlaces, listas). */
 function mdToHtml(src: string): string {
   const inline = (s: string) =>
@@ -107,8 +118,10 @@ export function invitationEmail(input: {
     sessionInfo?: string | null;
     /** Fecha límite en ISO (YYYY-MM-DD). */
     deadline?: string | null;
-    /** Mensaje de bienvenida (admite markdown). */
+    /** Mensaje de bienvenida (admite markdown y variables {{nombre}}, {{email}}…). */
     welcomeIntro?: string | null;
+    /** Nombre de la organización (para la variable {{organizacion}}). */
+    orgName?: string | null;
   };
 }): { subject: string; html: string; text: string } {
   const lang = input.lang ?? "ca";
@@ -120,6 +133,21 @@ export function invitationEmail(input: {
   const prog = input.program;
   const programName = prog?.name?.trim() || "";
   const hasProgram = programName.length > 0;
+  // Variables sustituibles en el mensaje de bienvenida ({{nombre}}, {{email}}…).
+  const fullName = input.participantName.trim();
+  const vars: Record<string, string> = {
+    nombre: first,
+    name: first,
+    nombre_completo: fullName,
+    nombrecompleto: fullName,
+    fullname: fullName,
+    email: input.accountEmail,
+    correo: input.accountEmail,
+    programa: programName,
+    program: programName,
+    organizacion: prog?.orgName?.trim() ?? "",
+    org: prog?.orgName?.trim() ?? "",
+  };
 
   const T = ca
     ? {
@@ -222,7 +250,7 @@ export function invitationEmail(input: {
     <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:12px 16px;margin:0 0 14px;">
       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${infoRows}</table>
     </div>
-    <div style="margin:0 0 4px;">${mdToHtml(prog?.welcomeIntro?.trim() || W.reflective)}</div>`
+    <div style="margin:0 0 4px;">${mdToHtml(fillVars(prog?.welcomeIntro?.trim() || W.reflective, vars))}</div>`
     : "";
 
   // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
@@ -287,7 +315,7 @@ export function invitationEmail(input: {
       : "",
     hasProgram && sessionText ? `${W.lSession}: ${sessionText}` : "",
     deadlineFmt ? `${W.lDeadline}: ${deadlineFmt}` : "",
-    hasProgram && prog?.welcomeIntro?.trim() ? prog.welcomeIntro.trim() : "",
+    hasProgram && prog?.welcomeIntro?.trim() ? fillVars(prog.welcomeIntro.trim(), vars) : "",
     T.intro.replace(/<[^>]+>/g, ""),
     `${T.correo} ${input.accountEmail}`,
     input.password ? `${T.tPwd} ${input.password}` : "",

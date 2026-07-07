@@ -150,8 +150,15 @@ export function OrgEmailForm({
             placeholder="Si lo dejas vacío se usa un texto por defecto. Admite markdown: **negrita**, _cursiva_ y listas con guiones."
             className={`${inputCls} w-full resize-y`}
           />
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
             Admite markdown: **negrita**, _cursiva_, listas con “- ” y enlaces [texto](https://…).
+            <br />
+            Variables (se rellenan al enviar):{" "}
+            <code className="text-slate-500">{"{{nombre}}"}</code>,{" "}
+            <code className="text-slate-500">{"{{nombre_completo}}"}</code>,{" "}
+            <code className="text-slate-500">{"{{email}}"}</code>,{" "}
+            <code className="text-slate-500">{"{{programa}}"}</code>,{" "}
+            <code className="text-slate-500">{"{{organizacion}}"}</code>.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

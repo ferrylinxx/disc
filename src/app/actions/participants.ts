@@ -96,6 +96,7 @@ async function sendAccountInvite(input: {
       const org = await prisma.organization.findUnique({
         where: { id: input.organizationId },
         select: {
+          name: true,
           programName: true,
           sessionDate: true,
           sessionInfo: true,
@@ -110,6 +111,7 @@ async function sendAccountInvite(input: {
           sessionInfo: org.sessionInfo,
           deadline: org.deadline,
           welcomeIntro: org.welcomeIntro,
+          orgName: org.name,
         };
       }
     }
