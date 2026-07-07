@@ -164,7 +164,7 @@ const es = {
     reflexionLead:
       "Preguntas para llevarte a la conversación y trabajar en la sesión; no tienen respuesta correcta.",
     mapIntro:
-      "El mapa sitúa los cuatro recursos en dos ejes: arriba/abajo (activo ↔ reflexivo) e izquierda/derecha (orientado a tareas ↔ a personas). Tu punto refleja la mezcla de tus recursos.",
+      "El mapa sitúa los cuatro recursos en cuatro cuadrantes (D↖ · I↗ · S↙ · C↘). Tu punto aparece en el cuadrante de tu recurso predominante: cuanto más marcado es, más cerca de la esquina; cuanto más equilibrado tu perfil, más hacia el centro.",
     closing:
       "El autoconocimiento es el punto de partida. La comprensión mutua es el puente. La adaptación consciente es la competencia. La colaboración eficaz es el resultado.",
     methodNote:
@@ -609,7 +609,7 @@ const ca: typeof es = {
     reflexionLead:
       "Preguntes per endur-te a la conversa i treballar a la sessió; no tenen resposta correcta.",
     mapIntro:
-      "El mapa situa els quatre recursos en dos eixos: amunt/avall (actiu ↔ reflexiu) i esquerra/dreta (orientat a tasques ↔ a persones). El teu punt reflecteix la barreja dels teus recursos.",
+      "El mapa situa els quatre recursos en quatre quadrants (D↖ · I↗ · S↙ · C↘). El teu punt apareix al quadrant del teu recurs predominant: com més marcat és, més a prop de la cantonada; com més equilibrat el teu perfil, més cap al centre.",
     closing:
       "L'autoconeixement és el punt de partida. La comprensió mútua és el pont. L'adaptació conscient és la competència. La col·laboració eficaç és el resultat.",
     methodNote:
