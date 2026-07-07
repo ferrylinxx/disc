@@ -13,6 +13,7 @@ import {
   updateOrgEmailConfig,
   type ActionState,
 } from "@/app/actions/org";
+import { addOrgGestor } from "@/app/actions/users";
 import { ConfirmButton, toast } from "./ui-client";
 
 const initial: ActionState = {};
@@ -300,6 +301,70 @@ export function RenameOrgForm({ id, name }: { id: string; name: string }) {
         {pending ? "Guardando…" : "Renombrar"}
       </button>
     </form>
+  );
+}
+
+/** Alta de un gestor (Admin cliente o Facilitador) directamente en la organización. */
+export function AddGestorForm({ organizationId }: { organizationId: string }) {
+  const [state, action, pending] = useActionState(addOrgGestor, initial);
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef<ActionState | null>(null);
+  useEffect(() => {
+    if (state === seen.current) return;
+    seen.current = state;
+    if (state.error) toast(state.error, "error");
+    else if (state.ok) {
+      toast(state.message ?? "Gestor añadido.", "success");
+      if (!state.credentials) formRef.current?.reset();
+    }
+  }, [state]);
+  return (
+    <div className="space-y-3">
+      <form ref={formRef} action={action} className="flex flex-wrap items-end gap-2">
+        <input type="hidden" name="organizationId" value={organizationId} />
+        <div className="min-w-[190px] flex-1">
+          <label className="mb-1 block text-xs font-semibold text-slate-500">Email del gestor</label>
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="persona@empresa.com"
+            className={`${inputCls} w-full`}
+          />
+        </div>
+        <div className="min-w-[130px]">
+          <label className="mb-1 block text-xs font-semibold text-slate-500">Nombre (opcional)</label>
+          <input name="name" placeholder="Nombre" className={`${inputCls} w-full`} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-500">Rol</label>
+          <select name="role" defaultValue="ADMIN" className={inputCls}>
+            <option value="ADMIN">Admin cliente</option>
+            <option value="FACILITATOR">Facilitador</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+        >
+          {pending ? "Añadiendo…" : "Añadir gestor"}
+        </button>
+      </form>
+      {state.credentials && (
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-xs leading-relaxed text-emerald-800">
+          Cuenta creada. Cópiale estas credenciales (no se volverán a mostrar):
+          <br />
+          <b>Correo:</b> {state.credentials.email} &nbsp;·&nbsp; <b>Contraseña:</b>{" "}
+          <span className="font-mono">{state.credentials.password}</span>
+        </div>
+      )}
+      <p className="text-[11px] text-slate-400">
+        Si el email no tiene cuenta, se crea automáticamente y (si el SMTP está configurado) se le
+        envían las credenciales. <b>Admin cliente</b> gestiona la organización; <b>Facilitador</b>{" "}
+        acompaña las sesiones.
+      </p>
+    </div>
   );
 }
 

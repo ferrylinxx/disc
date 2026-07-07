@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { absoluteUrl, isMailConfigured, sendMail } from "@/lib/email/mailer";
 import { invitationEmail } from "@/lib/email/templates";
-import { createPasswordSetToken } from "@/lib/auth/password";
+import { createPasswordSetToken, hashPassword, randomPassword } from "@/lib/auth/password";
 import type { Lang } from "@/lib/i18n/dictionaries";
 import type { ActionState } from "./org";
 
@@ -221,6 +221,85 @@ export async function addMembership(
   });
   revalidatePath("/admin", "layout");
   return { ok: true };
+}
+
+const AddGestorSchema = z.object({
+  organizationId: z.string().min(1),
+  email: z.email({ error: "Introduce un email válido." }).trim().toLowerCase(),
+  name: z.string().trim().max(120).optional(),
+  role: z.enum(["ADMIN", "FACILITATOR"]),
+});
+
+/**
+ * Añade un gestor a una organización directamente por email + rol (sin pasar por
+ * la sección Usuarios). Si el email no tiene cuenta, la crea con contraseña
+ * temporal y le envía las credenciales; si ya existe, solo asigna/actualiza su
+ * rol en la organización.
+ */
+export async function addOrgGestor(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole("SUPERADMIN");
+  const parsed = AddGestorSchema.safeParse({
+    organizationId: formData.get("organizationId"),
+    email: formData.get("email"),
+    name: formData.get("name") || undefined,
+    role: formData.get("role"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Revisa los datos del gestor." };
+  }
+  const { organizationId, email, name, role } = parsed.data;
+  const roleName = role === "ADMIN" ? "Admin cliente" : "Facilitador";
+
+  let user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true },
+  });
+  let created = false;
+  let tempPassword: string | undefined;
+  if (!user) {
+    tempPassword = randomPassword();
+    const passwordHash = await hashPassword(tempPassword);
+    user = await prisma.user.create({
+      data: { email, name: name ?? null, passwordHash, globalRole: "USER" },
+      select: { id: true, name: true },
+    });
+    created = true;
+  } else if (name && !user.name) {
+    await prisma.user.update({ where: { id: user.id }, data: { name } });
+  }
+
+  await prisma.membership.upsert({
+    where: { userId_organizationId: { userId: user.id, organizationId } },
+    update: { role },
+    create: { userId: user.id, organizationId, role },
+  });
+
+  let emailed = false;
+  if (created && tempPassword) {
+    emailed = await sendNewUserEmail({
+      to: email,
+      name: name ?? null,
+      userId: user.id,
+      password: tempPassword,
+      lang: "es",
+    });
+  }
+
+  revalidatePath(`/admin/organizaciones/${organizationId}`);
+  revalidatePath("/admin", "layout");
+
+  if (!created) return { ok: true, message: `Gestor asignado como ${roleName}.` };
+  const message = emailed
+    ? `Gestor añadido como ${roleName}. Le hemos enviado sus credenciales por email.`
+    : `Gestor añadido como ${roleName}. Cuenta creada; copia sus credenciales.`;
+  return {
+    ok: true,
+    message,
+    credentials: !emailed && tempPassword ? { email, password: tempPassword } : undefined,
+  };
 }
 
 /** Quita una membership concreta. */

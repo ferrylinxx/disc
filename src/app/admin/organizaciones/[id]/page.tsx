@@ -15,6 +15,7 @@ import {
   InviteParticipantForm,
 } from "@/components/dashboard/Forms";
 import {
+  AddGestorForm,
   DeleteEntityButton,
   DeleteOrgButton,
   OrgEmailForm,
@@ -220,8 +221,11 @@ export default async function AdminOrgDetailPage({
         </Link>
       }
     >
+      <div className="space-y-4">
+        <AddGestorForm organizationId={org.id} />
+        <div className="border-t border-slate-100 pt-4">
       {org.members.length === 0 ? (
-        <EmptyState title="Sin gestores asignados" hint="Asigna roles desde la sección Usuarios." />
+        <EmptyState title="Sin gestores asignados" hint="Añade el primero con el formulario de arriba." />
       ) : (
         <ul className="divide-y divide-slate-50">
           {org.members.map((m) => (
@@ -242,6 +246,8 @@ export default async function AdminOrgDetailPage({
           ))}
         </ul>
       )}
+        </div>
+      </div>
     </Card>
   );
 
