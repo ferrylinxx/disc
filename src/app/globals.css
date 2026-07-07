@@ -268,7 +268,18 @@ body {
   .print-area header { break-inside: avoid; }
   /* PDF ejecutivo: oculta las pantallas ampliadas (solo facilitador). */
   .print-area[data-export="ejecutivo"] [data-detail] { display: none !important; }
+  /* Desactiva TODAS las animaciones (incluidas las ligadas al scroll con
+     animation-timeline: view()) y fuerza visibilidad total: si no, en el PDF
+     los textos aparecen y desaparecen o salen en blanco (estado inicial
+     opacity:0 de la animación de aparición). */
+  .reveal,
   .animate-fade-up,
   .animate-fade-in,
-  .animate-scale-in { animation: none !important; }
+  .animate-scale-in,
+  .animate-float {
+    animation: none !important;
+    animation-timeline: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
