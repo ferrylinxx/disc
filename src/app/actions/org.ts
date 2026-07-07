@@ -185,6 +185,7 @@ export async function improveInvitationWelcome(input: {
       headers: {
         Authorization: `Bearer ${key}`,
         "content-type": "application/json",
+        "user-agent": "disc-gesem/1.0",
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -237,7 +238,11 @@ export async function extractRosterFromImage(input: {
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "content-type": "application/json",
+        "user-agent": "disc-gesem/1.0",
+      },
       body: JSON.stringify({
         model: "meta-llama/llama-4-scout-17b-16e-instruct",
         max_tokens: 2000,
