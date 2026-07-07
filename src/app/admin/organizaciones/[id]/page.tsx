@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/dal";
 import {
   adminOrganizationDetail,
   adminParticipants,
+  assignableUsers,
   organizationTeamReport,
   teamsForOrganizations,
 } from "@/lib/data/dashboard";
@@ -45,11 +46,12 @@ export default async function AdminOrgDetailPage({
   await requireRole("SUPERADMIN");
   const { id } = await params;
 
-  const [org, participants, teams, teamData] = await Promise.all([
+  const [org, participants, teams, teamData, gestorCandidates] = await Promise.all([
     adminOrganizationDetail(id),
     adminParticipants(id),
     teamsForOrganizations([id]),
     organizationTeamReport(id, [id]),
+    assignableUsers(id),
   ]);
   if (!org) notFound();
 
@@ -222,7 +224,7 @@ export default async function AdminOrgDetailPage({
       }
     >
       <div className="space-y-4">
-        <AddGestorForm organizationId={org.id} />
+        <AddGestorForm organizationId={org.id} users={gestorCandidates} />
         <div className="border-t border-slate-100 pt-4">
       {org.members.length === 0 ? (
         <EmptyState title="Sin gestores asignados" hint="Añade el primero con el formulario de arriba." />

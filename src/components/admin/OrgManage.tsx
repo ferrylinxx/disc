@@ -305,22 +305,57 @@ export function RenameOrgForm({ id, name }: { id: string; name: string }) {
 }
 
 /** Alta de un gestor (Admin cliente o Facilitador) directamente en la organización. */
-export function AddGestorForm({ organizationId }: { organizationId: string }) {
+export function AddGestorForm({
+  organizationId,
+  users,
+}: {
+  organizationId: string;
+  users: { id: string; name: string | null; email: string }[];
+}) {
   const [state, action, pending] = useActionState(addOrgGestor, initial);
-  const formRef = useRef<HTMLFormElement>(null);
   const seen = useRef<ActionState | null>(null);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   useEffect(() => {
     if (state === seen.current) return;
     seen.current = state;
     if (state.error) toast(state.error, "error");
     else if (state.ok) {
       toast(state.message ?? "Gestor añadido.", "success");
-      if (!state.credentials) formRef.current?.reset();
+      if (!state.credentials) {
+        setEmail("");
+        setName("");
+      }
     }
   }, [state]);
+
+  function pickUser(e: React.ChangeEvent<HTMLSelectElement>) {
+    const u = users.find((x) => x.id === e.target.value);
+    if (u) {
+      setEmail(u.email);
+      setName(u.name ?? "");
+    }
+    e.target.value = "";
+  }
+
   return (
     <div className="space-y-3">
-      <form ref={formRef} action={action} className="flex flex-wrap items-end gap-2">
+      {users.length > 0 && (
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-500">
+            Elegir un usuario ya creado
+          </label>
+          <select onChange={pickUser} defaultValue="" className={`${inputCls} w-full`}>
+            <option value="">— Selecciona un usuario existente —</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name ? `${u.name} · ${u.email}` : u.email}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <form action={action} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="organizationId" value={organizationId} />
         <div className="min-w-[190px] flex-1">
           <label className="mb-1 block text-xs font-semibold text-slate-500">Email del gestor</label>
@@ -328,13 +363,21 @@ export function AddGestorForm({ organizationId }: { organizationId: string }) {
             name="email"
             type="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="persona@empresa.com"
             className={`${inputCls} w-full`}
           />
         </div>
         <div className="min-w-[130px]">
           <label className="mb-1 block text-xs font-semibold text-slate-500">Nombre (opcional)</label>
-          <input name="name" placeholder="Nombre" className={`${inputCls} w-full`} />
+          <input
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre"
+            className={`${inputCls} w-full`}
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-slate-500">Rol</label>
@@ -360,9 +403,9 @@ export function AddGestorForm({ organizationId }: { organizationId: string }) {
         </div>
       )}
       <p className="text-[11px] text-slate-400">
-        Si el email no tiene cuenta, se crea automáticamente y (si el SMTP está configurado) se le
-        envían las credenciales. <b>Admin cliente</b> gestiona la organización; <b>Facilitador</b>{" "}
-        acompaña las sesiones.
+        Elige un <b>usuario ya creado</b> en el desplegable, o escribe un email nuevo (se crea la
+        cuenta y, si hay SMTP, se le envían las credenciales). <b>Admin cliente</b> gestiona la
+        organización; <b>Facilitador</b> acompaña las sesiones.
       </p>
     </div>
   );

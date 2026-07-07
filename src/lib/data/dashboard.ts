@@ -354,6 +354,21 @@ export type AdminOrganizationDetail = NonNullable<
   Awaited<ReturnType<typeof adminOrganizationDetail>>
 >;
 
+/** Usuarios que aún NO son gestores de la organización (candidatos a añadir). */
+export async function assignableUsers(organizationId: string) {
+  const members = await prisma.membership.findMany({
+    where: { organizationId },
+    select: { userId: true },
+  });
+  const memberIds = members.map((m) => m.userId);
+  return prisma.user.findMany({
+    where: memberIds.length ? { id: { notIn: memberIds } } : {},
+    orderBy: [{ name: "asc" }, { email: "asc" }],
+    select: { id: true, name: true, email: true },
+    take: 300,
+  });
+}
+
 /** Proyectos, equipos y participantes de las organizaciones del cliente. */
 export async function clientOverview(organizationIds: string[]) {
   if (organizationIds.length === 0) {
