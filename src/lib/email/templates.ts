@@ -99,7 +99,7 @@ function shell(title: string, body: string, lang: Lang = "es"): string {
       : "Cuestionario de estilos conductuales DISC GESEM. Los resultados describen tendencias y no constituyen un diagnóstico.";
   return `<!doctype html><html><body style="margin:0;background:#eef1f7;padding:30px 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;"><tr><td align="center" style="padding:0 16px;">
-    <table role="presentation" width="700" cellpadding="0" cellspacing="0" style="width:100%;max-width:700px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e6eaf1;box-shadow:0 12px 34px rgba(15,23,42,0.07);">
+    <table role="presentation" width="840" cellpadding="0" cellspacing="0" style="width:100%;max-width:840px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e6eaf1;box-shadow:0 12px 34px rgba(15,23,42,0.07);">
       <tr><td style="padding:24px 36px 20px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
         <img src="${appUrl}/brand/gesem-logo-email.png" alt="GESEM DISC" width="130" style="display:block;border:0;height:auto;width:130px;" />
       </td></tr>
@@ -112,7 +112,7 @@ function shell(title: string, body: string, lang: Lang = "es"): string {
         <div style="color:#94a3b8;font-size:12px;line-height:1.6;">${footer}</div>
       </td></tr>
     </table>
-    <div style="max-width:700px;margin:16px auto 0;color:#aeb8c7;font-size:11px;text-align:center;letter-spacing:.3px;">DISC GESEM · Cuestionario de estilos conductuales</div>
+    <div style="max-width:840px;margin:16px auto 0;color:#aeb8c7;font-size:11px;text-align:center;letter-spacing:.3px;">DISC GESEM · Cuestionario de estilos conductuales</div>
   </td></tr></table>
   </body></html>`;
 }
