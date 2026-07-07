@@ -1,13 +1,18 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   deleteOrganization,
   deleteProject,
   deleteTeam,
   updateOrganization,
 } from "@/app/actions/admin";
-import { updateOrgEmailConfig, type ActionState } from "@/app/actions/org";
+import {
+  improveInvitationWelcome,
+  previewInvitationEmail,
+  updateOrgEmailConfig,
+  type ActionState,
+} from "@/app/actions/org";
 import { ConfirmButton, toast } from "./ui-client";
 
 const initial: ActionState = {};
@@ -36,69 +41,173 @@ export function OrgEmailForm({
     if (state.error) toast(state.error, "error");
     else if (state.ok) toast("Correo de invitación actualizado.", "success");
   }, [state]);
+
+  // Campos controlados: la vista previa y la IA usan los valores sin guardar.
+  const [prog, setProg] = useState(programName);
+  const [sess, setSess] = useState(sessionInfo);
+  const [dead, setDead] = useState(deadline);
+  const [intro, setIntro] = useState(welcomeIntro);
+  const [lang, setLang] = useState<"ca" | "es">("ca");
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const [improving, setImproving] = useState(false);
+
+  async function openPreview(l: "ca" | "es") {
+    setPreviewing(true);
+    const r = await previewInvitationEmail({
+      organizationId: id,
+      programName: prog,
+      sessionInfo: sess,
+      deadline: dead,
+      welcomeIntro: intro,
+      lang: l,
+    });
+    setPreviewing(false);
+    if (r.ok && r.html) {
+      setLang(l);
+      setPreview({ subject: r.subject ?? "", html: r.html });
+    } else toast(r.error ?? "No se pudo generar la vista previa.", "error");
+  }
+
+  async function improve() {
+    setImproving(true);
+    const r = await improveInvitationWelcome({ programName: prog, current: intro, lang });
+    setImproving(false);
+    if (r.ok && r.text) {
+      setIntro(r.text);
+      toast("Mensaje mejorado con IA.", "success");
+    } else toast(r.error ?? "No se pudo mejorar con IA.", "error");
+  }
+
+  const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
   return (
-    <form action={action} className="space-y-3">
-      <input type="hidden" name="organizationId" value={id} />
-      <div className="grid gap-3 sm:grid-cols-2">
+    <>
+      <form action={action} className="space-y-3">
+        <input type="hidden" name="organizationId" value={id} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className={labelCls}>Nombre del programa</span>
+            <input
+              name="programName"
+              value={prog}
+              onChange={(e) => setProg(e.target.value)}
+              placeholder="CONECTAR PARA COLABORAR"
+              className={`${inputCls} w-full`}
+            />
+          </label>
+          <label className="block">
+            <span className={labelCls}>Fecha límite</span>
+            <input
+              name="deadline"
+              value={dead}
+              onChange={(e) => setDead(e.target.value)}
+              placeholder="10 de julio"
+              className={`${inputCls} w-full`}
+            />
+          </label>
+        </div>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-slate-500">
-            Nombre del programa
-          </span>
+          <span className={labelCls}>Taller (cuándo / dónde)</span>
           <input
-            name="programName"
-            defaultValue={programName}
-            placeholder="CONECTAR PARA COLABORAR"
+            name="sessionInfo"
+            value={sess}
+            onChange={(e) => setSess(e.target.value)}
+            placeholder="15 de julio en vuestras instalaciones"
             className={`${inputCls} w-full`}
           />
         </label>
-        <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-slate-500">
-            Fecha límite
-          </span>
-          <input
-            name="deadline"
-            defaultValue={deadline}
-            placeholder="10 de julio"
-            className={`${inputCls} w-full`}
+        <div>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-500">Mensaje de bienvenida (opcional)</span>
+            <button
+              type="button"
+              onClick={improve}
+              disabled={improving}
+              className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
+            >
+              {improving ? "Mejorando…" : "✨ Mejorar con IA"}
+            </button>
+          </div>
+          <textarea
+            name="welcomeIntro"
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+            rows={3}
+            placeholder="Si lo dejas vacío se usa un texto por defecto."
+            className={`${inputCls} w-full resize-y`}
           />
-        </label>
-      </div>
-      <label className="block">
-        <span className="mb-1 block text-xs font-semibold text-slate-500">
-          Taller (cuándo / dónde)
-        </span>
-        <input
-          name="sessionInfo"
-          defaultValue={sessionInfo}
-          placeholder="15 de julio en vuestras instalaciones"
-          className={`${inputCls} w-full`}
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-xs font-semibold text-slate-500">
-          Mensaje de bienvenida (opcional)
-        </span>
-        <textarea
-          name="welcomeIntro"
-          defaultValue={welcomeIntro}
-          rows={3}
-          placeholder="Si lo dejas vacío se usa un texto por defecto."
-          className={`${inputCls} w-full resize-y`}
-        />
-      </label>
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+          >
+            {pending ? "Guardando…" : "Guardar correo"}
+          </button>
+          <button
+            type="button"
+            onClick={() => openPreview(lang)}
+            disabled={previewing}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            {previewing ? "Generando…" : "👁 Vista previa"}
+          </button>
+          <span className="text-xs text-slate-400">
+            Si el programa está vacío, el correo usa el texto genérico.
+          </span>
+        </div>
+      </form>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+          onClick={() => setPreview(null)}
         >
-          {pending ? "Guardando…" : "Guardar correo"}
-        </button>
-        <span className="text-xs text-slate-400">
-          Si el programa está vacío, el correo usa el texto genérico.
-        </span>
-      </div>
-    </form>
+          <div
+            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  Asunto
+                </p>
+                <p className="truncate text-sm font-bold text-slate-800">{preview.subject}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="flex rounded-lg border border-slate-200 p-0.5 text-xs font-semibold">
+                  {(["ca", "es"] as const).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => openPreview(l)}
+                      className={`rounded-md px-2 py-1 transition ${
+                        lang === l ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100"
+                      }`}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  className="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <iframe
+              srcDoc={preview.html}
+              title="Vista previa del correo"
+              className="h-[70vh] w-full bg-white"
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
