@@ -97,18 +97,22 @@ function shell(title: string, body: string, lang: Lang = "es"): string {
     lang === "ca"
       ? "Qüestionari d'estils conductuals DISC GESEM. Els resultats descriuen tendències i no constitueixen un diagnòstic."
       : "Cuestionario de estilos conductuales DISC GESEM. Los resultados describen tendencias y no constituyen un diagnóstico.";
-  return `<!doctype html><html><body style="margin:0;background:#f6f7fb;padding:24px 0;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;"><tr><td align="center" style="padding:0 16px;">
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-      <tr><td style="padding:18px 28px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
-        <img src="${appUrl}/brand/gesem-logo-email.png" alt="GESEM DISC" width="120" style="display:block;border:0;height:auto;width:120px;" />
+  return `<!doctype html><html><body style="margin:0;background:#eef1f7;padding:30px 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;"><tr><td align="center" style="padding:0 16px;">
+    <table role="presentation" width="700" cellpadding="0" cellspacing="0" style="width:100%;max-width:700px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e6eaf1;box-shadow:0 12px 34px rgba(15,23,42,0.07);">
+      <tr><td style="padding:24px 36px 20px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
+        <img src="${appUrl}/brand/gesem-logo-email.png" alt="GESEM DISC" width="130" style="display:block;border:0;height:auto;width:130px;" />
       </td></tr>
-      <tr><td style="background-color:#00a1e0;background-image:linear-gradient(120deg,#00a1e0,#5ac3dd);padding:22px 28px;color:#ffffff;">
-        <div style="font-size:20px;font-weight:800;">${title}</div>
+      <tr><td style="background-color:#00a1e0;background-image:linear-gradient(125deg,#0092ce 0%,#00a1e0 48%,#59c2dc 100%);padding:26px 36px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.82);">GESEM</div>
+        <div style="font-size:22px;font-weight:800;line-height:1.3;color:#ffffff;margin-top:5px;">${title}</div>
       </td></tr>
-      <tr><td style="padding:24px 28px;">${body}</td></tr>
-      <tr><td style="padding:16px 28px;border-top:1px solid #f1f5f9;color:#94a3b8;font-size:12px;line-height:1.5;">${footer}</td></tr>
+      <tr><td style="padding:28px 36px 30px;">${body}</td></tr>
+      <tr><td style="padding:22px 36px 26px;background:#f8fafc;border-top:1px solid #eef2f7;">
+        <div style="color:#94a3b8;font-size:12px;line-height:1.6;">${footer}</div>
+      </td></tr>
     </table>
+    <div style="max-width:700px;margin:16px auto 0;color:#aeb8c7;font-size:11px;text-align:center;letter-spacing:.3px;">DISC GESEM · Cuestionario de estilos conductuales</div>
   </td></tr></table>
   </body></html>`;
 }
@@ -274,9 +278,9 @@ export function invitationEmail(input: {
   ].join("");
   const programBlock = hasProgram
     ? `
-    <p style="margin:0 0 12px;line-height:1.6;color:#334155;">${W.lead(esc(programName))}</p>
-    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:12px 16px;margin:0 0 14px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${infoRows}</table>
+    <p style="margin:0 0 14px;line-height:1.6;color:#334155;font-size:15px;">${W.lead(esc(programName))}</p>
+    <div style="background:#f2f9ff;border:1px solid #d6ebfb;border-radius:16px;padding:16px 20px;margin:0 0 18px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">${infoRows}</table>
     </div>
     <div style="margin:0 0 4px;">${mdToHtml(fillVars(prog?.welcomeIntro?.trim() || W.reflective, vars))}</div>`
     : "";
@@ -298,41 +302,42 @@ export function invitationEmail(input: {
   const onboarding = T.onboarding
     .map(
       (x) =>
-        `<li style="margin:0 0 6px;list-style:none;color:#475569;font-size:13px;line-height:1.5;">• ${x}</li>`,
+        `<tr><td style="padding:0 10px 9px 0;vertical-align:top;color:#00a1e0;font-weight:800;font-size:13px;line-height:1.5;">&#10003;</td><td style="padding:0 0 9px;color:#475569;font-size:13px;line-height:1.55;">${x}</td></tr>`,
     )
     .join("");
 
   const onboardingBlock = account
     ? ""
     : `
-    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
-      <div style="font-size:13px;font-weight:800;color:#075985;margin:0 0 8px;">${T.onboardingTitle}</div>
-      <ul style="margin:0;padding:0;">${onboarding}</ul>
+    <div style="background:#f2f9ff;border:1px solid #d6ebfb;border-radius:16px;padding:16px 20px;margin:0 0 12px;">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#0284c7;margin:0 0 12px;">${T.onboardingTitle}</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${onboarding}</table>
     </div>
-    <p style="margin:0 0 20px;color:#94a3b8;font-size:12px;">${T.expiry}</p>`;
+    <p style="margin:0 0 8px;color:#94a3b8;font-size:12px;text-align:center;">${T.expiry}</p>`;
 
+  const divider = `<div style="height:1px;background:#eef2f7;margin:22px 0;"></div>`;
+  const button = `<a href="${input.loginUrl}" style="display:inline-block;background-color:${BRAND};background-image:linear-gradient(120deg,#00a1e0,#37b4e2);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 34px;border-radius:9999px;box-shadow:0 8px 18px rgba(0,161,224,0.30);">${T.loginBtn} &rarr;</a>`;
   const body = `
-    <p style="margin:0 0 12px;">${T.hello}</p>
+    <p style="margin:0 0 18px;font-size:17px;font-weight:600;color:#0f172a;">${T.hello}</p>
     ${programBlock}
+    ${hasProgram ? divider : ""}
     <p style="margin:0 0 16px;line-height:1.6;color:#475569;">${account ? T.introAccount : T.intro}</p>
-    <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
+    <div style="border:1px solid #e6eef7;border-radius:16px;padding:18px 20px;margin:0 0 20px;background:#f9fcff;">
       ${creds}
+      <p style="margin:14px 0 0;color:#64748b;font-size:13px;line-height:1.5;">${input.password ? T.pwWith : T.pwWithout}</p>
     </div>
-    <p style="margin:0 0 18px;color:#64748b;font-size:13px;line-height:1.5;">${input.password ? T.pwWith : T.pwWithout}</p>
-    <p style="margin:0 0 20px;">
-      <a href="${input.loginUrl}" style="display:inline-block;background-color:${BRAND};color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:9999px;">
-        ${T.loginBtn}
-      </a>
-    </p>
+    <div style="text-align:center;margin:0 0 24px;">${button}</div>
     ${onboardingBlock}
-    <p style="margin:0 0 20px;font-size:14px;">
+    <p style="margin:16px 0 20px;font-size:14px;text-align:center;">
       <a href="${input.setPasswordUrl}" style="color:${BRAND};font-weight:600;text-decoration:none;">${T.changePwd}</a>
     </p>
-    <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;word-break:break-all;">
-      ${T.fallback}<br/>
-      ${T.fAccess} ${input.loginUrl}<br/>
-      ${T.fChange} ${input.setPasswordUrl}
-    </p>`;
+    <div style="border-top:1px solid #f1f5f9;padding-top:16px;">
+      <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.7;word-break:break-all;">
+        ${T.fallback}<br/>
+        ${T.fAccess} ${input.loginUrl}<br/>
+        ${T.fChange} ${input.setPasswordUrl}
+      </p>
+    </div>`;
   const sessionText = [sessionDateFmt, prog?.sessionInfo?.trim()].filter(Boolean).join(" · ");
   const textLines = [
     T.hello,
