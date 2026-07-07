@@ -304,6 +304,10 @@ export async function adminOrganizationDetail(id: string) {
       name: true,
       slug: true,
       createdAt: true,
+      programName: true,
+      sessionInfo: true,
+      deadline: true,
+      welcomeIntro: true,
       projects: {
         orderBy: { createdAt: "desc" },
         select: {

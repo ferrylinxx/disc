@@ -61,6 +61,48 @@ export async function createOrganization(
   return { ok: true };
 }
 
+const OrgEmailSchema = z.object({
+  organizationId: z.string().min(1),
+  programName: z.string().trim().max(120).optional(),
+  sessionInfo: z.string().trim().max(240).optional(),
+  deadline: z.string().trim().max(120).optional(),
+  welcomeIntro: z.string().trim().max(1200).optional(),
+});
+
+/**
+ * Guarda la personalización del correo de invitación de una organización
+ * (nombre del programa, taller, fecha límite y mensaje de bienvenida). Todos
+ * opcionales: sin programName, el correo usa el texto genérico por defecto.
+ */
+export async function updateOrgEmailConfig(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireAuth();
+  const parsed = OrgEmailSchema.safeParse({
+    organizationId: formData.get("organizationId"),
+    programName: formData.get("programName") ?? undefined,
+    sessionInfo: formData.get("sessionInfo") ?? undefined,
+    deadline: formData.get("deadline") ?? undefined,
+    welcomeIntro: formData.get("welcomeIntro") ?? undefined,
+  });
+  if (!parsed.success) return { error: "Revisa los datos del correo." };
+  if (!assertOrgAccess(session, parsed.data.organizationId)) {
+    return { error: "Sin permiso sobre esta organización." };
+  }
+  await prisma.organization.update({
+    where: { id: parsed.data.organizationId },
+    data: {
+      programName: parsed.data.programName || null,
+      sessionInfo: parsed.data.sessionInfo || null,
+      deadline: parsed.data.deadline || null,
+      welcomeIntro: parsed.data.welcomeIntro || null,
+    },
+  });
+  revalidatePath(`/admin/organizaciones/${parsed.data.organizationId}`);
+  return { ok: true };
+}
+
 const ProjectSchema = z.object({
   organizationId: z.string().min(1),
   name: z.string().min(2, { error: "Nombre demasiado corto." }).trim(),

@@ -17,6 +17,7 @@ import {
 import {
   DeleteEntityButton,
   DeleteOrgButton,
+  OrgEmailForm,
   RenameOrgForm,
 } from "@/components/admin/OrgManage";
 import { ParticipantsTable } from "@/components/admin/ParticipantsTable";
@@ -147,6 +148,18 @@ export default async function AdminOrgDetailPage({
 
   const participantesTab = (
     <>
+      <Card
+        title="Correo de invitación"
+        description="Personaliza el correo de esta organización: programa, taller y fecha límite"
+      >
+        <OrgEmailForm
+          id={org.id}
+          programName={org.programName ?? ""}
+          sessionInfo={org.sessionInfo ?? ""}
+          deadline={org.deadline ?? ""}
+          welcomeIntro={org.welcomeIntro ?? ""}
+        />
+      </Card>
       <Card title="Invitar participantes" description="Individual o subiendo/pegando una lista">
         <div className="space-y-5">
           <InviteParticipantForm organizationId={org.id} teams={teamOptions} />

@@ -85,9 +85,27 @@ async function sendAccountInvite(input: {
   userId: string;
   tempPassword?: string;
   lang?: Lang;
+  /** Organización, para personalizar el correo con su programa/fechas. */
+  organizationId?: string;
 }): Promise<boolean> {
   if (!isMailConfigured()) return false;
   try {
+    // Personalización del correo por organización (programa, taller, fecha límite).
+    let program: Parameters<typeof invitationEmail>[0]["program"];
+    if (input.organizationId) {
+      const org = await prisma.organization.findUnique({
+        where: { id: input.organizationId },
+        select: { programName: true, sessionInfo: true, deadline: true, welcomeIntro: true },
+      });
+      if (org?.programName) {
+        program = {
+          name: org.programName,
+          sessionInfo: org.sessionInfo,
+          deadline: org.deadline,
+          welcomeIntro: org.welcomeIntro,
+        };
+      }
+    }
     const token = await createPasswordSetToken(input.userId);
     // El enlace de acceso lleva las credenciales para autocompletar el login
     // (el usuario solo pulsa "Entrar"). Van codificadas en la query.
@@ -103,6 +121,7 @@ async function sendAccountInvite(input: {
       loginUrl: absoluteUrl(`/login?${loginParams.toString()}`),
       setPasswordUrl: absoluteUrl(`/restablecer/${token}`),
       lang: input.lang,
+      program,
     });
     await sendMail({
       to: input.to,
@@ -234,6 +253,7 @@ export async function inviteParticipant(
     userId: account.userId,
     tempPassword: account.tempPassword,
     lang,
+    organizationId: parsed.data.organizationId,
   });
 
   if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);
@@ -308,6 +328,7 @@ export async function resendInvitation(
     fullName: participant.fullName,
     userId,
     tempPassword,
+    organizationId: participant.organizationId,
   });
   if (!sent) {
     return { error: "No se pudo enviar el correo. Revisa la configuración SMTP." };
@@ -431,6 +452,7 @@ export async function bulkInviteParticipants(
       fullName: valid.data.fullName,
       userId: account.userId,
       tempPassword: account.tempPassword,
+      organizationId: parsed.data.organizationId,
     });
     if (sent) emailed += 1;
   }
@@ -507,6 +529,7 @@ export async function bulkParticipantAction(
       fullName: t.fullName,
       userId,
       tempPassword,
+      organizationId: t.organizationId,
     });
     if (ok) sent += 1;
   }

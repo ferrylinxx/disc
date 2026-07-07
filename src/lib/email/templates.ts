@@ -58,11 +58,23 @@ export function invitationEmail(input: {
   lang?: Lang;
   /** Modo "cuenta" (creación de usuario): sin el onboarding del cuestionario. */
   account?: boolean;
+  /** Personalización por organización (opcional): programa, taller, fecha límite y bienvenida. */
+  program?: {
+    name?: string | null;
+    sessionInfo?: string | null;
+    deadline?: string | null;
+    welcomeIntro?: string | null;
+  };
 }): { subject: string; html: string; text: string } {
   const lang = input.lang ?? "ca";
   const account = input.account ?? false;
   const first = input.participantName.split(" ")[0] || "";
   const ca = lang === "ca";
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const prog = input.program;
+  const programName = prog?.name?.trim() || "";
+  const hasProgram = programName.length > 0;
 
   const T = ca
     ? {
@@ -122,6 +134,39 @@ export function invitationEmail(input: {
         tPwd: "Contraseña temporal:",
       };
 
+  // Asunto y bloque de bienvenida personalizados por programa (si hay programName).
+  const subject = hasProgram
+    ? ca
+      ? `Benvingut/da al procés ${programName}`
+      : `Bienvenido/a al proceso ${programName}`
+    : T.subject;
+  const W = ca
+    ? {
+        lead: (n: string, s: string) =>
+          `Et donem la benvinguda al procés <strong>${n}</strong>${s ? ` — ${s}` : ""}.`,
+        reflective:
+          "Més que respondre un qüestionari, regala't uns minuts per conèixer-te millor i arribar a la sessió amb una mirada més conscient sobre la teva manera de col·laborar.",
+        deadline: (d: string) =>
+          `Tens temps per completar el qüestionari fins al <strong>${d}</strong>.`,
+      }
+    : {
+        lead: (n: string, s: string) =>
+          `Te damos la bienvenida al proceso <strong>${n}</strong>${s ? ` — ${s}` : ""}.`,
+        reflective:
+          "Más que responder un cuestionario, regálate unos minutos para conocerte mejor y llegar a la sesión con una mirada más consciente sobre tu forma de colaborar.",
+        deadline: (d: string) =>
+          `Tienes tiempo para completar el cuestionario hasta el <strong>${d}</strong>.`,
+      };
+  const sInfo = prog?.sessionInfo?.trim() ? esc(prog.sessionInfo.trim()) : "";
+  const wIntro = prog?.welcomeIntro?.trim() ? esc(prog.welcomeIntro.trim()) : "";
+  const dLine = prog?.deadline?.trim() ? esc(prog.deadline.trim()) : "";
+  const programBlock = hasProgram
+    ? `
+    <p style="margin:0 0 12px;line-height:1.6;color:#334155;">${W.lead(esc(programName), sInfo)}</p>
+    <p style="margin:0 0 12px;line-height:1.6;color:#475569;">${wIntro || W.reflective}</p>
+    ${dLine ? `<p style="margin:0 0 16px;color:#64748b;font-size:13px;">${W.deadline(dLine)}</p>` : ""}`
+    : "";
+
   // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
   // un clic en los clientes que lo soportan (resto: triple clic).
   const val = (v: string) =>
@@ -154,6 +199,7 @@ export function invitationEmail(input: {
 
   const body = `
     <p style="margin:0 0 12px;">${T.hello}</p>
+    ${programBlock}
     <p style="margin:0 0 16px;line-height:1.6;color:#475569;">${account ? T.introAccount : T.intro}</p>
     <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 8px;">
       ${creds}
@@ -174,14 +220,25 @@ export function invitationEmail(input: {
       ${T.fChange} ${input.setPasswordUrl}
     </p>`;
   const textLines = [
-    `${T.hello} ${T.intro.replace(/<[^>]+>/g, "")}`,
+    T.hello,
+    hasProgram
+      ? ca
+        ? `Benvingut/da al procés ${programName}${prog?.sessionInfo?.trim() ? ` — ${prog.sessionInfo.trim()}` : ""}.`
+        : `Bienvenido/a al proceso ${programName}${prog?.sessionInfo?.trim() ? ` — ${prog.sessionInfo.trim()}` : ""}.`
+      : "",
+    prog?.deadline?.trim()
+      ? ca
+        ? `Data límit: ${prog.deadline.trim()}`
+        : `Fecha límite: ${prog.deadline.trim()}`
+      : "",
+    T.intro.replace(/<[^>]+>/g, ""),
     `${T.correo} ${input.accountEmail}`,
     input.password ? `${T.tPwd} ${input.password}` : "",
     `${T.fAccess} ${input.loginUrl}`,
     `${T.fChange} ${input.setPasswordUrl}`,
   ].filter(Boolean);
   return {
-    subject: T.subject,
+    subject,
     html: shell(T.shellTitle, body, lang),
     text: textLines.join("\n"),
   };
