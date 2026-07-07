@@ -168,18 +168,27 @@ const es = {
     closing:
       "El autoconocimiento es el punto de partida. La comprensión mutua es el puente. La adaptación consciente es la competencia. La colaboración eficaz es el resultado.",
     methodNote:
-      "DISC GESEM utiliza un modelo ipsativo de elección forzada inspirado en las cuatro dimensiones DISC. Describe tendencias de comportamiento en un momento determinado y constituye una herramienta de autoconocimiento y desarrollo. No es un diagnóstico clínico ni una evaluación de capacidades.",
+      "DISC GESEM toma como referencia los fundamentos del modelo DISC —uno de los marcos más reconocidos para comprender las preferencias conductuales a través de cuatro dimensiones: Dominancia (D), Influencia (I), Estabilidad (S) y Cumplimiento (C)— e incorpora una metodología propia de interpretación, orientada a la reflexión y el desarrollo. No modifica los fundamentos del modelo; amplía su capacidad para generar conversación y aprendizaje. Describe tendencias conductuales en un momento determinado; no es un diagnóstico ni una evaluación de capacidades.",
     situacion: "Situación",
     graphsLead: "Tres lecturas de tu estilo, según tus respuestas:",
+    perspTitle: "Tres perspectivas de tu estilo conductual",
+    perspIntro: [
+      "El modelo DISC nos ayuda a comprender nuestras preferencias conductuales: la forma en que tendemos a actuar, comunicarnos y relacionarnos con los demás.",
+      "Todas las personas disponemos de los cuatro recursos —Dominancia (D), Influencia (I), Estabilidad (S) y Cumplimiento (C)—, aunque no los expresamos con la misma intensidad en cada situación. El contexto y las personas con las que interactuamos hacen que algunos se manifiesten con más facilidad que otros.",
+      "Por eso DISC GESEM incorpora tres perspectivas complementarias. No representan tres personalidades ni tres versiones distintas de ti: son tres formas de observar un mismo estilo conductual, para un autoconocimiento más amplio y útil.",
+    ],
     graphPublic: "Yo público",
+    graphPublicSub: "La forma en la que habitualmente te muestras.",
     graphPublicDesc:
-      "Los comportamientos que eliges con más frecuencia al decidir cómo actuar ante los demás; la imagen conductual que tiendes a proyectar.",
+      "Refleja los recursos que expresas con mayor naturalidad al interactuar con otras personas: la parte de tu estilo más visible en tu manera de comunicarte, colaborar, tomar decisiones o afrontar el día a día.",
     graphPrivate: "Yo privado",
+    graphPrivateSub: "Los recursos que permanecen más en segundo plano.",
     graphPrivateDesc:
-      "Los recursos que eliges con menos frecuencia; ayuda a ver qué estilos usas menos de forma espontánea.",
+      "Los recursos que utilizas con menor frecuencia de forma espontánea. No significa que no formen parte de ti ni que seas incapaz de usarlos: simplemente recurres menos a ellos. Conocerlos ayuda a identificar estilos que también puedes desarrollar cuando la situación lo requiera.",
     graphMirror: "Yo percibido",
+    graphMirrorSub: "La visión global de tu estilo conductual.",
     graphMirrorDesc:
-      "El resultado neto del cuestionario; es la base de la interpretación narrativa del informe.",
+      "Integra toda la información de la evaluación para ofrecer una visión global de tu estilo. Representa la combinación de recursos que caracteriza tu manera habitual de actuar y es la referencia principal para interpretar el resto del informe.",
     axisTop: "Activo · directo",
     axisBottom: "Reflexivo · sereno",
     axisLeft: "Orientado a tareas",
@@ -195,10 +204,16 @@ const es = {
       "Describe tendencias de comportamiento, no etiquetas permanentes.",
       "Es un punto de partida para el autoconocimiento y el desarrollo.",
     ],
-    graphsHow: "Cómo se construye cada lectura:",
-    graphPublicSrc: "a partir de tus elecciones «Más».",
-    graphPrivateSrc: "a partir de tus elecciones «Menos».",
-    graphMirrorSrc: "de la integración de ambas.",
+    perspWhatTitle: "¿Qué aporta observar las tres perspectivas?",
+    perspWhatIntro:
+      "Cada una aporta una información diferente y complementaria. Analizarlas conjuntamente permite comprender con más profundidad:",
+    perspWhatItems: [
+      "Qué recursos expresas con mayor naturalidad.",
+      "Qué recursos permanecen habitualmente en segundo plano.",
+      "Cómo se integran todos ellos en tu estilo conductual.",
+    ],
+    perspWhatClose:
+      "Esta visión global favorece el autoconocimiento y ofrece una base para desarrollar nuevas formas de actuación, adaptarte a diferentes contextos y colaborar de forma más consciente.",
     graphsNotThree:
       "Los tres resultados son complementarios: ofrecen perspectivas diferentes del mismo estilo conductual, no tres personalidades distintas.",
     introNoEval:
@@ -598,18 +613,27 @@ const ca: typeof es = {
     closing:
       "L'autoconeixement és el punt de partida. La comprensió mútua és el pont. L'adaptació conscient és la competència. La col·laboració eficaç és el resultat.",
     methodNote:
-      "DISC GESEM utilitza un model ipsatiu d'elecció forçada inspirat en les quatre dimensions DISC. Descriu tendències de comportament en un moment determinat i és una eina d'autoconeixement i desenvolupament. No és un diagnòstic clínic ni una avaluació de capacitats.",
+      "DISC GESEM pren com a referència els fonaments del model DISC —un dels marcs més reconeguts per comprendre les preferències conductuals a través de quatre dimensions: Dominància (D), Influència (I), Estabilitat (S) i Compliment (C)— i incorpora una metodologia pròpia d'interpretació, orientada a la reflexió i el desenvolupament. No modifica els fonaments del model; n'amplia la capacitat per generar conversa i aprenentatge. Descriu tendències conductuals en un moment determinat; no és un diagnòstic ni una avaluació de capacitats.",
     situacion: "Situació",
     graphsLead: "Tres lectures del teu estil, segons les teves respostes:",
+    perspTitle: "Tres perspectives del teu estil conductual",
+    perspIntro: [
+      "El model DISC ens ajuda a comprendre les nostres preferències conductuals: la manera com tendim a actuar, comunicar-nos i relacionar-nos amb els altres.",
+      "Totes les persones disposem dels quatre recursos —Dominància (D), Influència (I), Estabilitat (S) i Compliment (C)—, encara que no els expressem amb la mateixa intensitat en cada situació. El context i les persones amb qui interactuem fan que alguns es manifestin amb més facilitat que altres.",
+      "Per això DISC GESEM incorpora tres perspectives complementàries. No representen tres personalitats ni tres versions diferents de tu: són tres maneres d'observar un mateix estil conductual, per a un autoconeixement més ampli i útil.",
+    ],
     graphPublic: "Jo públic",
+    graphPublicSub: "La manera com habitualment et mostres.",
     graphPublicDesc:
-      "Els comportaments que tries amb més freqüència en decidir com actuar davant els altres; la imatge conductual que tendeixes a projectar.",
+      "Reflecteix els recursos que expresses amb més naturalitat en interactuar amb altres persones: la part del teu estil més visible en la teva manera de comunicar-te, col·laborar, prendre decisions o afrontar el dia a dia.",
     graphPrivate: "Jo privat",
+    graphPrivateSub: "Els recursos que queden més en segon pla.",
     graphPrivateDesc:
-      "Els recursos que tries amb menys freqüència; ajuda a veure quins estils fas servir menys de manera espontània.",
+      "Els recursos que utilitzes amb menys freqüència de manera espontània. No vol dir que no formin part de tu ni que siguis incapaç de fer-los servir: simplement hi recorres menys. Conèixer-los ajuda a identificar estils que també pots desenvolupar quan la situació ho requereixi.",
     graphMirror: "Jo percebut",
+    graphMirrorSub: "La visió global del teu estil conductual.",
     graphMirrorDesc:
-      "El resultat net del qüestionari; és la base de la interpretació narrativa de l'informe.",
+      "Integra tota la informació de l'avaluació per oferir una visió global del teu estil. Representa la combinació de recursos que caracteritza la teva manera habitual d'actuar i és la referència principal per interpretar la resta de l'informe.",
     axisTop: "Actiu · directe",
     axisBottom: "Reflexiu · serè",
     axisLeft: "Orientat a tasques",
@@ -625,10 +649,16 @@ const ca: typeof es = {
       "Descriu tendències de comportament, no etiquetes permanents.",
       "És un punt de partida per a l'autoconeixement i el desenvolupament.",
     ],
-    graphsHow: "Com es construeix cada lectura:",
-    graphPublicSrc: "a partir de les teves eleccions «Més».",
-    graphPrivateSrc: "a partir de les teves eleccions «Menys».",
-    graphMirrorSrc: "de la integració de totes dues.",
+    perspWhatTitle: "Què aporta observar les tres perspectives?",
+    perspWhatIntro:
+      "Cadascuna aporta una informació diferent i complementària. Analitzar-les conjuntament permet comprendre amb més profunditat:",
+    perspWhatItems: [
+      "Quins recursos expresses amb més naturalitat.",
+      "Quins recursos queden habitualment en segon pla.",
+      "Com s'integren tots ells en el teu estil conductual.",
+    ],
+    perspWhatClose:
+      "Aquesta visió global afavoreix l'autoconeixement i ofereix una base per desenvolupar noves formes d'actuació, adaptar-te a diferents contextos i col·laborar de manera més conscient.",
     graphsNotThree:
       "Els tres resultats són complementaris: ofereixen perspectives diferents del mateix estil conductual, no tres personalitats diferents.",
     introNoEval:

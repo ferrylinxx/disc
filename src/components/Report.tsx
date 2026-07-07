@@ -335,24 +335,29 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
         </div>
         {graphs ? (
           <div className="mt-4">
-            {/* Explicación de las tres lecturas antes del gráfico (#2) */}
-            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                {t.graphsHow}
-              </p>
-              <ul className="mt-2 space-y-1">
-                {[
-                  { n: t.graphPublic, d: t.graphPublicDesc, s: t.graphPublicSrc, c: "#0ea5e9" },
-                  { n: t.graphPrivate, d: t.graphPrivateDesc, s: t.graphPrivateSrc, c: "#f59e0b" },
-                  { n: t.graphMirror, d: t.graphMirrorDesc, s: t.graphMirrorSrc, c: "#10b981" },
-                ].map((r) => (
-                  <li key={r.n} className="text-sm leading-relaxed text-slate-600">
-                    <span className="font-bold" style={{ color: r.c }}>{r.n}:</span> {r.d}{" "}
-                    <span className="text-slate-400">({r.s})</span>
-                  </li>
+            {/* Tres perspectivas de tu estilo conductual (texto definitivo V1) */}
+            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50/60 p-5">
+              <p className="text-sm font-bold text-slate-700">{t.perspTitle}</p>
+              <div className="mt-2 space-y-2">
+                {t.perspIntro.map((p, k) => (
+                  <p key={k} className="text-sm leading-relaxed text-slate-600">
+                    {p}
+                  </p>
                 ))}
-              </ul>
-              <p className="mt-2 text-xs font-medium text-slate-500">{t.graphsNotThree}</p>
+              </div>
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+                {[
+                  { n: t.graphPublic, sub: t.graphPublicSub, d: t.graphPublicDesc, c: "#0ea5e9" },
+                  { n: t.graphPrivate, sub: t.graphPrivateSub, d: t.graphPrivateDesc, c: "#f59e0b" },
+                  { n: t.graphMirror, sub: t.graphMirrorSub, d: t.graphMirrorDesc, c: "#10b981" },
+                ].map((r) => (
+                  <div key={r.n} className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-sm font-bold" style={{ color: r.c }}>{r.n}</p>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-500">{r.sub}</p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{r.d}</p>
+                  </div>
+                ))}
+              </div>
             </div>
             <PositionBars
               lead={t.graphsLead}
@@ -367,6 +372,21 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
                 .sort((a, c) => a.order - c.order)
                 .map((d) => ({ code: d.code, name: recurso(d.code) }))}
             />
+            {/* ¿Qué aporta observar las tres perspectivas? */}
+            <div className="mt-5 rounded-xl border border-slate-100 bg-white p-4">
+              <p className="text-sm font-bold text-slate-700">{t.perspWhatTitle}</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">{t.perspWhatIntro}</p>
+              <ul className="mt-2 space-y-1.5">
+                {t.perspWhatItems.map((it, k) => (
+                  <li key={k} className="flex gap-2 text-sm leading-relaxed text-slate-600">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                    <span>{it}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{t.perspWhatClose}</p>
+              <p className="mt-3 text-xs font-medium text-slate-400">{t.graphsNotThree}</p>
+            </div>
           </div>
         ) : (
           <div className="mt-6">
