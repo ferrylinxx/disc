@@ -305,6 +305,7 @@ export async function adminOrganizationDetail(id: string) {
       slug: true,
       createdAt: true,
       programName: true,
+      emailSubject: true,
       sessionDate: true,
       sessionInfo: true,
       deadline: true,

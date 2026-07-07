@@ -112,6 +112,8 @@ export function invitationEmail(input: {
   /** Personalización por organización (opcional): programa, taller, fecha límite y bienvenida. */
   program?: {
     name?: string | null;
+    /** Asunto personalizado (admite variables); si vacío, se usa el asunto por defecto del programa. */
+    subject?: string | null;
     /** Fecha del taller en ISO (YYYY-MM-DD). */
     sessionDate?: string | null;
     /** Lugar del taller. */
@@ -207,12 +209,15 @@ export function invitationEmail(input: {
         tPwd: "Contraseña temporal:",
       };
 
-  // Asunto y bloque de bienvenida personalizados por programa (si hay programName).
-  const subject = hasProgram
-    ? ca
-      ? `Benvingut/da al procés ${programName}`
-      : `Bienvenido/a al proceso ${programName}`
-    : T.subject;
+  // Asunto: personalizado (con variables) si se indica; si no, el del programa; si no, el genérico.
+  const customSubject = prog?.subject?.trim();
+  const subject = customSubject
+    ? fillVars(customSubject, vars)
+    : hasProgram
+      ? ca
+        ? `Benvingut/da al procés ${programName}`
+        : `Bienvenido/a al proceso ${programName}`
+      : T.subject;
   const W = ca
     ? {
         lead: (n: string) => `Et donem la benvinguda al procés <strong>${n}</strong>.`,

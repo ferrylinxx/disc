@@ -66,6 +66,7 @@ export async function createOrganization(
 const OrgEmailSchema = z.object({
   organizationId: z.string().min(1),
   programName: z.string().trim().max(120).optional(),
+  emailSubject: z.string().trim().max(160).optional(),
   sessionDate: z.string().trim().max(40).optional(),
   sessionInfo: z.string().trim().max(240).optional(),
   deadline: z.string().trim().max(40).optional(),
@@ -85,6 +86,7 @@ export async function updateOrgEmailConfig(
   const parsed = OrgEmailSchema.safeParse({
     organizationId: formData.get("organizationId"),
     programName: formData.get("programName") ?? undefined,
+    emailSubject: formData.get("emailSubject") ?? undefined,
     sessionDate: formData.get("sessionDate") ?? undefined,
     sessionInfo: formData.get("sessionInfo") ?? undefined,
     deadline: formData.get("deadline") ?? undefined,
@@ -98,6 +100,7 @@ export async function updateOrgEmailConfig(
     where: { id: parsed.data.organizationId },
     data: {
       programName: parsed.data.programName || null,
+      emailSubject: parsed.data.emailSubject || null,
       sessionDate: parsed.data.sessionDate || null,
       sessionInfo: parsed.data.sessionInfo || null,
       deadline: parsed.data.deadline || null,
@@ -116,6 +119,7 @@ export async function updateOrgEmailConfig(
 export async function previewInvitationEmail(input: {
   organizationId: string;
   programName?: string;
+  emailSubject?: string;
   sessionDate?: string;
   sessionInfo?: string;
   deadline?: string;
@@ -142,6 +146,7 @@ export async function previewInvitationEmail(input: {
     program: name
       ? {
           name,
+          subject: input.emailSubject,
           sessionDate: input.sessionDate,
           sessionInfo: input.sessionInfo,
           deadline: input.deadline,

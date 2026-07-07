@@ -98,6 +98,7 @@ async function sendAccountInvite(input: {
         select: {
           name: true,
           programName: true,
+          emailSubject: true,
           sessionDate: true,
           sessionInfo: true,
           deadline: true,
@@ -107,6 +108,7 @@ async function sendAccountInvite(input: {
       if (org?.programName) {
         program = {
           name: org.programName,
+          subject: org.emailSubject,
           sessionDate: org.sessionDate,
           sessionInfo: org.sessionInfo,
           deadline: org.deadline,

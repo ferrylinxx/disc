@@ -23,6 +23,7 @@ const inputCls =
 export function OrgEmailForm({
   id,
   programName,
+  emailSubject,
   sessionDate,
   sessionInfo,
   deadline,
@@ -30,6 +31,7 @@ export function OrgEmailForm({
 }: {
   id: string;
   programName: string;
+  emailSubject: string;
   sessionDate: string;
   sessionInfo: string;
   deadline: string;
@@ -46,6 +48,7 @@ export function OrgEmailForm({
 
   // Campos controlados: la vista previa y la IA usan los valores sin guardar.
   const [prog, setProg] = useState(programName);
+  const [subj, setSubj] = useState(emailSubject);
   const [sDate, setSDate] = useState(sessionDate);
   const [sess, setSess] = useState(sessionInfo);
   const [dead, setDead] = useState(deadline);
@@ -60,6 +63,7 @@ export function OrgEmailForm({
     const r = await previewInvitationEmail({
       organizationId: id,
       programName: prog,
+      emailSubject: subj,
       sessionDate: sDate,
       sessionInfo: sess,
       deadline: dead,
@@ -97,6 +101,19 @@ export function OrgEmailForm({
             placeholder="CONECTAR PARA COLABORAR"
             className={`${inputCls} w-full`}
           />
+        </label>
+        <label className="block">
+          <span className={labelCls}>Asunto del correo</span>
+          <input
+            name="emailSubject"
+            value={subj}
+            onChange={(e) => setSubj(e.target.value)}
+            placeholder="Bienvenido/a al proceso {{programa}}"
+            className={`${inputCls} w-full`}
+          />
+          <span className="mt-1 block text-[11px] text-slate-400">
+            Si lo dejas vacío: “Bienvenido/a al proceso [programa]”. Admite variables.
+          </span>
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
