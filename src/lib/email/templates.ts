@@ -34,7 +34,12 @@ function fillVars(text: string, vars: Record<string, string>): string {
   });
 }
 
-/** Markdown mínimo → HTML para el cuerpo del correo (negrita, cursiva, enlaces, listas). */
+/**
+ * Markdown mínimo → HTML para el cuerpo del correo (negrita, cursiva, enlaces,
+ * listas). Los saltos de línea simples se tratan como espacios (unen líneas
+ * envueltas); solo una línea en blanco separa párrafos. Agrupa listas y
+ * párrafos aunque estén mezclados sin línea en blanco entre medias.
+ */
 function mdToHtml(src: string): string {
   const inline = (s: string) =>
     s
@@ -44,20 +49,38 @@ function mdToHtml(src: string): string {
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/_([^_]+)_/g, "<em>$1</em>")
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" style="color:#00a1e0;">$1</a>');
-  return src
-    .trim()
-    .split(/\n\s*\n/)
-    .map((block) => {
-      const lines = block.split(/\n/);
-      if (lines.every((l) => /^\s*[-*]\s+/.test(l))) {
-        const items = lines
-          .map((l) => `<li style="margin:0 0 4px;">${inline(l.replace(/^\s*[-*]\s+/, ""))}</li>`)
-          .join("");
-        return `<ul style="margin:0 0 12px;padding-left:18px;color:#475569;font-size:14px;line-height:1.6;">${items}</ul>`;
+  const isItem = (l: string) => /^\s*[-*]\s+/.test(l);
+  const out: string[] = [];
+  for (const block of src.replace(/\r\n/g, "\n").trim().split(/\n\s*\n/)) {
+    const lines = block.split("\n");
+    let i = 0;
+    while (i < lines.length) {
+      if (isItem(lines[i])) {
+        const items: string[] = [];
+        while (i < lines.length && isItem(lines[i])) {
+          items.push(
+            `<li style="margin:0 0 4px;">${inline(lines[i].replace(/^\s*[-*]\s+/, "").trim())}</li>`,
+          );
+          i++;
+        }
+        out.push(
+          `<ul style="margin:0 0 12px;padding-left:18px;color:#475569;font-size:14px;line-height:1.6;">${items.join("")}</ul>`,
+        );
+      } else {
+        const para: string[] = [];
+        while (i < lines.length && !isItem(lines[i])) {
+          const t = lines[i].trim();
+          if (t) para.push(t);
+          i++;
+        }
+        if (para.length) {
+          const text = inline(para.join(" ")).replace(/[ \t]{2,}/g, " ");
+          out.push(`<p style="margin:0 0 12px;line-height:1.6;color:#475569;">${text}</p>`);
+        }
       }
-      return `<p style="margin:0 0 12px;line-height:1.6;color:#475569;">${inline(block).replace(/\n/g, "<br/>")}</p>`;
-    })
-    .join("");
+    }
+  }
+  return out.join("");
 }
 
 /**
