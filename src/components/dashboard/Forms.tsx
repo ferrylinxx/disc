@@ -5,6 +5,7 @@ import {
   createOrganization,
   createProject,
   createTeam,
+  extractRosterFromImage,
   type ActionState,
 } from "@/app/actions/org";
 import {
@@ -16,6 +17,32 @@ const initial: ActionState = {};
 
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
+
+/** Reescala una imagen a un ancho máximo y la devuelve como data URL JPEG (para no exceder el límite del server action). */
+function fileToDataUrl(file: File, maxW = 1600, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("read"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("img"));
+      img.onload = () => {
+        const scale = Math.min(1, maxW / (img.width || maxW));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("ctx"));
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = String(reader.result ?? "");
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 /** Caja de credenciales recién creadas con botón para copiarlas. */
 function CredentialsBox({
@@ -222,6 +249,8 @@ export function BulkInviteForm({
   );
   const rosterRef = useRef<HTMLTextAreaElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  const [extractMsg, setExtractMsg] = useState<string | null>(null);
 
   function onCsvSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -237,6 +266,30 @@ export function BulkInviteForm({
     e.target.value = ""; // permite volver a subir el mismo archivo
   }
 
+  async function onImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setExtractMsg(null);
+    setExtracting(true);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const r = await extractRosterFromImage({ imageDataUrl: dataUrl });
+      if (r.ok && r.roster && rosterRef.current) {
+        const existing = rosterRef.current.value.trim();
+        rosterRef.current.value = existing ? `${existing}\n${r.roster}` : r.roster;
+        const n = r.roster.split("\n").filter(Boolean).length;
+        setExtractMsg(`✓ ${n} ${n === 1 ? "persona añadida" : "personas añadidas"}. Revísalas antes de invitar.`);
+      } else {
+        setExtractMsg(r.error ?? "No se pudo extraer de la imagen.");
+      }
+    } catch {
+      setExtractMsg("No se pudo leer la imagen.");
+    } finally {
+      setExtracting(false);
+    }
+  }
+
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="organizationId" value={organizationId} />
@@ -249,6 +302,30 @@ export function BulkInviteForm({
         <span className="text-sky-600">↑</span>
         <input type="file" accept=".csv,text/csv,text/plain" onChange={onCsvSelected} className="hidden" />
       </label>
+
+      <label
+        className={`flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-dashed border-sky-300 bg-sky-50/40 px-3.5 py-2.5 text-sm text-slate-600 transition hover:border-sky-400 ${
+          extracting ? "pointer-events-none opacity-70" : ""
+        }`}
+      >
+        <span>
+          <span className="font-semibold text-sky-700">
+            {extracting ? "Extrayendo con IA…" : "📷 Extraer de una foto (IA)"}
+          </span>
+          <span className="text-slate-400"> — sube una imagen de la tabla</span>
+        </span>
+        <span className="text-sky-600">✨</span>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={onImageSelected}
+          disabled={extracting}
+          className="hidden"
+        />
+      </label>
+      {extractMsg && (
+        <p className="text-[11px] font-medium text-sky-700">{extractMsg}</p>
+      )}
 
       <textarea
         ref={rosterRef}

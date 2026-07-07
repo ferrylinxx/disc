@@ -212,6 +212,70 @@ export async function improveInvitationWelcome(input: {
   }
 }
 
+/**
+ * Extrae un listado de participantes ("Nombre Apellido, correo") desde la foto o
+ * imagen de una tabla, con IA de visión (Groq, Llama 4). Devuelve el texto para
+ * revisarlo/editarlo antes de invitar. Requiere GROQ_API_KEY en el servidor.
+ */
+export async function extractRosterFromImage(input: {
+  imageDataUrl: string;
+}): Promise<{ ok: boolean; roster?: string; error?: string }> {
+  await requireAuth();
+  const key = process.env.GROQ_API_KEY;
+  if (!key) {
+    return { ok: false, error: "Falta GROQ_API_KEY en el servidor para la extracción con IA." };
+  }
+  const url = (input.imageDataUrl || "").trim();
+  if (!/^data:image\/(png|jpe?g|webp);base64,/i.test(url)) {
+    return { ok: false, error: "La imagen no es válida." };
+  }
+  const prompt =
+    "Extrae de la imagen la tabla de personas (nombre y correo electrónico). " +
+    "Devuelve SOLO líneas con el formato «Nombre Apellido, correo@dominio», una persona por línea. " +
+    "Sin cabecera, sin numeración, sin viñetas y sin ninguna explicación. " +
+    "Si una fila no tiene un correo claro, omítela. No inventes correos ni nombres.";
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        max_tokens: 2000,
+        temperature: 0,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url } },
+            ],
+          },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      console.error("[IA-visión] respuesta no OK:", res.status, await res.text());
+      return { ok: false, error: `La IA no procesó la imagen (${res.status}).` };
+    }
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const raw = (data.choices?.[0]?.message?.content ?? "")
+      .replace(/```[a-z]*\n?/gi, "")
+      .replace(/```/g, "")
+      .trim();
+    const lines = raw
+      .split(/\r?\n/)
+      .map((l) => l.replace(/^\s*[-*\d.)]+\s*/, "").trim())
+      .filter((l) => l.includes("@") && l.includes(","));
+    if (lines.length === 0) {
+      return { ok: false, error: "No se detectaron filas con nombre y correo en la imagen." };
+    }
+    return { ok: true, roster: lines.join("\n") };
+  } catch (e) {
+    console.error("[IA-visión] fallo de conexión:", e);
+    return { ok: false, error: "No se pudo conectar con la IA de visión." };
+  }
+}
+
 const ProjectSchema = z.object({
   organizationId: z.string().min(1),
   name: z.string().min(2, { error: "Nombre demasiado corto." }).trim(),
