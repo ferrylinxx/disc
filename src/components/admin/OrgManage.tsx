@@ -24,6 +24,7 @@ export function OrgEmailForm({
   id,
   programName,
   emailSubject,
+  emailLang,
   sessionDate,
   sessionInfo,
   deadline,
@@ -32,6 +33,7 @@ export function OrgEmailForm({
   id: string;
   programName: string;
   emailSubject: string;
+  emailLang: string;
   sessionDate: string;
   sessionInfo: string;
   deadline: string;
@@ -53,7 +55,8 @@ export function OrgEmailForm({
   const [sess, setSess] = useState(sessionInfo);
   const [dead, setDead] = useState(deadline);
   const [intro, setIntro] = useState(welcomeIntro);
-  const [lang, setLang] = useState<"ca" | "es">("ca");
+  // Idioma del correo de la org: es también el idioma de la vista previa.
+  const [lang, setLang] = useState<"ca" | "es">(emailLang === "es" ? "es" : "ca");
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [improving, setImproving] = useState(false);
@@ -92,6 +95,24 @@ export function OrgEmailForm({
     <>
       <form action={action} className="space-y-3">
         <input type="hidden" name="organizationId" value={id} />
+        <input type="hidden" name="emailLang" value={lang} />
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-slate-500">Idioma del correo</span>
+          <div className="flex rounded-lg border border-slate-200 p-0.5 text-xs font-semibold">
+            {(["ca", "es"] as const).map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                className={`rounded-md px-3 py-1 transition ${
+                  lang === l ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {l === "ca" ? "Català" : "Español"}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className="block">
           <span className={labelCls}>Nombre del programa</span>
           <input

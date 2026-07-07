@@ -78,6 +78,7 @@ model Organization {
   // si no hay programName, el correo usa el texto genérico por defecto.
   programName  String? // Nombre del proceso/programa (asunto y bienvenida).
   emailSubject String? // Asunto del correo (admite variables); si vacío, usa el asunto por defecto del programa.
+  emailLang    String? // Idioma del correo de invitación de la organización ("ca" | "es").
   sessionDate  String? // Fecha del taller en ISO (YYYY-MM-DD), elegida con calendario.
   sessionInfo  String? // Lugar del taller (p. ej. "vuestras instalaciones").
   deadline     String? // Fecha límite en ISO (YYYY-MM-DD), elegida con calendario.

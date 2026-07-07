@@ -156,6 +156,7 @@ export default async function AdminOrgDetailPage({
           id={org.id}
           programName={org.programName ?? ""}
           emailSubject={org.emailSubject ?? ""}
+          emailLang={org.emailLang ?? ""}
           sessionDate={org.sessionDate ?? ""}
           sessionInfo={org.sessionInfo ?? ""}
           deadline={org.deadline ?? ""}

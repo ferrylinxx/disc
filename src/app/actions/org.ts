@@ -65,12 +65,13 @@ export async function createOrganization(
 
 const OrgEmailSchema = z.object({
   organizationId: z.string().min(1),
-  programName: z.string().trim().max(120).optional(),
-  emailSubject: z.string().trim().max(160).optional(),
+  programName: z.string().trim().max(200).optional(),
+  emailSubject: z.string().trim().max(200).optional(),
+  emailLang: z.enum(["ca", "es"]).optional(),
   sessionDate: z.string().trim().max(40).optional(),
-  sessionInfo: z.string().trim().max(240).optional(),
+  sessionInfo: z.string().trim().max(300).optional(),
   deadline: z.string().trim().max(40).optional(),
-  welcomeIntro: z.string().trim().max(1200).optional(),
+  welcomeIntro: z.string().trim().max(6000).optional(),
 });
 
 /**
@@ -87,12 +88,18 @@ export async function updateOrgEmailConfig(
     organizationId: formData.get("organizationId"),
     programName: formData.get("programName") ?? undefined,
     emailSubject: formData.get("emailSubject") ?? undefined,
+    emailLang: formData.get("emailLang") || undefined,
     sessionDate: formData.get("sessionDate") ?? undefined,
     sessionInfo: formData.get("sessionInfo") ?? undefined,
     deadline: formData.get("deadline") ?? undefined,
     welcomeIntro: formData.get("welcomeIntro") ?? undefined,
   });
-  if (!parsed.success) return { error: "Revisa los datos del correo." };
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return {
+      error: `Revisa los datos del correo${issue?.path?.length ? ` (campo "${issue.path.join(".")}")` : ""}.`,
+    };
+  }
   if (!assertOrgAccess(session, parsed.data.organizationId)) {
     return { error: "Sin permiso sobre esta organización." };
   }
@@ -101,6 +108,7 @@ export async function updateOrgEmailConfig(
     data: {
       programName: parsed.data.programName || null,
       emailSubject: parsed.data.emailSubject || null,
+      emailLang: parsed.data.emailLang || null,
       sessionDate: parsed.data.sessionDate || null,
       sessionInfo: parsed.data.sessionInfo || null,
       deadline: parsed.data.deadline || null,

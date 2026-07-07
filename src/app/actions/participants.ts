@@ -92,6 +92,7 @@ async function sendAccountInvite(input: {
   try {
     // Personalización del correo por organización (programa, taller, fecha límite).
     let program: Parameters<typeof invitationEmail>[0]["program"];
+    let orgLang: Lang | undefined;
     if (input.organizationId) {
       const org = await prisma.organization.findUnique({
         where: { id: input.organizationId },
@@ -99,12 +100,14 @@ async function sendAccountInvite(input: {
           name: true,
           programName: true,
           emailSubject: true,
+          emailLang: true,
           sessionDate: true,
           sessionInfo: true,
           deadline: true,
           welcomeIntro: true,
         },
       });
+      if (org?.emailLang === "ca" || org?.emailLang === "es") orgLang = org.emailLang;
       if (org?.programName) {
         program = {
           name: org.programName,
@@ -131,7 +134,7 @@ async function sendAccountInvite(input: {
       password: input.tempPassword,
       loginUrl: absoluteUrl(`/login?${loginParams.toString()}`),
       setPasswordUrl: absoluteUrl(`/restablecer/${token}`),
-      lang: input.lang,
+      lang: orgLang ?? input.lang,
       program,
     });
     await sendMail({
