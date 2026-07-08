@@ -223,6 +223,47 @@ export async function addMembership(
   return { ok: true };
 }
 
+const BulkUserSchema = z.object({
+  op: z.enum(["delete", "role"]),
+  ids: z.array(z.string().min(1)).min(1),
+  role: z.enum(["SUPERADMIN", "USER"]).optional(),
+});
+
+/**
+ * Acción en lote sobre usuarios (solo SUPERADMIN): eliminar o cambiar el rol
+ * global de varios a la vez. Nunca actúa sobre la propia cuenta (evita el
+ * autobloqueo/autoborrado).
+ */
+export async function bulkUserAction(input: {
+  op: "delete" | "role";
+  ids: string[];
+  role?: "SUPERADMIN" | "USER";
+}): Promise<ActionState> {
+  const session = await requireRole("SUPERADMIN");
+  const parsed = BulkUserSchema.safeParse(input);
+  if (!parsed.success) return { error: "Datos no válidos." };
+  const { op, ids, role } = parsed.data;
+  const targets = ids.filter((id) => id !== session.userId);
+  if (targets.length === 0) {
+    return { error: "No puedes aplicar la acción sobre tu propia cuenta." };
+  }
+  if (op === "delete") {
+    const res = await prisma.user.deleteMany({ where: { id: { in: targets } } });
+    revalidatePath("/admin", "layout");
+    return { ok: true, message: `${res.count} usuarios eliminados.` };
+  }
+  if (!role) return { error: "Falta el rol." };
+  const res = await prisma.user.updateMany({
+    where: { id: { in: targets } },
+    data: { globalRole: role },
+  });
+  revalidatePath("/admin", "layout");
+  return {
+    ok: true,
+    message: `${res.count} usuarios cambiados a ${role === "SUPERADMIN" ? "Superadmin" : "Usuario"}.`,
+  };
+}
+
 const AddGestorSchema = z.object({
   organizationId: z.string().min(1),
   email: z.email({ error: "Introduce un email válido." }).trim().toLowerCase(),
