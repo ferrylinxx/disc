@@ -133,7 +133,7 @@ export function UserManager({
     const rows = users.filter((u) => {
       if (term) {
         const domain = (u.email.split("@")[1] ?? "").toLowerCase();
-        const hay = [u.name ?? "", u.email, ...u.memberships.map((m) => m.organizationName)]
+        const hay = [u.name ?? "", u.email, ...u.orgs.map((o) => o.name)]
           .join(" ")
           .toLowerCase();
         if (!hay.includes(term) && !domain.includes(term)) return false;
@@ -145,8 +145,7 @@ export function UserManager({
         !u.memberships.some((m) => m.role === mRole)
       )
         return false;
-      if (orgFilter !== "ALL" && !u.memberships.some((m) => m.organizationId === orgFilter))
-        return false;
+      if (orgFilter !== "ALL" && !u.orgs.some((o) => o.id === orgFilter)) return false;
       if (conn !== "ALL") {
         const t = u.lastSeenAt ? now - new Date(u.lastSeenAt).getTime() : Infinity;
         const online = t < ONLINE_WINDOW_MS;
@@ -217,14 +216,14 @@ export function UserManager({
     const map = new Map<string, { name: string; users: AdminUser[] }>();
     const noOrg: AdminUser[] = [];
     for (const u of filtered) {
-      if (u.memberships.length === 0) {
+      if (u.orgs.length === 0) {
         noOrg.push(u);
         continue;
       }
-      for (const m of u.memberships) {
-        const g = map.get(m.organizationId) ?? { name: m.organizationName, users: [] };
+      for (const o of u.orgs) {
+        const g = map.get(o.id) ?? { name: o.name, users: [] };
         g.users.push(u);
-        map.set(m.organizationId, g);
+        map.set(o.id, g);
       }
     }
     const arr = [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));

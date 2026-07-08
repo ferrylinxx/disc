@@ -169,6 +169,11 @@ export async function adminUsers() {
           },
           orderBy: { createdAt: "asc" },
         },
+        // Organizaciones donde el usuario es participante (para filtrar/agrupar
+        // por organización, no solo por rol de gestor).
+        participants: {
+          select: { organization: { select: { id: true, name: true } } },
+        },
       },
     }),
     prisma.organization.findMany({
@@ -178,21 +183,28 @@ export async function adminUsers() {
   ]);
 
   return {
-    users: users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      globalRole: u.globalRole,
-      createdAt: u.createdAt,
-      lastSeenAt: u.lastSeenAt,
-      participantCount: u._count.participants,
-      memberships: u.memberships.map((m) => ({
-        id: m.id,
-        role: m.role,
-        organizationId: m.organization.id,
-        organizationName: m.organization.name,
-      })),
-    })),
+    users: users.map((u) => {
+      // Todas las organizaciones del usuario (como gestor y/o participante).
+      const orgMap = new Map<string, string>();
+      for (const m of u.memberships) orgMap.set(m.organization.id, m.organization.name);
+      for (const p of u.participants) orgMap.set(p.organization.id, p.organization.name);
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        globalRole: u.globalRole,
+        createdAt: u.createdAt,
+        lastSeenAt: u.lastSeenAt,
+        participantCount: u._count.participants,
+        memberships: u.memberships.map((m) => ({
+          id: m.id,
+          role: m.role,
+          organizationId: m.organization.id,
+          organizationName: m.organization.name,
+        })),
+        orgs: [...orgMap].map(([id, name]) => ({ id, name })),
+      };
+    }),
     organizations,
   };
 }
