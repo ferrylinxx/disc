@@ -251,6 +251,7 @@ export async function adminParticipants(organizationId?: string) {
       createdAt: true,
       organization: { select: { id: true, name: true } },
       team: { select: { name: true } },
+      user: { select: { lastSeenAt: true } },
       results: {
         orderBy: { computedAt: "desc" },
         take: 1,
@@ -277,6 +278,7 @@ export async function adminParticipants(organizationId?: string) {
     organizationId: p.organization.id,
     orgName: p.organization.name,
     teamName: p.team?.name ?? null,
+    lastSeenAt: p.user?.lastSeenAt ?? null,
     inviteToken: p.invitations[0]?.token ?? null,
     result: p.results[0]
       ? {

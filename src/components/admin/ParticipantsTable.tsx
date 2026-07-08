@@ -13,6 +13,7 @@ import type { AdminParticipant } from "@/lib/data/dashboard";
 import { Avatar } from "@/components/dashboard/AdminWidgets";
 import { EmptyState, ProfileChip, StatusBadge, tableCls } from "./ui";
 import { ConfirmButton, toast } from "./ui-client";
+import { PresenceBadge } from "./PresenceBadge";
 
 const initial: ActionState = {};
 const inputCls =
@@ -405,6 +406,7 @@ export function ParticipantsTable({
                   {showOrg && <th className={tableCls.th}>{sortable("org", "Organización")}</th>}
                   <th className={tableCls.th}>Equipo</th>
                   <th className={tableCls.th}>{sortable("status", "Estado")}</th>
+                  <th className={tableCls.th}>Conexión</th>
                   <th className={tableCls.th}>Resultado</th>
                   <th className={`${tableCls.th} text-right`}>Acciones</th>
                 </tr>
@@ -437,6 +439,9 @@ export function ParticipantsTable({
                     <td className={`${tableCls.td} text-slate-500`}>{p.teamName ?? "—"}</td>
                     <td className={tableCls.td}>
                       <StatusBadge status={p.status} />
+                    </td>
+                    <td className={tableCls.td}>
+                      <PresenceBadge lastSeenAt={p.lastSeenAt} />
                     </td>
                     <td className={tableCls.td}>
                       {p.result ? (
