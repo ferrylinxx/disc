@@ -14,6 +14,7 @@ import { Avatar } from "@/components/dashboard/AdminWidgets";
 import { EmptyState, ProfileChip, StatusBadge, tableCls } from "./ui";
 import { ConfirmButton, toast } from "./ui-client";
 import { PresenceBadge } from "./PresenceBadge";
+import { SPEED_WARNING_LABEL, SpeedBadge } from "./SpeedBadge";
 
 const initial: ActionState = {};
 const inputCls =
@@ -45,6 +46,7 @@ function downloadCsv(rows: AdminParticipant[], showOrg: boolean) {
     "Estado",
     "Perfil",
     "EQ",
+    "Calidad",
   ];
   const lines = rows.map((p) =>
     [
@@ -55,6 +57,7 @@ function downloadCsv(rows: AdminParticipant[], showOrg: boolean) {
       STATUS_LABEL[p.status] ?? p.status,
       p.result?.profileCode ?? "",
       p.result?.eq ?? "",
+      p.result?.speed?.status === "tooFast" ? SPEED_WARNING_LABEL : "",
     ]
       .map(csvCell)
       .join(","),
@@ -445,9 +448,10 @@ export function ParticipantsTable({
                     </td>
                     <td className={tableCls.td}>
                       {p.result ? (
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex flex-wrap items-center gap-2">
                           <ProfileChip code={p.result.profileCode} />
                           <span className="text-xs text-slate-500">EQ {p.result.eq}</span>
+                          <SpeedBadge speed={p.result.speed} />
                         </span>
                       ) : (
                         <span className="text-xs text-slate-300">—</span>

@@ -5,6 +5,11 @@ import { classifyIntensity, proportionalShares } from "@/lib/engine/scoring";
 import { getActiveInstrument } from "@/lib/instruments";
 import { computeTeamInsights } from "@/lib/analytics/team";
 import type { TeamParticipantResult } from "@/lib/analytics/team";
+import {
+  classifySpeed,
+  DEFAULT_SPEED_THRESHOLDS,
+  type SpeedAssessment,
+} from "@/lib/engine/quality";
 
 /**
  * Consultas de lectura para los paneles por rol. Cada función recibe el
@@ -247,6 +252,42 @@ export type AdminOrganization = Awaited<
 >[number];
 
 /**
+ * Veredicto de velocidad de respuesta por conjunto de respuestas, agregado en
+ * BD: dos consultas en total, independientemente del número de participantes.
+ */
+async function speedByResponseSet(
+  responseSetIds: string[],
+): Promise<Map<string, SpeedAssessment>> {
+  const out = new Map<string, SpeedAssessment>();
+  if (responseSetIds.length === 0) return out;
+  const inSets = { responseSetId: { in: responseSetIds } };
+  const [timed, fast] = await Promise.all([
+    prisma.itemResponse.groupBy({
+      by: ["responseSetId"],
+      where: { ...inSets, timeMs: { not: null } },
+      _count: { _all: true },
+    }),
+    prisma.itemResponse.groupBy({
+      by: ["responseSetId"],
+      where: { ...inSets, timeMs: { lt: DEFAULT_SPEED_THRESHOLDS.fastItemMs } },
+      _count: { _all: true },
+    }),
+  ]);
+  const timedBySet = new Map(timed.map((g) => [g.responseSetId, g._count._all]));
+  const fastBySet = new Map(fast.map((g) => [g.responseSetId, g._count._all]));
+  for (const id of responseSetIds) {
+    out.set(
+      id,
+      classifySpeed({
+        timedItems: timedBySet.get(id) ?? 0,
+        fastItems: fastBySet.get(id) ?? 0,
+      }),
+    );
+  }
+  return out;
+}
+
+/**
  * Participantes (panel admin · Participantes): incluye organización, equipo,
  * último resultado y el token de la invitación activa, para seguimiento,
  * reenvío y envío manual del informe. Acepta filtro por organización.
@@ -270,6 +311,7 @@ export async function adminParticipants(organizationId?: string) {
         select: {
           eq: true,
           profileCode: true,
+          responseSetId: true,
           primaryDimension: { select: { code: true } },
         },
       },
@@ -281,6 +323,9 @@ export async function adminParticipants(organizationId?: string) {
       },
     },
   });
+  const speed = await speedByResponseSet(
+    rows.flatMap((p) => (p.results[0] ? [p.results[0].responseSetId] : [])),
+  );
   return rows.map((p) => ({
     id: p.id,
     fullName: p.fullName,
@@ -297,6 +342,7 @@ export async function adminParticipants(organizationId?: string) {
           eq: p.results[0].eq,
           profileCode: p.results[0].profileCode,
           primary: p.results[0].primaryDimension.code,
+          speed: speed.get(p.results[0].responseSetId) ?? null,
         }
       : null,
   }));
