@@ -81,7 +81,7 @@ export async function EvaluationByInvitation({
       { day: "2-digit", month: "long", year: "numeric" },
     );
     return (
-      <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+      <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14 lg:max-w-5xl">
         {autoPrint && <AutoPrint />}
         <div className="animate-fade-up mb-6 flex flex-col items-center text-center">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
