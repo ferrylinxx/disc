@@ -19,9 +19,23 @@ const prisma = new PrismaClient({ adapter });
 
 const DEMO_PASSWORD = "gesem1234";
 
-const SUPERADMINS = [
-  { email: "ferrangarola22@gmail.com", name: "Ferran Garola", password: "Ferran2203%" },
-];
+/**
+ * Superadmin adicional con contraseña propia. SOLO desde el entorno, nunca en el
+ * código (el repositorio ha sido público). Sin estas variables no se crea:
+ *   SEED_SUPERADMIN_EMAIL, SEED_SUPERADMIN_PASSWORD, SEED_SUPERADMIN_NAME (opcional)
+ */
+const saEmail = process.env.SEED_SUPERADMIN_EMAIL?.trim();
+const saPassword = process.env.SEED_SUPERADMIN_PASSWORD;
+const SUPERADMINS =
+  saEmail && saPassword
+    ? [
+        {
+          email: saEmail,
+          name: process.env.SEED_SUPERADMIN_NAME?.trim() || "Superadmin",
+          password: saPassword,
+        },
+      ]
+    : [];
 
 async function main() {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
