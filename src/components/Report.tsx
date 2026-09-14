@@ -275,17 +275,25 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
       {/* Qué es el perfil (contextualiza antes de interpretar, #4) */}
       <p className="px-1 text-sm leading-relaxed text-slate-600">{t.profileIntro}</p>
 
-      {/* Tendencia predominante (texto editorial fijo V1, si existe) */}
-      {b.tendencia && (
-        <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            {t.tendencyPre}
-          </h3>
-          <div className="mt-3">
+      {/* Tendencia predominante: prosa editorial V1 del perfil y, si ese perfil
+          todavía no la tiene cargada, composición desde la narrativa base. La
+          sección NUNCA se omite: sin este fallback desaparecía entera del
+          informe cuando el bloque no estaba publicado en la biblioteca. */}
+      <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          {t.tendencyPre}
+        </h3>
+        <div className="mt-3 space-y-3">
+          {b.tendencia ? (
             <Prose text={b.tendencia} />
-          </div>
-        </section>
-      )}
+          ) : (
+            <>
+              <Prose text={narrative.intro} />
+              <Prose text={narrative.communication} />
+            </>
+          )}
+        </div>
+      </section>
 
       {/* Cierre común del bloque "Tendencia predominante" (Entregable 10) */}
       <p className="px-1 text-xs leading-relaxed text-slate-400">{t.tendencyClose}</p>
