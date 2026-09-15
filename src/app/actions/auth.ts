@@ -7,10 +7,12 @@ import { prisma } from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/auth/session";
 import { homePathForRole, primaryRole } from "@/lib/auth/rbac";
 import type { GlobalRole, MembershipRole } from "@/lib/auth/jwt";
+import { getLang } from "@/lib/i18n/server";
+import { getDict } from "@/lib/i18n/dictionaries";
 
 const LoginSchema = z.object({
-  email: z.email({ error: "Introduce un email válido." }).trim().toLowerCase(),
-  password: z.string().min(1, { error: "La contraseña es obligatoria." }),
+  email: z.email().trim().toLowerCase(),
+  password: z.string().min(1),
 });
 
 export interface LoginState {
@@ -22,12 +24,13 @@ export async function login(
   _state: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
+  const t = getDict(await getLang()).auth;
   const parsed = LoginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: "Revisa el email y la contraseña." };
+    return { error: t.errCheckCredentials };
   }
 
   const { email, password } = parsed.data;
@@ -37,12 +40,12 @@ export async function login(
   });
 
   if (!user || !user.passwordHash) {
-    return { error: "Credenciales incorrectas." };
+    return { error: t.errWrongCredentials };
   }
 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
-    return { error: "Credenciales incorrectas." };
+    return { error: t.errWrongCredentials };
   }
 
   const memberships = user.memberships.map((m) => ({

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
 import { logout } from "@/app/actions/auth";
@@ -6,8 +7,10 @@ import { AdminSidebar } from "@/components/admin/Sidebar";
 import { CommandPalette } from "@/components/admin/CommandPalette";
 import { CommandTrigger } from "@/components/admin/CommandTrigger";
 import { Toaster } from "@/components/admin/ui-client";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getLang } from "@/lib/i18n/server";
 
-export const metadata = { title: "Consola GESEM" };
+export const metadata = { title: "Consola" };
 
 /** Marco de la consola admin: topbar con buscador + navegación lateral. */
 export default async function AdminLayout({
@@ -16,6 +19,7 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   const session = await requireRole("SUPERADMIN");
+  const lang = await getLang();
   const [organizations, users, participants] = await Promise.all([
     prisma.organization.count(),
     prisma.user.count(),
@@ -34,12 +38,23 @@ export default async function AdminLayout({
       <CommandPalette />
       <Toaster />
       <main className="relative mx-auto w-full max-w-[1480px] px-4 py-5 sm:px-6">
-        {/* Topbar */}
-        <div className="animate-fade-up mb-5 flex items-center gap-3">
-          <div className="flex-1">
+        {/* Topbar: la única barra de la consola (la cabecera pública se oculta aquí) */}
+        <div className="animate-fade-up mb-5 flex items-center gap-2 sm:gap-3">
+          {/* En móvil el menú lateral no muestra la marca: va aquí */}
+          <Link href="/admin" className="shrink-0 md:hidden" aria-label="Consola GESEM">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/gesem-logo.svg" alt="GESEM" className="h-7 w-auto" />
+          </Link>
+          <div className="min-w-0 flex-1">
             <CommandTrigger />
           </div>
-          <div className="hidden items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 py-1 pl-3 pr-1 shadow-sm backdrop-blur sm:flex">
+          <div
+            className="hidden sm:block"
+            title="Idioma de los informes que abras desde la consola"
+          >
+            <LanguageSwitcher lang={lang} />
+          </div>
+          <div className="hidden items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 py-1 pl-3 pr-1 shadow-sm backdrop-blur md:flex">
             <span className="text-xs font-medium text-slate-500">
               Hola, <span className="font-semibold text-slate-800">{greetName}</span>
             </span>

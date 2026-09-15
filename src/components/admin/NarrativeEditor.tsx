@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { saveNarrative } from "@/app/actions/narratives";
 import type { ActionState } from "@/app/actions/org";
 import type { AdminNarrativeEntry } from "@/lib/data/narratives";
+import { btn } from "./ui";
 
 /** Forma del contenido de un recurso (D/I/S/C). */
 interface ResourceContent {
@@ -31,6 +32,12 @@ interface ProfileContent {
 
 const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
 
+const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
+  PUBLISHED: { label: "Publicada", cls: "bg-emerald-100 text-emerald-700" },
+  DRAFT: { label: "Borrador", cls: "bg-amber-100 text-amber-700" },
+  ARCHIVED: { label: "Archivada", cls: "bg-slate-200 text-slate-500" },
+};
+
 function StatusBadge({ status, inDb }: { status: string; inDb: boolean }) {
   if (!inDb) {
     return (
@@ -39,16 +46,18 @@ function StatusBadge({ status, inDb }: { status: string; inDb: boolean }) {
       </span>
     );
   }
-  const map: Record<string, string> = {
-    PUBLISHED: "bg-emerald-100 text-emerald-700",
-    DRAFT: "bg-amber-100 text-amber-700",
-    ARCHIVED: "bg-slate-200 text-slate-500",
-  };
+  const s = STATUS_LABEL[status];
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${map[status] ?? "bg-slate-100 text-slate-500"}`}>
-      {status}
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${s?.cls ?? "bg-slate-100 text-slate-500"}`}>
+      {s?.label ?? status}
     </span>
   );
+}
+
+/** Autor legible: los procesos automáticos (seed, importaciones) no se muestran. */
+function authorLabel(author: string | null): string | null {
+  if (!author || /^(seed|reseed|import)/i.test(author)) return null;
+  return author;
 }
 
 function Field({
@@ -186,8 +195,10 @@ function EntryEditor({ entry }: { entry: AdminNarrativeEntry }) {
           <StatusBadge status={entry.status} inDb={entry.inDb} />
         </span>
         <span className="text-xs text-slate-400">
-          {entry.inDb ? `v${entry.version}${entry.author ? ` · ${entry.author}` : ""}` : "sin guardar"}
-          <span className="ml-2 transition group-open:rotate-180">▾</span>
+          {entry.inDb
+            ? `Versión ${entry.version}${authorLabel(entry.author) ? ` · ${authorLabel(entry.author)}` : ""}`
+            : "Sin guardar"}
+          <span className="ml-2 inline-block transition group-open:rotate-180">▾</span>
         </span>
       </summary>
 
@@ -216,7 +227,7 @@ function EntryEditor({ entry }: { entry: AdminNarrativeEntry }) {
           <button
             type="submit"
             disabled={pending}
-            className="bg-brand rounded-full px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            className={btn.primary}
           >
             {pending ? "Guardando…" : "Guardar"}
           </button>

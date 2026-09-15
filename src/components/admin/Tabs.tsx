@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 export interface TabItem {
   id: string;
@@ -9,14 +9,35 @@ export interface TabItem {
   content: ReactNode;
 }
 
-/** Pestañas del admin: todas montadas, se muestra la activa (conserva estado). */
+/**
+ * Pestañas del admin: todas montadas, se muestra la activa (conserva estado).
+ * La pestaña activa va en el hash de la URL (#participantes…): sobrevive a
+ * recargar la página y permite enlazar a una pestaña desde otra.
+ */
 export function Tabs({ tabs }: { tabs: TabItem[] }) {
   const [active, setActive] = useState(tabs[0]?.id);
+  const ids = tabs.map((t) => t.id).join(",");
+
+  useEffect(() => {
+    const fromHash = () => {
+      const id = window.location.hash.slice(1);
+      if (ids.split(",").includes(id)) setActive(id);
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, [ids]);
+
+  const select = (id: string) => {
+    setActive(id);
+    window.history.replaceState(null, "", `#${id}`);
+  };
+
   return (
     <div>
       <div
         role="tablist"
-        className="mb-5 flex flex-wrap gap-1 overflow-x-auto border-b border-slate-200"
+        className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200"
       >
         {tabs.map((t) => {
           const on = active === t.id;
@@ -26,8 +47,8 @@ export function Tabs({ tabs }: { tabs: TabItem[] }) {
               type="button"
               role="tab"
               aria-selected={on}
-              onClick={() => setActive(t.id)}
-              className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
+              onClick={() => select(t.id)}
+              className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
                 on
                   ? "border-sky-500 text-sky-600"
                   : "border-transparent text-slate-500 hover:text-slate-800"

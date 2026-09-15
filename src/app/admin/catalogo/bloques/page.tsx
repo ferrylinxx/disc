@@ -4,7 +4,7 @@ import { adminBlockEntries, type BlockLocale } from "@/lib/data/narratives";
 import { BlocksEditor } from "@/components/admin/BlocksEditor";
 import { PageHeader, Card } from "@/components/admin/ui";
 
-export const metadata = { title: "Biblioteca narrativa · Consola GESEM" };
+export const metadata = { title: "Biblioteca narrativa · Consola" };
 
 const LOCALES: { code: BlockLocale; label: string }[] = [
   { code: "es", label: "Castellano" },
@@ -24,11 +24,11 @@ export default async function AdminBlocksPage({
   return (
     <>
       <PageHeader
-        title="Biblioteca narrativa (117 bloques)"
+        title="Biblioteca narrativa"
         description={
           locale === "ca"
-            ? "Traducción catalana. Cada bloque muestra el original en castellano para comparar. Los informes en catalán solo usan lo publicado."
-            : "13 perfiles × 9 bloques. Revisa o edita el contenido de cada bloque. Publica lo definitivo cuando esté validado."
+            ? "Traducción catalana. Cada apartado muestra el original en castellano para comparar. Los informes en catalán solo usan lo publicado."
+            : "Texto de cada perfil, apartado por apartado (13 perfiles × 8 apartados del informe). La barra indica las palabras publicadas frente a las 700 del canon V1."
         }
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -36,7 +36,7 @@ export default async function AdminBlocksPage({
           href="/admin/catalogo"
           className="text-sm font-semibold text-sky-700 transition hover:text-sky-900"
         >
-          ← Volver a narrativas y catálogo
+          ← Volver a Contenido
         </Link>
         <nav
           aria-label="Idioma de la biblioteca"

@@ -2,12 +2,12 @@
 
 import { useActionState, useRef, useState } from "react";
 import {
-  createOrganization,
   createProject,
   createTeam,
   extractRosterFromImage,
   type ActionState,
 } from "@/app/actions/org";
+import { btn } from "@/components/admin/ui";
 import {
   bulkInviteParticipants,
   inviteParticipant,
@@ -112,32 +112,16 @@ function Feedback({ state }: { state: ActionState }) {
   return null;
 }
 
+/** Botón de envío con el estilo principal común de la consola. */
 function Submit({ pending, label }: { pending: boolean; label: string }) {
   return (
     <button
       type="submit"
       disabled={pending}
-      className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+      className={`${btn.primary} py-2.5 disabled:cursor-not-allowed`}
     >
       {pending ? "Guardando…" : label}
     </button>
-  );
-}
-
-/** Alta de organización (SUPERADMIN). */
-export function CreateOrgForm() {
-  const [state, action, pending] = useActionState(createOrganization, initial);
-  return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
-      <input
-        name="name"
-        required
-        placeholder="Nombre de la organización"
-        className={`${inputCls} flex-1 min-w-[220px]`}
-      />
-      <Submit pending={pending} label="Crear organización" />
-      <Feedback state={state} />
-    </form>
   );
 }
 
@@ -202,36 +186,81 @@ export function InviteParticipantForm({
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="organizationId" value={organizationId} />
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          name="fullName"
-          required
-          placeholder="Nombre completo"
-          className={`${inputCls} flex-1 min-w-[160px]`}
-        />
+      <div
+        className={`grid gap-2 sm:grid-cols-2 ${
+          teams.length > 0 ? "lg:grid-cols-[1fr_1fr_12rem_9rem_auto]" : "lg:grid-cols-[1fr_1fr_9rem_auto]"
+        }`}
+      >
+        <input name="fullName" required placeholder="Nombre completo" className={inputCls} />
         <input
           name="email"
           type="email"
           required
           placeholder="email@empresa.com"
-          className={`${inputCls} flex-1 min-w-[180px]`}
+          className={inputCls}
         />
-        <select name="teamId" className={`${inputCls} min-w-[160px]`}>
-          <option value="">Sin equipo</option>
-          {teams.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.projectName} · {t.name}
-            </option>
-          ))}
-        </select>
-        <select name="lang" className={`${inputCls} min-w-[120px]`} title="Idioma del correo" defaultValue="ca">
-          <option value="ca">Correo: CAT</option>
-          <option value="es">Correo: ESP</option>
+        {/* Sin equipos creados, el selector solo ofrecería "Sin equipo". */}
+        {teams.length > 0 && (
+          <select name="teamId" className={inputCls}>
+            <option value="">Sin equipo</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.projectName} · {t.name}
+              </option>
+            ))}
+          </select>
+        )}
+        <select name="lang" className={inputCls} title="Idioma del correo" defaultValue="ca">
+          <option value="ca">Correo en catalán</option>
+          <option value="es">Correo en castellano</option>
         </select>
         <Submit pending={pending} label="Invitar" />
       </div>
       <Feedback state={state} />
     </form>
+  );
+}
+
+/**
+ * "+ Invitar participantes": despliega los formularios de invitación (una
+ * persona o varias). Plegado por defecto para que la lista de participantes
+ * sea lo primero que se ve.
+ */
+export function InvitePanel({
+  organizationId,
+  teams,
+}: {
+  organizationId: string;
+  teams: TeamOption[];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={open ? btn.secondary : btn.primary}
+      >
+        {open ? "Cerrar invitaciones" : "+ Invitar participantes"}
+      </button>
+      {open && (
+        <div className="animate-fade-up mt-3 space-y-5 rounded-2xl border border-sky-100 bg-sky-50/40 p-4">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Una persona
+            </p>
+            <InviteParticipantForm organizationId={organizationId} teams={teams} />
+          </div>
+          <div className="border-t border-sky-100 pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Varias a la vez
+            </p>
+            <BulkInviteForm organizationId={organizationId} teams={teams} />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -335,15 +364,17 @@ export function BulkInviteForm({
         placeholder={"Nombre Apellido, email@empresa.com\nOtra Persona, otra@empresa.com"}
         className={`${inputCls} font-mono text-xs`}
       />
-      <div className="flex flex-wrap items-center gap-2">
-        <select name="teamId" className={`${inputCls} min-w-[160px] flex-1`}>
-          <option value="">Sin equipo</option>
-          {teams.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.projectName} · {t.name}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {teams.length > 0 && (
+          <select name="teamId" className={`${inputCls} min-w-[160px] flex-1`}>
+            <option value="">Sin equipo</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.projectName} · {t.name}
+              </option>
+            ))}
+          </select>
+        )}
         <Submit pending={pending} label="Invitar a todos" />
       </div>
       <p className="text-[11px] text-slate-400">

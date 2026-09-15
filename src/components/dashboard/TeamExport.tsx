@@ -3,6 +3,7 @@
 import type { Dimension } from "@/lib/engine/types";
 import type { TeamInsights } from "@/lib/analytics/team";
 import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { btn } from "@/components/admin/ui";
 
 interface Props {
   insights: TeamInsights;
@@ -45,25 +46,13 @@ export function TeamExport({ insights, dimensions, teamName }: Props) {
 
   return (
     <div className="no-print flex flex-wrap items-center justify-end gap-2">
-      <button
-        type="button"
-        onClick={downloadCsv}
-        className="rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
-      >
+      <button type="button" onClick={downloadCsv} className={btn.secondary}>
         ↓ Exportar CSV
       </button>
-      <button
-        type="button"
-        onClick={() => printAs("ejecutivo")}
-        className="rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
-      >
+      <button type="button" onClick={() => printAs("ejecutivo")} className={btn.secondary}>
         ↓ PDF ejecutivo
       </button>
-      <button
-        type="button"
-        onClick={() => printAs("facilitador")}
-        className="bg-brand rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
-      >
+      <button type="button" onClick={() => printAs("facilitador")} className={btn.primary}>
         ↓ PDF facilitador
       </button>
     </div>

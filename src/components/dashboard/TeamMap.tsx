@@ -2,6 +2,8 @@ import type { Dimension } from "@/lib/engine/types";
 import type { TeamInsights } from "@/lib/analytics/team";
 import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
 import { discGrad, discGradStrong, discGradStops } from "@/lib/disc-gradient";
+import { ProfileChip } from "@/components/admin/ui";
+import { layoutTeamBubbles, QUAD_ORIGIN, TEAM_GRID } from "@/lib/team-bubbles";
 
 interface Props {
   insights: TeamInsights;
@@ -22,7 +24,7 @@ interface Props {
  * (solo PDF del facilitador).
  */
 const SCREENS = [
-  { id: "portada", label: "Portada" },
+  { id: "portada", label: "Resumen" },
   { id: "mapa-disc", label: "Mapa conductual" },
   { id: "lectura-global", label: "Lectura global" },
   { id: "distribucion-perfiles", label: "Distribución por perfiles" },
@@ -62,12 +64,13 @@ export function TeamMap({ insights, dimensions, header }: Props) {
 
   return (
     <div className="space-y-6">
-      <nav className="glass no-print sticky top-2 z-10 flex flex-wrap gap-1.5 rounded-2xl border border-white/60 p-2">
+      {/* Índice en una sola fila desplazable, fijo bajo la cabecera de la web. */}
+      <nav className="no-print sticky top-20 z-20 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200/70 bg-white/90 p-1.5 shadow-sm backdrop-blur">
         {SCREENS.map((s, i) => (
           <a
             key={s.id}
             href={`#${s.id}`}
-            className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-700"
+            className="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-sky-50 hover:text-sky-700"
           >
             <span className="text-slate-400">{i + 1}.</span> {s.label}
           </a>
@@ -81,8 +84,8 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         </p>
       )}
 
-      {/* 1 · Portada */}
-      <Screen id="portada" n={1} title="Portada">
+      {/* 1 · Portada (en pantalla, "Resumen del equipo"; en el PDF abre el informe) */}
+      <Screen id="portada" n={1} title="Resumen del equipo">
         {header && (
           <div className="mb-4 grid gap-3 rounded-2xl border border-slate-100 bg-white/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <Fact label="Organización" value={header.organizationName} />
@@ -123,7 +126,7 @@ export function TeamMap({ insights, dimensions, header }: Props) {
         {empty ? (
           <Muted />
         ) : (
-          <div className="grid items-center gap-6 lg:grid-cols-[auto_1fr]">
+          <div className="grid items-start gap-6 lg:grid-cols-2">
             <TeamDiscGrid points={insights.discPoints} dye={dye} />
             <div>
               <p className="text-sm leading-relaxed text-slate-600">
@@ -131,21 +134,20 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                 leyenda y situada según los recursos que utiliza con más frecuencia.
                 Las agrupaciones muestran dónde se concentra el equipo.
               </p>
-              <ul className="mt-4 space-y-1.5">
+              <ul
+                className={`mt-4 grid gap-x-5 gap-y-1.5 ${
+                  insights.discPoints.length > 8 ? "sm:grid-cols-2" : ""
+                }`}
+              >
                 {insights.discPoints.map((p) => (
-                  <li key={p.n} className="flex items-center gap-2.5 text-sm">
-                    <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                      style={{ backgroundColor: "#222222" }}
-                    >
+                  <li key={p.n} className="flex min-w-0 items-center gap-2.5 text-sm">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[11px] font-bold text-white">
                       {p.n}
                     </span>
                     <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
                       {p.name}
                     </span>
-                    <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-500">
-                      {p.profile}
-                    </span>
+                    <ProfileChip code={p.profile} />
                   </li>
                 ))}
               </ul>
@@ -184,8 +186,8 @@ export function TeamMap({ insights, dimensions, header }: Props) {
                   {insights.combinations.map((c) => (
                     <tr key={c.code} className="border-b border-slate-50">
                       <td className="px-3 py-2">
-                        <span className="mr-2 inline-flex rounded-md bg-slate-900 px-1.5 py-0.5 text-[11px] font-bold text-white">
-                          {c.code}
+                        <span className="mr-2">
+                          <ProfileChip code={c.code} />
                         </span>
                         <span className="text-slate-700">{c.name}</span>
                       </td>
@@ -203,25 +205,17 @@ export function TeamMap({ insights, dimensions, header }: Props) {
 
       {/* 5 · Recursos colectivos */}
       <Screen id="recursos" n={5} title="Recursos colectivos">
-        <div className="grid items-center gap-6 lg:grid-cols-2">
-          <Radar
-            data={insights.distribution.map((d) => ({
-              code: d.dimensionCode,
-              label: styleShort(d.dimensionCode),
-              value: d.share,
-              color: dye(d.dimensionCode),
-            }))}
-          />
-          <div className="space-y-2.5">
-            {insights.distribution.map((d) => (
-              <BarRow
-                key={d.dimensionCode}
-                label={`${styleShort(d.dimensionCode)} · ${name.get(d.dimensionCode) ?? d.dimensionCode}`}
-                value={d.share}
-                code={d.dimensionCode}
-              />
-            ))}
-          </div>
+        {/* Barras con su peso en el equipo. Sustituyen al radar: con valores entre
+            el 10 y el 35 % quedaba un rombo diminuto en el centro, ilegible. */}
+        <div className="space-y-3">
+          {insights.distribution.map((d) => (
+            <BarRow
+              key={d.dimensionCode}
+              label={`${styleShort(d.dimensionCode)} · ${name.get(d.dimensionCode) ?? d.dimensionCode}`}
+              value={d.share}
+              code={d.dimensionCode}
+            />
+          ))}
         </div>
         {insights.strengths.length > 0 && (
           <div className="mt-5">
@@ -446,7 +440,8 @@ function Fact({ label, value }: { label: string; value: string }) {
 /**
  * Mapa conductual del equipo: cuadrantes DISC en el mismo orden que el informe
  * individual: D↖ I↗ / S↙ C↘. Cada burbuja es una persona del equipo, situada
- * por sus recursos predominantes.
+ * por sus recursos predominantes. Los nombres de los recursos van fuera de la
+ * rejilla para que ninguna burbuja los tape.
  */
 function TeamDiscGrid({
   points,
@@ -455,45 +450,39 @@ function TeamDiscGrid({
   points: { x: number; y: number; code: string; n: number }[];
   dye: (c: string) => string;
 }) {
-  // Separa burbujas que caen casi en el mismo punto para que todas se vean.
-  const placed: { x: number; y: number }[] = [];
-  const spread = points.map((p) => {
-    let x = p.x;
-    let y = p.y;
-    let tries = 0;
-    while (placed.some((q) => Math.hypot(q.x - x, q.y - y) < 18) && tries < 16) {
-      const ang = tries * 2.399;
-      const rad = 16 + Math.floor(tries / 8) * 10;
-      x = Math.max(20, Math.min(180, p.x + Math.cos(ang) * rad));
-      y = Math.max(20, Math.min(180, p.y + Math.sin(ang) * rad));
-      tries += 1;
-    }
-    placed.push({ x, y });
-    return { ...p, x, y };
-  });
-  // code → [x del cuadrante, y del cuadrante, ancla horizontal del rótulo]
-  const QUADS: { code: string; x: number; y: number; lx: number; anchor: "start" | "end" }[] = [
-    { code: "D", x: 6, y: 6, lx: 16, anchor: "start" },
-    { code: "I", x: 100, y: 6, lx: 184, anchor: "end" },
-    { code: "S", x: 6, y: 100, lx: 16, anchor: "start" },
-    { code: "C", x: 100, y: 100, lx: 184, anchor: "end" },
-  ];
+  const { bubbles, r } = layoutTeamBubbles(points);
+  const { x: GX, y: GY, size } = TEAM_GRID;
+  const half = size / 2;
+  const QUADS = ["D", "I", "S", "C"];
+  const tag = (code: string, ty: number, anchor: "start" | "end") => (
+    <text
+      key={`tag-${code}`}
+      x={anchor === "start" ? GX + 2 : GX + size - 2}
+      y={ty}
+      textAnchor={anchor}
+      fontSize="9.5"
+      fontWeight="700"
+      fill={dye(code)}
+    >
+      {`${code} · ${styleShort(code).toUpperCase()}`}
+    </text>
+  );
   return (
     <div className="flex justify-center">
       <svg
-        viewBox="-6 -6 212 212"
-        className="h-80 w-80 max-w-full"
+        viewBox="0 0 220 252"
+        className="h-auto w-full max-w-[440px]"
         role="img"
         aria-label="Mapa conductual del equipo (cuadrantes DISC)"
       >
         <defs>
           <filter id="tm-shadow" x="-60%" y="-60%" width="220%" height="220%">
-            <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" floodColor="#0f172a" floodOpacity="0.2" />
+            <feDropShadow dx="0" dy="1.2" stdDeviation="1.4" floodColor="#0f172a" floodOpacity="0.22" />
           </filter>
-          {QUADS.map((q) => {
-            const [a, b] = discGradStops(q.code);
+          {QUADS.map((code) => {
+            const [a, b] = discGradStops(code);
             return (
-              <linearGradient key={q.code} id={`tmg-${q.code}`} x1="0" y1="0" x2="1" y2="1">
+              <linearGradient key={code} id={`tmg-${code}`} x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor={a} />
                 <stop offset="100%" stopColor={b} />
               </linearGradient>
@@ -501,56 +490,53 @@ function TeamDiscGrid({
           })}
         </defs>
 
-        {/* Cuadrantes */}
-        {QUADS.map((q) => (
-          <g key={q.code}>
-            <rect
-              x={q.x}
-              y={q.y}
-              width={94}
-              height={94}
-              rx={10}
-              fill={`url(#tmg-${q.code})`}
-              fillOpacity={0.16}
-              stroke={dye(q.code)}
-              strokeOpacity={0.3}
-            />
-            <text
-              x={q.lx}
-              y={q.y < 50 ? 32 : 176}
-              textAnchor={q.anchor}
-              fontSize="30"
-              fontWeight="800"
-              fill={`url(#tmg-${q.code})`}
-              fillOpacity={0.7}
-            >
-              {q.code}
-            </text>
-            <text
-              x={q.lx}
-              y={q.y < 50 ? 44 : 188}
-              textAnchor={q.anchor}
-              fontSize="8.5"
-              fontWeight="700"
-              fill={dye(q.code)}
-              className="uppercase"
-            >
-              {styleShort(q.code)}
-            </text>
-          </g>
-        ))}
+        {tag("D", 17, "start")}
+        {tag("I", 17, "end")}
 
+        {/* Cuadrantes con la letra de fondo, muy suave */}
+        {QUADS.map((code) => {
+          const [qx, qy] = QUAD_ORIGIN[code];
+          const x = GX + qx * half;
+          const y = GY + qy * half;
+          return (
+            <g key={code}>
+              <rect
+                x={x + 1}
+                y={y + 1}
+                width={half - 2}
+                height={half - 2}
+                rx={10}
+                fill={`url(#tmg-${code})`}
+                fillOpacity={0.16}
+                stroke={dye(code)}
+                strokeOpacity={0.3}
+              />
+              <text
+                x={x + half / 2}
+                y={y + half / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="52"
+                fontWeight="800"
+                fill={`url(#tmg-${code})`}
+                fillOpacity={0.25}
+              >
+                {code}
+              </text>
+            </g>
+          );
+        })}
 
         {/* Personas (numeradas; ver leyenda) */}
-        {spread.map((p) => (
+        {bubbles.map((p) => (
           <g key={p.n} filter="url(#tm-shadow)">
-            <circle cx={p.x} cy={p.y} r="10" fill="#222222" />
+            <circle cx={p.x} cy={p.y} r={r} fill="#1e293b" stroke="#ffffff" strokeWidth="1.2" />
             <text
               x={p.x}
               y={p.y}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize="9"
+              fontSize={r > 8 ? 8.5 : 7}
               fontWeight="800"
               fill="#ffffff"
             >
@@ -558,93 +544,23 @@ function TeamDiscGrid({
             </text>
           </g>
         ))}
+
+        {tag("S", 246, "start")}
+        {tag("C", 246, "end")}
       </svg>
     </div>
   );
 }
 
-/**
- * Radar (SVG) de los recursos colectivos. Polígono de 4 ejes (D/I/S/C) con la
- * intensidad relativa del equipo. Sin dependencias externas.
- */
-function Radar({
-  data,
-}: {
-  data: { code: string; label: string; value: number; color: string }[];
-}) {
-  const size = 240;
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = 88;
-  const n = data.length;
-  // Eje i en ángulo (empezando arriba, sentido horario).
-  const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2;
-  const point = (i: number, radius: number) => ({
-    x: cx + radius * Math.cos(angle(i)),
-    y: cy + radius * Math.sin(angle(i)),
-  });
-  const valuePoints = data
-    .map((d, i) => {
-      const p = point(i, (Math.min(100, Math.max(0, d.value)) / 100) * r);
-      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-    })
-    .join(" ");
-  const rings = [0.25, 0.5, 0.75, 1];
-
-  return (
-    <div className="flex justify-center">
-      <svg viewBox={`-44 -22 ${size + 88} ${size + 44}`} className="h-auto w-72 max-w-full" role="img" aria-label="Radar de recursos del equipo">
-        {rings.map((f) => (
-          <polygon
-            key={f}
-            points={data
-              .map((_, i) => {
-                const p = point(i, r * f);
-                return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-              })
-              .join(" ")}
-            fill="none"
-            stroke="#e2e8f0"
-            strokeWidth="1"
-          />
-        ))}
-        {data.map((_, i) => {
-          const p = point(i, r);
-          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />;
-        })}
-        <polygon points={valuePoints} fill="rgba(0,161,224,0.18)" stroke="#00a1e0" strokeWidth="2" />
-        {data.map((d, i) => {
-          const p = point(i, (Math.min(100, Math.max(0, d.value)) / 100) * r);
-          return <circle key={d.code} cx={p.x} cy={p.y} r="3.5" fill={d.color} />;
-        })}
-        {data.map((d, i) => {
-          const p = point(i, r + 16);
-          return (
-            <text
-              key={d.code}
-              x={p.x}
-              y={p.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="fill-slate-600 text-[10px] font-semibold"
-            >
-              {d.label}
-            </text>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-/** Barra horizontal con etiqueta (intensidad relativa, sin porcentaje). */
+/** Barra horizontal con etiqueta y peso del recurso en el equipo (el informe de equipo sí lleva %). */
 function BarRow({ label, value, code }: { label: string; value: number; code: string }) {
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-xs">
+      <div className="mb-1 flex items-center justify-between gap-3 text-xs">
         <span className="font-semibold text-slate-700">{label}</span>
+        <span className="tabular-nums font-bold text-slate-600">{Math.round(value)}%</span>
       </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${Math.min(100, Math.max(0, value))}%`, backgroundImage: discGradStrong(code, 90) }}
@@ -683,6 +599,30 @@ function Muted() {
   return <p className="text-sm text-slate-400">Sin datos suficientes todavía.</p>;
 }
 
+/** Luminancia relativa (WCAG) de un color #RRGGBB. */
+function luminance(hex: string): number {
+  const lin = (i: number) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(1) + 0.7152 * lin(3) + 0.0722 * lin(5);
+}
+
+/**
+ * Celda del mapa de calor: el color se atenúa por transparencia del FONDO (no
+ * de la celda entera, que apagaba también el número) y el texto se elige
+ * oscuro o blanco según el tono resultante sobre blanco, para que siempre se lea.
+ */
+function heatCell(color: string, pct: number): { background: string; text: string } {
+  const a = 0.15 + (Math.min(100, Math.max(0, pct)) / 100) * 0.85;
+  const mix = (i: number) =>
+    Math.round(255 * (1 - a) + parseInt(color.slice(i, i + 2), 16) * a)
+      .toString(16)
+      .padStart(2, "0");
+  const blended = `#${mix(1)}${mix(3)}${mix(5)}`;
+  return { background: blended, text: luminance(blended) > 0.18 ? "#1e293b" : "#ffffff" };
+}
+
 /** Mapa de calor contextos × dimensiones (% medio del equipo por contexto). */
 function ContextHeatmap({
   insights,
@@ -714,15 +654,12 @@ function ContextHeatmap({
               {dims.map((d) => {
                 const cell = ctx.scores.find((s) => s.dimensionCode === d.code);
                 const pct = cell?.percent ?? 0;
+                const { background, text } = heatCell(dye(d.code), pct);
                 return (
                   <td key={d.code} className="p-1 text-center">
                     <div
-                      className="mx-auto flex h-9 w-full max-w-[64px] items-center justify-center rounded-lg text-xs font-semibold"
-                      style={{
-                        backgroundColor: dye(d.code),
-                        opacity: 0.15 + (Math.min(100, pct) / 100) * 0.85,
-                        color: pct > 45 ? "#fff" : "#334155",
-                      }}
+                      className="mx-auto flex h-9 w-full max-w-[64px] items-center justify-center rounded-lg text-xs font-bold tabular-nums"
+                      style={{ backgroundColor: background, color: text }}
                       title={`${ctx.name} · ${styleShort(d.code)}: ${pct}%`}
                     >
                       {pct}

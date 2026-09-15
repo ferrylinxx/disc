@@ -1023,7 +1023,7 @@ export async function participantReportByToken(token: string) {
  */
 export async function adminAttention() {
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [staleInvites, inProgress, unassigned] = await Promise.all([
+  const [staleInvites, inProgress, unassigned, teamCount, latestResults] = await Promise.all([
     prisma.invitation.count({
       where: {
         status: { in: ["PENDING", "SENT", "OPENED"] },
@@ -1034,8 +1034,21 @@ export async function adminAttention() {
     prisma.participant.count({
       where: { status: "COMPLETED", teamId: null },
     }),
+    prisma.team.count(),
+    // Último resultado de cada participante completado, para el aviso de calidad.
+    prisma.participant.findMany({
+      where: { status: "COMPLETED" },
+      select: {
+        results: { orderBy: { computedAt: "desc" }, take: 1, select: { responseSetId: true } },
+      },
+    }),
   ]);
-  return { staleInvites, inProgress, unassigned };
+  const speed = await speedByResponseSet(
+    latestResults.flatMap((p) => (p.results[0] ? [p.results[0].responseSetId] : [])),
+  );
+  const fastResponses = [...speed.values()].filter((s) => s.status === "tooFast").length;
+  // "Sin equipo" solo es una tarea pendiente si la plataforma usa equipos.
+  return { staleInvites, inProgress, unassigned: teamCount > 0 ? unassigned : 0, fastResponses };
 }
 
 /** Organizaciones del cliente con sus equipos (para selects de formularios). */

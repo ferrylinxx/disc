@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { discGradStops } from "@/lib/disc-gradient";
 
 /**
  * Sistema de diseño de la Consola GESEM (server-safe, sin estado).
@@ -184,10 +185,18 @@ export function Pill({
   );
 }
 
-/** Chip de perfil DISC (p. ej. DI, EQ). */
+/** Color de un código de perfil: el de su recurso principal (EQ, azul GESEM). */
+export function profileColor(code: string): string {
+  return code === "EQ" ? "#00a1e0" : discGradStops(code.charAt(0))[0];
+}
+
+/** Chip de perfil DISC (p. ej. DI, EQ) con el color de su recurso principal. */
 export function ProfileChip({ code }: { code: string }) {
   return (
-    <span className="inline-flex rounded-md bg-slate-900 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white">
+    <span
+      className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide text-white"
+      style={{ backgroundColor: profileColor(code) }}
+    >
       {code}
     </span>
   );
@@ -239,6 +248,8 @@ export const tableCls = {
   thead:
     "border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-400",
   th: "px-3 py-2.5 font-semibold",
+  /** Botón de ordenación dentro de un <th>: los botones no heredan el uppercase. */
+  sort: "inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-slate-700",
   tr: "border-b border-slate-50 transition hover:bg-slate-50/70",
   td: "px-3 py-3 align-middle",
 };

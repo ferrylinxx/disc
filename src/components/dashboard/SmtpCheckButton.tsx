@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { btn } from "@/components/admin/ui";
 
 interface CheckResult {
   ok: boolean;
@@ -37,7 +38,7 @@ export function SmtpCheckButton() {
         type="button"
         onClick={run}
         disabled={loading}
-        className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500 disabled:opacity-60"
+        className={btn.primary}
       >
         {loading ? "Verificando…" : "Probar SMTP"}
       </button>

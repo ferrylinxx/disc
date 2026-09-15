@@ -170,11 +170,9 @@ export default async function PanelOverviewPage() {
                           >
                             {dim.code}
                           </span>
+                          {/* Sin cifra: como en el informe, solo intensidad relativa. */}
                           <span className="flex-1 text-sm font-medium text-slate-600">
                             {dim.name}
-                          </span>
-                          <span className="text-sm font-bold text-slate-700">
-                            {share}%
                           </span>
                         </div>
                         <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">

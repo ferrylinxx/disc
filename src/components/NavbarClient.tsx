@@ -27,6 +27,12 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
   const SECTIONS = SECTION_DEFS.map((s) => ({ ...s, label: t.nav[s.key] }));
   const pathname = usePathname();
   const isHome = pathname === "/inicio";
+  // En las pantallas de acceso sobran "Accedir" y "Començar": ya estás en ellas.
+  const isAuthPage = ["/login", "/recuperar", "/restablecer"].some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  // La consola admin tiene su propia barra superior (buscador, idioma y salir).
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("");
@@ -62,6 +68,8 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
 
   // Fondo sólido si se ha hecho scroll o si el menú móvil está abierto.
   const solid = scrolled || open;
+
+  if (isAdmin) return null;
 
   return (
     <header className="sticky top-0 z-40">
@@ -149,22 +157,14 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
                     </button>
                   </form>
                 </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="rounded-full px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
-                  >
-                    {t.nav.access}
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="bg-brand group inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold text-white shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5 hover:shadow-sky-500/40"
-                  >
-                    {t.nav.start}
-                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                  </Link>
-                </>
+              ) : isAuthPage ? null : (
+                <Link
+                  href="/login"
+                  className="bg-brand group inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold text-white shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5 hover:shadow-sky-500/40"
+                >
+                  {t.nav.access}
+                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </Link>
               )}
             </div>
 
@@ -249,23 +249,14 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
                         </button>
                       </form>
                     </>
-                  ) : (
-                    <>
-                      <Link
-                        href="/login"
-                        onClick={close}
-                        className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700"
-                      >
-                        {t.nav.access}
-                      </Link>
-                      <Link
-                        href="/login"
-                        onClick={close}
-                        className="bg-brand inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-sky-500/25"
-                      >
-                        {t.nav.start} →
-                      </Link>
-                    </>
+                  ) : isAuthPage ? null : (
+                    <Link
+                      href="/login"
+                      onClick={close}
+                      className="bg-brand inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-sky-500/25"
+                    >
+                      {t.nav.access} →
+                    </Link>
                   )}
                 </div>
               </nav>

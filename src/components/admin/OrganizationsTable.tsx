@@ -80,11 +80,14 @@ export function OrganizationsTable({ organizations }: { organizations: OrgRow[] 
     return filtered;
   }, [organizations, term, sort]);
 
+  // Columna Proyectos solo si alguna organización los usa (si no, era una fila de ceros).
+  const showProjects = organizations.some((o) => o.projects > 0);
+
   const sortable = (key: SortKey, label: string) => (
     <button
       type="button"
       onClick={() => setSort((s) => ({ key, dir: s.key === key && s.dir === "asc" ? "desc" : "asc" }))}
-      className="inline-flex items-center gap-1 transition hover:text-slate-700"
+      className={tableCls.sort}
     >
       {label}
       <span className="text-slate-300">
@@ -99,8 +102,8 @@ export function OrganizationsTable({ organizations }: { organizations: OrgRow[] 
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar organización o slug…"
-          className="w-64 max-w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+          placeholder="Buscar organización…"
+          className="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 sm:w-72"
         />
         <button
           type="button"
@@ -120,7 +123,7 @@ export function OrganizationsTable({ organizations }: { organizations: OrgRow[] 
             <thead className={tableCls.thead}>
               <tr>
                 <th className={tableCls.th}>{sortable("name", "Organización")}</th>
-                <th className={tableCls.th}>{sortable("projects", "Proyectos")}</th>
+                {showProjects && <th className={tableCls.th}>{sortable("projects", "Proyectos")}</th>}
                 <th className={tableCls.th}>Gestores</th>
                 <th className={tableCls.th}>{sortable("participants", "Participantes")}</th>
                 <th className={`${tableCls.th} w-44`}>{sortable("completion", "Completados")}</th>
@@ -144,7 +147,7 @@ export function OrganizationsTable({ organizations }: { organizations: OrgRow[] 
                         </span>
                       </Link>
                     </td>
-                    <td className={`${tableCls.td} text-slate-600`}>{org.projects}</td>
+                    {showProjects && <td className={`${tableCls.td} text-slate-600`}>{org.projects}</td>}
                     <td className={`${tableCls.td} text-slate-600`}>{org.members}</td>
                     <td className={`${tableCls.td} text-slate-600`}>{org.participants}</td>
                     <td className={tableCls.td}>
@@ -152,7 +155,7 @@ export function OrganizationsTable({ organizations }: { organizations: OrgRow[] 
                         <div className="flex-1">
                           <Progress value={pct} />
                         </div>
-                        <span className="w-12 shrink-0 text-right text-xs font-semibold text-slate-500">
+                        <span className="w-14 shrink-0 whitespace-nowrap text-right text-xs font-semibold text-slate-500">
                           {org.completed} · {pct}%
                         </span>
                       </div>
@@ -163,7 +166,7 @@ export function OrganizationsTable({ organizations }: { organizations: OrgRow[] 
                     <td className={`${tableCls.td} text-right`}>
                       <Link
                         href={`/admin/organizaciones/${org.id}`}
-                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-600"
+                        className="whitespace-nowrap rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-600"
                       >
                         Gestionar →
                       </Link>

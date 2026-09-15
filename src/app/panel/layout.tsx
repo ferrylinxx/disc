@@ -2,13 +2,11 @@ import type { ReactNode } from "react";
 import { requireAuth } from "@/lib/auth/dal";
 import { getLang } from "@/lib/i18n/server";
 import { getDict } from "@/lib/i18n/dictionaries";
-import { logout } from "@/app/actions/auth";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PanelTabs } from "@/components/PanelTabs";
 import { GlossaryButton } from "@/components/GlossaryDrawer";
 import { panelParticipant } from "@/lib/data/panel";
 
-export const metadata = { title: "Tu espacio · DISC GESEM" };
+export const metadata = { title: "Tu espacio" };
 
 /** Marco del panel del participante: cabecera + pestañas por sección. */
 export default async function PanelLayout({
@@ -20,7 +18,8 @@ export default async function PanelLayout({
   const lang = await getLang();
   const t = getDict(lang).panel;
   const participant = await panelParticipant(session.userId);
-  const name = participant?.fullName ?? session.name ?? session.email;
+  // Mismo nombre que la cabecera de la web (la cuenta), no el de la ficha.
+  const name = session.name ?? participant?.fullName ?? session.email;
 
   const tabs = [
     { href: "/panel", label: t.tabOverview },
@@ -40,18 +39,8 @@ export default async function PanelLayout({
             {t.title}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
-          <GlossaryButton lang={lang} />
-          <LanguageSwitcher lang={lang} />
-          <form action={logout}>
-            <button
-              type="submit"
-              className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-            >
-              {t.logout}
-            </button>
-          </form>
-        </div>
+        {/* Idioma y salir ya están en la cabecera de la web: aquí no se repiten. */}
+        <GlossaryButton lang={lang} />
       </div>
 
       <PanelTabs tabs={tabs} />

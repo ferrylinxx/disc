@@ -1,14 +1,18 @@
 import { requireRole } from "@/lib/auth/dal";
 import { adminOrganizations } from "@/lib/data/dashboard";
-import { CreateOrgForm } from "@/components/dashboard/Forms";
 import { Card, PageHeader } from "@/components/admin/ui";
 import { OrganizationsTable } from "@/components/admin/OrganizationsTable";
+import { NewOrgButton } from "@/components/admin/NewOrgButton";
 
-export const metadata = { title: "Organizaciones · Consola GESEM" };
+export const metadata = { title: "Organizaciones · Consola" };
 
-export default async function AdminOrganizationsPage() {
+export default async function AdminOrganizationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ nueva?: string }>;
+}) {
   await requireRole("SUPERADMIN");
-  const organizations = await adminOrganizations();
+  const [organizations, { nueva }] = await Promise.all([adminOrganizations(), searchParams]);
   const rows = organizations.map((o) => ({
     id: o.id,
     name: o.name,
@@ -24,15 +28,10 @@ export default async function AdminOrganizationsPage() {
     <>
       <PageHeader
         title="Organizaciones"
-        description="Clientes de la plataforma. Entra en una organización para gestionar sus proyectos, equipos y participantes."
-      />
-
-      <Card
-        title="Nueva organización"
-        description="Crea un cliente para empezar a estructurar proyectos y equipos."
+        description="Clientes de la plataforma. Entra en una organización para gestionar sus participantes, equipos e informes."
       >
-        <CreateOrgForm />
-      </Card>
+        <NewOrgButton defaultOpen={nueva === "1"} />
+      </PageHeader>
 
       <Card title={`Organizaciones (${rows.length})`}>
         <OrganizationsTable organizations={rows} />

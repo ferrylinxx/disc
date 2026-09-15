@@ -14,7 +14,7 @@ import {
 } from "@/components/admin/ui";
 import { Avatar, ProgressRing } from "@/components/dashboard/AdminWidgets";
 
-export const metadata = { title: "Resumen · Consola GESEM" };
+export const metadata = { title: "Resumen · Consola" };
 
 const dateFmt = new Intl.DateTimeFormat("es-ES", {
   dateStyle: "medium",
@@ -80,8 +80,9 @@ export default async function AdminOverviewPage() {
   const def = getActiveInstrument();
   const distByCode = new Map(profileDistribution.map((d) => [d.code, d.count]));
   const totalDist = profileDistribution.reduce((s, d) => s + d.count, 0);
-  const maxDist = Math.max(1, ...profileDistribution.map((d) => d.count));
 
+  // Solo lo que de verdad está pendiente: una fila a cero no pide nada. Las
+  // respuestas muy rápidas ya tienen su propia tarjeta arriba.
   const attentionRows = [
     {
       count: attention.staleInvites,
@@ -98,10 +99,10 @@ export default async function AdminOverviewPage() {
     {
       count: attention.unassigned,
       label: "Sin equipo asignado",
-      hint: "Completadas pendientes de asignar",
+      hint: "Completadas pendientes de asignar a un equipo",
       tone: "sky" as const,
     },
-  ];
+  ].filter((r) => r.count > 0);
   const pendingTotal = attentionRows.reduce((s, r) => s + r.count, 0);
   const allClear = pendingTotal === 0;
 
@@ -116,12 +117,12 @@ export default async function AdminOverviewPage() {
         <Link href="/admin/participantes" className={btn.secondary}>
           Participantes
         </Link>
-        <Link href="/admin/organizaciones" className={btn.primary}>
+        <Link href="/admin/organizaciones?nueva=1" className={btn.primary}>
           + Nueva organización
         </Link>
       </PageHeader>
 
-      {/* KPIs */}
+      {/* KPIs: cada tarjeta, un dato distinto (antes "Informes" repetía "Completados") */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Organizaciones"
@@ -138,19 +139,25 @@ export default async function AdminOverviewPage() {
           icon={<IconUserCheck />}
         />
         <StatCard
-          label="Informes"
-          value={resultCount}
-          accent="#f59e0b"
-          hint={`EQ medio ${eqAverage || "—"}`}
-          icon={<IconReport />}
-        />
-        <StatCard
           label="Cumplimentación"
           value={`${completionRate}%`}
           accent="#6f7bf7"
           hint={`${participantStatus.completed} de ${participantCount}`}
           icon={<IconGauge />}
         />
+        <Link href="/admin/participantes?filtro=rapidas" className="block">
+          <StatCard
+            label="Respuestas muy rápidas"
+            value={attention.fastResponses}
+            accent="#f59e0b"
+            hint={
+              attention.fastResponses > 0
+                ? "Revisar antes de enviar el informe"
+                : `Sin avisos · EQ medio ${eqAverage || "—"}`
+            }
+            icon={<IconReport />}
+          />
+        </Link>
       </div>
 
       {/* Analítica: embudo (ancho) + distribución DISC */}
@@ -186,20 +193,19 @@ export default async function AdminOverviewPage() {
                 })}
               </div>
             </div>
-            <div className="mt-6 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:grid-cols-5">
+            {/* Estado de las invitaciones, en una línea: las cinco tarjetas de antes
+                repetían los mismos números que las barras de arriba. */}
+            <p className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500">
+              <span className="font-semibold text-slate-600">Invitaciones:</span>{" "}
               {[
-                { k: "Pendientes", v: invitationStatus.pending },
-                { k: "Enviadas", v: invitationStatus.sent },
-                { k: "Abiertas", v: invitationStatus.opened },
-                { k: "Completadas", v: invitationStatus.completed },
-                { k: "Expiradas", v: invitationStatus.expired },
-              ].map((i) => (
-                <div key={i.k} className="rounded-xl bg-slate-50 px-3 py-2">
-                  <div className="text-lg font-bold tabular-nums text-slate-800">{i.v}</div>
-                  <div className="text-[11px] font-medium text-slate-400">{i.k}</div>
-                </div>
-              ))}
-            </div>
+                { k: "pendientes", v: invitationStatus.pending },
+                { k: "enviadas", v: invitationStatus.sent },
+                { k: "abiertas", v: invitationStatus.opened },
+                { k: "expiradas", v: invitationStatus.expired },
+              ]
+                .map((i) => `${i.v} ${i.k}`)
+                .join(" · ")}
+            </p>
           </Card>
         </div>
 
@@ -215,7 +221,7 @@ export default async function AdminOverviewPage() {
                 .sort((a, b) => a.order - b.order)
                 .map((dim) => {
                   const count = distByCode.get(dim.code) ?? 0;
-                  const width = Math.round((count / maxDist) * 100);
+                  // La barra mide el % real (antes, respecto al máximo: un 48 % llenaba la barra).
                   const share = totalDist > 0 ? Math.round((count / totalDist) * 100) : 0;
                   return (
                     <div key={dim.code}>
@@ -233,7 +239,7 @@ export default async function AdminOverviewPage() {
                           <span className="font-bold text-slate-700">{count}</span> · {share}%
                         </span>
                       </div>
-                      <Progress value={width} color={dim.color} />
+                      <Progress value={share} color={dim.color} />
                     </div>
                   );
                 })}
@@ -312,12 +318,8 @@ export default async function AdminOverviewPage() {
           ) : (
             <div className="space-y-2">
               {attentionRows.map((t) => {
-                const muted = t.count === 0;
-                const numCls = muted
-                  ? "bg-slate-50 text-slate-300"
-                  : t.tone === "amber"
-                    ? "bg-amber-50 text-amber-600"
-                    : "bg-sky-50 text-sky-600";
+                const numCls =
+                  t.tone === "amber" ? "bg-amber-50 text-amber-600" : "bg-sky-50 text-sky-600";
                 return (
                   <Link
                     key={t.label}
@@ -330,10 +332,10 @@ export default async function AdminOverviewPage() {
                       {t.count}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-slate-700">
+                      <span className="block text-sm font-semibold text-slate-700">
                         {t.label}
                       </span>
-                      <span className="block truncate text-xs text-slate-400">{t.hint}</span>
+                      <span className="block text-xs leading-snug text-slate-400">{t.hint}</span>
                     </span>
                     <span className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400">
                       <IconArrow />
@@ -387,17 +389,20 @@ export default async function AdminOverviewPage() {
                     </span>
                   </div>
                   <Progress value={pct} color="#00a1e0" />
-                  <div className="flex flex-wrap gap-1.5 text-[11px] font-medium text-slate-500">
-                    <span className="rounded-md bg-slate-50 px-2 py-0.5">
-                      {o.completed}/{total} completados
-                    </span>
-                    <span className="rounded-md bg-slate-50 px-2 py-0.5">
-                      {o._count.projects} proyectos
-                    </span>
-                    <span className="rounded-md bg-slate-50 px-2 py-0.5">
-                      {o._count.members} miembros
-                    </span>
-                  </div>
+                  <p className="text-[11px] font-medium text-slate-500">
+                    {[
+                      `${o.completed} de ${total} completados`,
+                      // Solo lo que existe: "0 proyectos · 0 miembros" era ruido.
+                      o._count.projects > 0
+                        ? `${o._count.projects} ${o._count.projects === 1 ? "proyecto" : "proyectos"}`
+                        : null,
+                      o._count.members > 0
+                        ? `${o._count.members} ${o._count.members === 1 ? "gestor" : "gestores"}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 </Link>
               );
             })}

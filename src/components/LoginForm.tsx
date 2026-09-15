@@ -3,26 +3,30 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { login, type LoginState } from "@/app/actions/auth";
+import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 
 const initial: LoginState = {};
 
 export default function LoginForm({
+  lang,
   defaultEmail = "",
   defaultPassword = "",
   next,
 }: {
+  lang: Lang;
   defaultEmail?: string;
   defaultPassword?: string;
   next?: string;
 }) {
   const [state, action, pending] = useActionState(login, initial);
+  const t = getDict(lang).auth;
 
   return (
     <form action={action} className="space-y-5">
       {next && <input type="hidden" name="next" value={next} />}
       <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium text-slate-700">
-          Email
+          {t.email}
         </label>
         <input
           id="email"
@@ -31,15 +35,16 @@ export default function LoginForm({
           autoComplete="email"
           required
           defaultValue={defaultEmail}
-          placeholder="tu@empresa.com"
+          placeholder={t.emailPh}
           className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
         />
       </div>
 
       <div className="space-y-1.5">
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
-          Contraseña
+          {t.password}
         </label>
+        {/* Sin texto de ejemplo: unos puntos parecían una contraseña ya escrita. */}
         <input
           id="password"
           name="password"
@@ -47,7 +52,6 @@ export default function LoginForm({
           autoComplete="current-password"
           required
           defaultValue={defaultPassword}
-          placeholder="••••••••"
           className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
         />
       </div>
@@ -63,7 +67,7 @@ export default function LoginForm({
         disabled={pending}
         className="bg-brand w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Entrando…" : "Entrar"}
+        {pending ? t.submitting : t.submit}
       </button>
 
       <p className="text-center text-sm">
@@ -71,7 +75,7 @@ export default function LoginForm({
           href="/recuperar"
           className="font-semibold text-sky-600 transition hover:text-sky-700"
         >
-          ¿Olvidaste tu contraseña?
+          {t.forgot}
         </Link>
       </p>
     </form>

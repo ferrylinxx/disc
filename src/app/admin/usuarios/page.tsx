@@ -3,7 +3,7 @@ import { adminUsers } from "@/lib/data/dashboard";
 import { UserManager } from "@/components/dashboard/UserManager";
 import { PageHeader } from "@/components/admin/ui";
 
-export const metadata = { title: "Usuarios · Consola GESEM" };
+export const metadata = { title: "Usuarios · Consola" };
 
 export default async function AdminUsersPage() {
   const session = await requireRole("SUPERADMIN");

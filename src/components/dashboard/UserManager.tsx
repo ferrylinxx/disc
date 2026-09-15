@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   addMembership,
@@ -14,6 +14,8 @@ import type { ActionState } from "@/app/actions/org";
 import type { AdminUser } from "@/lib/data/dashboard";
 import { ConfirmButton, toast } from "@/components/admin/ui-client";
 import { PresenceBadge, ONLINE_WINDOW_MS } from "@/components/admin/PresenceBadge";
+import { btn, tableCls } from "@/components/admin/ui";
+import { Avatar } from "@/components/dashboard/AdminWidgets";
 
 const initial: ActionState = {};
 
@@ -47,7 +49,7 @@ function exportUsersCsv(users: AdminUser[]) {
       u.name ?? "",
       u.email,
       globalRoleLabel[u.globalRole] ?? u.globalRole,
-      u.memberships.length,
+      u.orgs.map((o) => o.name).join(" / "),
       u.participantCount,
     ]
       .map(csvCell)
@@ -157,7 +159,7 @@ export function UserManager({
     });
     const dir = sortDir === "asc" ? 1 : -1;
     rows.sort((a, b) => {
-      if (sortKey === "orgs") return (a.memberships.length - b.memberships.length) * dir;
+      if (sortKey === "orgs") return (a.orgs.length - b.orgs.length) * dir;
       if (sortKey === "role")
         return (globalRoleLabel[a.globalRole] ?? "").localeCompare(
           globalRoleLabel[b.globalRole] ?? "",
@@ -234,190 +236,327 @@ export function UserManager({
   const selectedUsers = users.filter((u) => selected.has(u.id));
 
   return (
-    <div className="space-y-6">
-      <section className="glass animate-fade-up rounded-2xl border border-white/60 p-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Usuarios ({users.length})
-            </h2>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              {onlineCount} en línea
+    <section className="animate-fade-up rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm shadow-slate-200/40">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-slate-900">Usuarios ({users.length})</h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nombre, email, dominio u organización…"
-              className={`${inputCls} w-72 max-w-full`}
-            />
-            <button
-              type="button"
-              onClick={() => exportUsersCsv(filtered)}
-              disabled={filtered.length === 0}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
-            >
-              ↓ CSV
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCreate((v) => !v)}
-              className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95"
-            >
-              {showCreate ? "Cerrar" : "Nuevo usuario"}
-            </button>
-          </div>
+            {onlineCount} en línea
+          </span>
         </div>
-
-        {/* Filtros */}
-        <div className="mb-4 flex flex-col gap-2 border-y border-slate-100 py-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Rol</span>
-            <Chip active={gRole === "ALL"} onClick={() => setGRole("ALL")}>Todos</Chip>
-            <Chip active={gRole === "SUPERADMIN"} onClick={() => setGRole("SUPERADMIN")}>Superadmin</Chip>
-            <Chip active={gRole === "USER"} onClick={() => setGRole("USER")}>Usuario</Chip>
-            <span className="mx-2 h-4 w-px bg-slate-200" />
-            <Chip active={mRole === "ALL"} onClick={() => setMRole("ALL")}>Cualquier org</Chip>
-            <Chip active={mRole === "ADMIN"} onClick={() => setMRole("ADMIN")}>Admin cliente</Chip>
-            <Chip active={mRole === "FACILITATOR"} onClick={() => setMRole("FACILITATOR")}>Facilitador</Chip>
-            <Chip active={mRole === "NONE"} onClick={() => setMRole("NONE")}>Sin organización</Chip>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Conexión</span>
-            <Chip active={conn === "ALL"} onClick={() => setConn("ALL")}>Todas</Chip>
-            <Chip active={conn === "ONLINE"} onClick={() => setConn("ONLINE")}>En línea</Chip>
-            <Chip active={conn === "ACTIVE"} onClick={() => setConn("ACTIVE")}>Activo</Chip>
-            <Chip active={conn === "NONE"} onClick={() => setConn("NONE")}>Sin actividad</Chip>
-            <span className="mx-2 h-4 w-px bg-slate-200" />
-            <select
-              value={orgFilter}
-              onChange={(e) => setOrgFilter(e.target.value)}
-              className={`${inputCls} py-1`}
-            >
-              <option value="ALL">Todas las organizaciones</option>
-              {organizations.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-            <span className="mx-1 h-4 w-px bg-slate-200" />
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className={`${inputCls} py-1`}
-            >
-              <option value="name">Ordenar: Nombre</option>
-              <option value="lastSeen">Ordenar: Última conexión</option>
-              <option value="orgs">Ordenar: Nº organizaciones</option>
-              <option value="role">Ordenar: Rol</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-              title="Cambiar dirección"
-              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
-            >
-              {sortDir === "asc" ? "↑" : "↓"}
-            </button>
-            <span className="mx-1 h-4 w-px bg-slate-200" />
-            <Chip active={grouped} onClick={() => setGrouped((v) => !v)}>
-              {grouped ? "▣ Agrupado por org" : "☰ Lista"}
-            </Chip>
-          </div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar nombre, email u organización…"
+            className={`${inputCls} min-w-0 flex-1 py-2 sm:w-72 sm:flex-none`}
+          />
+          <button
+            type="button"
+            onClick={() => exportUsersCsv(filtered)}
+            disabled={filtered.length === 0}
+            className={btn.secondary}
+          >
+            ↓ CSV
+          </button>
+          <button type="button" onClick={() => setShowCreate((v) => !v)} className={btn.primary}>
+            {showCreate ? "Cerrar" : "+ Nuevo usuario"}
+          </button>
         </div>
+      </div>
 
-        {showCreate && (
-          <div className="mb-4">
-            <CreateUserForm
-              organizations={organizations}
-              onCreated={() => setShowCreate(false)}
-            />
-          </div>
-        )}
+      {/* Filtros: rol global en chips; el resto, desplegables en la misma fila */}
+      <div className="mb-4 flex flex-wrap items-center gap-2 border-y border-slate-100 py-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Chip active={gRole === "ALL"} onClick={() => setGRole("ALL")}>Todos</Chip>
+          <Chip active={gRole === "SUPERADMIN"} onClick={() => setGRole("SUPERADMIN")}>Superadmin</Chip>
+          <Chip active={gRole === "USER"} onClick={() => setGRole("USER")}>Usuario</Chip>
+        </div>
+        <span className="mx-1 hidden h-5 w-px bg-slate-200 sm:block" />
+        <select
+          value={mRole}
+          onChange={(e) => setMRole(e.target.value as MRole)}
+          aria-label="Rol en organizaciones"
+          className={inputCls}
+        >
+          <option value="ALL">Cualquier rol en organización</option>
+          <option value="ADMIN">Admin cliente</option>
+          <option value="FACILITATOR">Facilitador</option>
+          <option value="NONE">Sin rol en organizaciones</option>
+        </select>
+        <select
+          value={orgFilter}
+          onChange={(e) => setOrgFilter(e.target.value)}
+          aria-label="Organización"
+          className={inputCls}
+        >
+          <option value="ALL">Todas las organizaciones</option>
+          {organizations.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+        <select
+          value={conn}
+          onChange={(e) => setConn(e.target.value as Conn)}
+          aria-label="Conexión"
+          className={inputCls}
+        >
+          <option value="ALL">Cualquier conexión</option>
+          <option value="ONLINE">En línea</option>
+          <option value="ACTIVE">Con actividad</option>
+          <option value="NONE">Sin actividad</option>
+        </select>
+        <div className="flex items-center gap-1 sm:ml-auto">
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            aria-label="Ordenar"
+            className={inputCls}
+          >
+            <option value="name">Ordenar: nombre</option>
+            <option value="lastSeen">Ordenar: última conexión</option>
+            <option value="orgs">Ordenar: nº organizaciones</option>
+            <option value="role">Ordenar: rol</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+            title="Cambiar dirección"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300"
+          >
+            {sortDir === "asc" ? "↑" : "↓"}
+          </button>
+          <Chip active={grouped} onClick={() => setGrouped((v) => !v)}>
+            {grouped ? "▣ Por organización" : "☰ Lista"}
+          </Chip>
+        </div>
+      </div>
 
-        {selected.size > 0 && (
-          <UserBulkBar users={selectedUsers} onDone={clearSelection} onClear={clearSelection} />
-        )}
+      {showCreate && (
+        <div className="mb-4">
+          <CreateUserForm
+            organizations={organizations}
+            onCreated={() => setShowCreate(false)}
+          />
+        </div>
+      )}
 
-        {filtered.length === 0 ? (
-          <p className="text-sm text-slate-500">No hay usuarios que coincidan.</p>
-        ) : grouped && groups ? (
-          <div className="space-y-4">
-            {groups.map((g) => (
-              <div key={g.name} className="rounded-xl border border-slate-100 bg-white/50 p-3">
-                <div className="mb-1 flex items-center gap-2 px-1 text-sm font-bold text-slate-700">
-                  {g.name}
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
-                    {g.users.length}
-                  </span>
-                </div>
-                <ul className="divide-y divide-slate-100">
-                  {g.users.map((user) => (
-                    <UserRow
-                      key={`${g.name}-${user.id}`}
-                      user={user}
-                      organizations={organizations}
-                      isSelf={user.id === currentUserId}
-                    />
-                  ))}
-                </ul>
+      {selected.size > 0 && (
+        <UserBulkBar users={selectedUsers} onDone={clearSelection} onClear={clearSelection} />
+      )}
+
+      {filtered.length === 0 ? (
+        <p className="py-8 text-center text-sm text-slate-500">No hay usuarios que coincidan.</p>
+      ) : grouped && groups ? (
+        <div className="space-y-5">
+          {groups.map((g) => (
+            <div key={g.name}>
+              <div className="mb-1 flex items-center gap-2 px-1 text-sm font-bold text-slate-700">
+                {g.name}
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                  {g.users.length}
+                </span>
               </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="mb-2 flex items-center gap-2 px-1 text-xs text-slate-400">
-              <input
-                type="checkbox"
-                checked={allOnPageSelected}
-                onChange={toggleAllOnPage}
-                className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
-                aria-label="Seleccionar página"
+              <UsersTable
+                users={g.users}
+                organizations={organizations}
+                currentUserId={currentUserId}
+                keyPrefix={g.name}
               />
-              Seleccionar esta página
             </div>
-            <ul className="divide-y divide-slate-100">
-              {paged.map((user) => (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  organizations={organizations}
-                  isSelf={user.id === currentUserId}
-                  selected={selected.has(user.id)}
-                  onToggle={() => toggle(user.id)}
+          ))}
+        </div>
+      ) : (
+        <>
+          <UsersTable
+            users={paged}
+            organizations={organizations}
+            currentUserId={currentUserId}
+            selected={selected}
+            onToggle={toggle}
+            allSelected={allOnPageSelected}
+            onToggleAll={toggleAllOnPage}
+          />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+            <span>
+              {filtered.length} usuarios · página {safePage + 1} de {totalPages}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={safePage === 0}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-600 transition hover:border-slate-300 disabled:opacity-40"
+              >
+                ← Anterior
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={safePage >= totalPages - 1}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-600 transition hover:border-slate-300 disabled:opacity-40"
+              >
+                Siguiente →
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Tabla de usuarios (misma presentación que Organizaciones y Participantes).
+ * "Gestionar" abre el editor en una fila a todo el ancho, debajo del usuario.
+ */
+function UsersTable({
+  users,
+  organizations,
+  currentUserId,
+  selected,
+  onToggle,
+  allSelected,
+  onToggleAll,
+  keyPrefix = "",
+}: {
+  users: AdminUser[];
+  organizations: OrgOption[];
+  currentUserId: string;
+  selected?: Set<string>;
+  onToggle?: (id: string) => void;
+  allSelected?: boolean;
+  onToggleAll?: () => void;
+  keyPrefix?: string;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const selectable = Boolean(onToggle);
+  const cols = selectable ? 7 : 6;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className={tableCls.table}>
+        <thead className={tableCls.thead}>
+          <tr>
+            {selectable && (
+              <th className={`${tableCls.th} w-8`}>
+                <input
+                  type="checkbox"
+                  checked={allSelected ?? false}
+                  onChange={onToggleAll}
+                  className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
+                  aria-label="Seleccionar página"
                 />
-              ))}
-            </ul>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-              <span>
-                {filtered.length} usuarios · página {safePage + 1} de {totalPages}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={safePage === 0}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-600 transition hover:border-slate-300 disabled:opacity-40"
-                >
-                  ← Anterior
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={safePage >= totalPages - 1}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-600 transition hover:border-slate-300 disabled:opacity-40"
-                >
-                  Siguiente →
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </section>
+              </th>
+            )}
+            <th className={tableCls.th}>Usuario</th>
+            <th className={tableCls.th}>Rol</th>
+            <th className={tableCls.th}>Organizaciones</th>
+            <th className={`${tableCls.th} text-center`}>Evaluaciones</th>
+            <th className={tableCls.th}>Conexión</th>
+            <th className={tableCls.th} />
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => {
+            const isSelf = user.id === currentUserId;
+            const open = openId === user.id;
+            const isChecked = selected?.has(user.id) ?? false;
+            return (
+              <Fragment key={`${keyPrefix}${user.id}`}>
+                <tr className={`${tableCls.tr} ${isChecked || open ? "bg-sky-50/40" : ""}`}>
+                  {selectable && (
+                    <td className={tableCls.td}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => onToggle?.(user.id)}
+                        className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
+                        aria-label={`Seleccionar ${user.name ?? user.email}`}
+                      />
+                    </td>
+                  )}
+                  <td className={tableCls.td}>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Avatar name={user.name || user.email} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 truncate font-semibold text-slate-900">
+                          {user.name || "—"}
+                          {isSelf && (
+                            <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-600">
+                              tú
+                            </span>
+                          )}
+                        </div>
+                        <div className="truncate text-xs text-slate-400">{user.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className={tableCls.td}>
+                    <span
+                      className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        user.globalRole === "SUPERADMIN"
+                          ? "bg-sky-50 text-sky-700"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {globalRoleLabel[user.globalRole] ?? user.globalRole}
+                    </span>
+                  </td>
+                  <td className={`${tableCls.td} max-w-[260px]`}>
+                    {user.orgs.length === 0 ? (
+                      <span className="text-xs text-slate-300">—</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {user.orgs.map((o) => {
+                          const m = user.memberships.find((x) => x.organizationId === o.id);
+                          return (
+                            <span
+                              key={o.id}
+                              className="rounded-md bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-100"
+                              title={m ? memberRoleLabel[m.role] : "Participante"}
+                            >
+                              {o.name}
+                              {m && <span className="text-sky-600"> · {memberRoleLabel[m.role]}</span>}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </td>
+                  <td className={`${tableCls.td} text-center text-slate-600`}>
+                    {user.participantCount}
+                  </td>
+                  <td className={`${tableCls.td} whitespace-nowrap`}>
+                    <PresenceBadge lastSeenAt={user.lastSeenAt} />
+                  </td>
+                  <td className={`${tableCls.td} text-right`}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(open ? null : user.id)}
+                      aria-expanded={open}
+                      className="whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-600"
+                    >
+                      {open ? "Cerrar" : "Gestionar"}
+                    </button>
+                  </td>
+                </tr>
+                {open && (
+                  <tr>
+                    <td colSpan={cols} className="px-3 pb-4">
+                      <UserEditor user={user} organizations={organizations} isSelf={isSelf} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -543,11 +682,9 @@ function CreateUserForm({
   }, [state.ok, onCreated]);
 
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white/60 p-6">
-      <h2 className="mb-1 text-lg font-semibold text-slate-900">
-        Nuevo usuario
-      </h2>
-      <p className="mb-4 text-sm text-slate-500">
+    <section className="rounded-2xl border border-sky-100 bg-sky-50/40 p-5">
+      <h3 className="mb-1 text-sm font-bold text-slate-900">Nuevo usuario</h3>
+      <p className="mb-4 text-xs text-slate-500">
         Crea una cuenta con acceso por credenciales y, si quieres, asígnala a una
         organización.
       </p>
@@ -614,89 +751,15 @@ function CreateUserForm({
           Idioma del correo
           <select name="lang" defaultValue="ca" className={`${inputCls} mt-1 block`}>
             <option value="ca">Catalán</option>
-            <option value="es">Español</option>
+            <option value="es">Castellano</option>
           </select>
         </label>
-        <button
-          type="submit"
-          disabled={pending}
-          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:opacity-60"
-        >
+        <button type="submit" disabled={pending} className={btn.primary}>
           {pending ? "Creando…" : "Crear usuario"}
         </button>
         <Feedback state={state} />
       </form>
     </section>
-  );
-}
-
-function UserRow({
-  user,
-  organizations,
-  isSelf,
-  selected,
-  onToggle,
-}: {
-  user: AdminUser;
-  organizations: OrgOption[];
-  isSelf: boolean;
-  selected?: boolean;
-  onToggle?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <li className={`py-3 ${selected ? "bg-sky-50/40" : ""}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-start gap-3">
-          {onToggle && (
-            <input
-              type="checkbox"
-              checked={selected ?? false}
-              onChange={onToggle}
-              className="mt-1 h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
-              aria-label={`Seleccionar ${user.name ?? user.email}`}
-            />
-          )}
-          <div>
-          <div className="flex items-center gap-2 font-semibold text-slate-900">
-            {user.name || "—"}
-            {isSelf && (
-              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-600">
-                tú
-              </span>
-            )}
-          </div>
-          <div className="text-xs text-slate-400">{user.email}</div>
-          <div className="mt-1">
-            <PresenceBadge lastSeenAt={user.lastSeenAt} />
-          </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-slate-500">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
-            {globalRoleLabel[user.globalRole] ?? user.globalRole}
-          </span>
-          <span>{user.memberships.length} organizaciones</span>
-          <span>{user.participantCount} evaluaciones</span>
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="rounded-lg border border-slate-200 bg-white/80 px-3 py-1 font-semibold text-slate-600 transition hover:border-slate-300"
-          >
-            {open ? "Cerrar" : "Gestionar"}
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <UserEditor
-          user={user}
-          organizations={organizations}
-          isSelf={isSelf}
-        />
-      )}
-    </li>
   );
 }
 
@@ -728,7 +791,7 @@ function UserEditor({
   useToastOnResult(rmState, "Asignación retirada.");
 
   return (
-    <div className="mt-3 space-y-4 rounded-xl border border-slate-100 bg-white/60 p-4">
+    <div className="space-y-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
       <form action={editAction} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="userId" value={user.id} />
         <label className="flex-1 min-w-[180px] text-xs font-medium text-slate-500">
@@ -752,11 +815,7 @@ function UserEditor({
             <option value="SUPERADMIN">Admin GESEM</option>
           </select>
         </label>
-        <button
-          type="submit"
-          disabled={editing}
-          className="bg-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:opacity-60"
-        >
+        <button type="submit" disabled={editing} className={btn.primary}>
           {editing ? "Guardando…" : "Guardar"}
         </button>
         <Feedback state={editState} />
@@ -764,10 +823,10 @@ function UserEditor({
 
       <div className="border-t border-slate-100 pt-3">
         <p className="mb-2 text-xs font-semibold text-slate-500">
-          Organizaciones
+          Rol en organizaciones
         </p>
         {user.memberships.length === 0 ? (
-          <p className="text-xs text-slate-400">Sin asignaciones.</p>
+          <p className="mb-2 text-xs text-slate-400">Sin asignaciones.</p>
         ) : (
           <ul className="mb-3 space-y-1.5">
             {user.memberships.map((m) => (
@@ -813,11 +872,7 @@ function UserEditor({
               <option value="ADMIN">Admin cliente</option>
               <option value="FACILITATOR">Facilitador</option>
             </select>
-            <button
-              type="submit"
-              disabled={savingMem}
-              className="rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 disabled:opacity-60"
-            >
+            <button type="submit" disabled={savingMem} className={btn.secondary}>
               {savingMem ? "Asignando…" : "Asignar"}
             </button>
             <Feedback state={memState} />
@@ -829,7 +884,7 @@ function UserEditor({
         {isSelf ? (
           <span
             title="No puedes eliminar tu propia cuenta"
-            className="cursor-not-allowed rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-300"
+            className="cursor-not-allowed rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-300"
           >
             Eliminar usuario
           </span>
@@ -841,7 +896,7 @@ function UserEditor({
             body="Se eliminará la cuenta y sus asignaciones. Esta acción no se puede deshacer."
             confirmLabel="Eliminar usuario"
             successMessage="Usuario eliminado."
-            triggerClass="rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+            triggerClass={btn.danger}
             triggerLabel="Eliminar usuario"
           />
         )}

@@ -39,6 +39,11 @@ interface Props {
     projectName?: string | null;
     date?: string | null;
   };
+  /**
+   * Muestra el código de perfil (DC, SI…) junto a la tendencia. Solo para quien
+   * gestiona el informe: al participante no le aporta nada y parece una etiqueta.
+   */
+  showInternalCode?: boolean;
 }
 
 /** Renderiza un texto multipárrafo (separado por líneas en blanco) como prosa. */
@@ -69,7 +74,16 @@ function Prose({ text, tone = "slate" }: { text: string; tone?: "slate" | "sky" 
  * No incluye retos, experimentos, tareas ni planes de acción individuales. El
  * protagonista es el RECURSO; el código de perfil es solo referencia interna.
  */
-export function Report({ result, def, narrative: narrativeProp, blocks, graphs, meta, lang = "es" }: Props) {
+export function Report({
+  result,
+  def,
+  narrative: narrativeProp,
+  blocks,
+  graphs,
+  meta,
+  lang = "es",
+  showInternalCode = false,
+}: Props) {
   const b = blocks ?? {};
   const t = getDict(lang).report;
   // Color base de cada dimensión = primera parada del degradado DISC oficial,
@@ -152,9 +166,11 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
           )}
           <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-1.5 text-sm font-bold text-white">
             <span>{narrative.resourceHeadline}</span>
-            <span className="text-[11px] font-medium text-white/60">
-              {narrative.internalCode}
-            </span>
+            {showInternalCode && (
+              <span className="text-[11px] font-medium text-white/60">
+                {narrative.internalCode}
+              </span>
+            )}
           </div>
           <p className="mx-auto mt-5 max-w-xl text-base font-medium leading-relaxed text-slate-600">
             {narrative.synthesis}
@@ -243,60 +259,56 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
         </div>
       </section>
 
-      {/* Tendencia predominante — protagonista: el recurso */}
-      <header
-        id="r-tendencia"
-        className="animate-scale-in relative scroll-mt-24 overflow-hidden rounded-3xl p-8 text-white shadow-xl"
-        style={{ backgroundImage: `linear-gradient(135deg, ${pColor}, ${sColor})` }}
-      >
-        <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
-        <p className="text-xs font-semibold uppercase tracking-widest text-white/80">
-          {t.tendencyPre}
-        </p>
-        <h2 className="mt-2 text-3xl font-black leading-tight">
-          {narrative.resourceHeadline}
-        </h2>
-        <p className="mt-1 text-base font-semibold text-white/90">{narrative.title}</p>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">
-          {narrative.intro}
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
-            <span className="opacity-80">{t.intensity}</span>
-            <span>{intLabel}</span>
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-white/70 backdrop-blur">
-            <span className="opacity-70">{t.internalCode}</span>
-            <span>{narrative.internalCode}</span>
-          </span>
-        </div>
-      </header>
-
-      {/* Qué es el perfil (contextualiza antes de interpretar, #4) */}
-      <p className="px-1 text-sm leading-relaxed text-slate-600">{t.profileIntro}</p>
-
-      {/* Tendencia predominante: prosa editorial V1 del perfil y, si ese perfil
-          todavía no la tiene cargada, composición desde la narrativa base. La
-          sección NUNCA se omite: sin este fallback desaparecía entera del
-          informe cuando el bloque no estaba publicado en la biblioteca. */}
-      <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          {t.tendencyPre}
-        </h3>
-        <div className="mt-3 space-y-3">
-          {b.tendencia ? (
-            <Prose text={b.tendencia} />
-          ) : (
-            <>
-              <Prose text={narrative.intro} />
-              <Prose text={narrative.communication} />
-            </>
-          )}
+      {/* Tendencia predominante: franja de color (el recurso como protagonista)
+          y, pegada a ella, la prosa del apartado. Antes eran dos bloques con el
+          mismo título y la misma frase repetida (portada, franja y tarjeta). */}
+      <section id="r-tendencia" className="scroll-mt-24">
+        <header
+          className="animate-scale-in relative overflow-hidden rounded-t-3xl p-8 text-white shadow-xl"
+          style={{ backgroundImage: `linear-gradient(135deg, ${pColor}, ${sColor})` }}
+        >
+          <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/80">
+            {t.tendencyPre}
+          </p>
+          <h2 className="mt-2 text-3xl font-black leading-tight">
+            {narrative.resourceHeadline}
+          </h2>
+          <p className="mt-1 text-base font-semibold text-white/90">{narrative.title}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+              <span className="opacity-80">{t.intensity}</span>
+              <span>{intLabel}</span>
+            </span>
+            {showInternalCode && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-white/70 backdrop-blur">
+                <span className="opacity-70">{t.internalCode}</span>
+                <span>{narrative.internalCode}</span>
+              </span>
+            )}
+          </div>
+        </header>
+        {/* Prosa editorial V1 del perfil y, si ese perfil todavía no la tiene
+            cargada, composición desde la narrativa base. El apartado NUNCA se
+            omite: sin este fallback desaparecía entero del informe. */}
+        <div className="rounded-b-3xl border border-t-0 border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur sm:p-8">
+          <div className="space-y-3">
+            {b.tendencia ? (
+              <Prose text={b.tendencia} />
+            ) : (
+              <>
+                <Prose text={narrative.intro} />
+                <Prose text={narrative.communication} />
+              </>
+            )}
+          </div>
+          {/* Qué es el perfil y cierre común del apartado (Entregable 10) */}
+          <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
+            <p className="text-xs leading-relaxed text-slate-500">{t.profileIntro}</p>
+            <p className="text-xs leading-relaxed text-slate-400">{t.tendencyClose}</p>
+          </div>
         </div>
       </section>
-
-      {/* Cierre común del bloque "Tendencia predominante" (Entregable 10) */}
-      <p className="px-1 text-xs leading-relaxed text-slate-400">{t.tendencyClose}</p>
 
       {/* Tu combinación personal — matices que varían por persona (#10) */}
       <section className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
@@ -626,7 +638,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
             </div>
             <div className="mt-5">
               <p className="mb-2 text-xs font-medium text-slate-400">{t.contextosHeatmap}</p>
-              <ContextHeatmap result={result} def={def} dimColor={dimColor} situacion={t.situacion} recurso={recurso} lang={lang} />
+              <ContextHeatmap result={result} def={def} dimColor={dimColor} recurso={recurso} lang={lang} t={t} />
             </div>
           </>
         )}
@@ -708,6 +720,14 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
           {t.methodNote}
         </p>
       </section>
+
+      {/* Acceso rápido al índice: el informe mide varias pantallas de alto. */}
+      <a
+        href="#r-indice"
+        className="no-print fixed bottom-5 right-5 z-30 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-xs font-semibold text-slate-600 shadow-lg shadow-slate-900/10 backdrop-blur transition hover:border-sky-300 hover:text-sky-700"
+      >
+        ↑ {t.indexJump}
+      </a>
     </div>
   );
 }
@@ -728,7 +748,7 @@ const INDEX_ANCHORS: { n: string; href: string }[] = [
 /** Índice de lectura del informe (orientación; oculto en la versión impresa). */
 function ReadingIndex({ title, items }: { title: string; items: string[] }) {
   return (
-    <nav className="no-print mt-4 border-t border-slate-100 pt-4">
+    <nav id="r-indice" className="no-print mt-4 scroll-mt-28 border-t border-slate-100 pt-4">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
         {title}
       </p>
@@ -785,26 +805,50 @@ function DiscGrid({
     markerCode ??
     shares.reduce((a, b) => (b.share > a.share ? b : a), shares[0])?.dimensionCode ??
     "D";
+  // Rejilla de 200×200 desplazada para dejar una fila de rótulos arriba y otra
+  // abajo: los nombres van FUERA de los cuadrantes, así el marcador nunca los tapa.
+  const GX = 10;
+  const GY = 22;
   // Marcador anclado al cuadrante del recurso dominante (orden D↖ I↗ / S↙ C↘).
   const { x, y } = quadrantPoint(shareMap, marker);
-  const cx = Math.max(24, Math.min(176, 100 + x * 76));
-  const cy = Math.max(24, Math.min(176, 100 - y * 76));
+  const cx = Math.max(GX + 14, Math.min(GX + 186, GX + 100 + x * 84));
+  const cy = Math.max(GY + 14, Math.min(GY + 186, GY + 100 - y * 84));
 
   const quad = (code: string, qx: number, qy: number) => (
     <g key={code}>
-      <rect x={qx} y={qy} width={90} height={90} rx={6} fill={`url(#${gid}-${code})`} opacity={0.16} />
-      <text x={qx + 12} y={qy + 34} fontSize="32" fontWeight="800" fill={`url(#${gid}-${code})`} opacity={0.6}>
+      <rect x={qx} y={qy} width={100} height={100} rx={8} fill={`url(#${gid}-${code})`} opacity={0.18} />
+      <text
+        x={qx + 50}
+        y={qy + 50}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="46"
+        fontWeight="800"
+        fill={`url(#${gid}-${code})`}
+        opacity={0.35}
+      >
         {code}
       </text>
-      <text x={qx + 12} y={qy + 50} fontSize="10.5" fontWeight="700" fill={discGradStops(code)[0]}>
-        {label(code)}
-      </text>
     </g>
+  );
+  // Rótulo exterior: letra + nombre del recurso, alineado a su lado de la rejilla.
+  const tag = (code: string, ty: number, anchor: "start" | "end") => (
+    <text
+      key={`tag-${code}`}
+      x={anchor === "start" ? GX + 2 : GX + 198}
+      y={ty}
+      textAnchor={anchor}
+      fontSize="10.5"
+      fontWeight="700"
+      fill={discGradStops(code)[0]}
+    >
+      {`${code} · ${label(code)}`}
+    </text>
   );
 
   return (
     <div className="flex justify-center">
-      <svg viewBox="0 0 200 200" className="h-auto w-full max-w-[210px]" role="img" aria-label="Cuadrícula DISC">
+      <svg viewBox="0 0 220 244" className="h-auto w-full max-w-[320px]" role="img" aria-label="Cuadrícula DISC">
         <defs>
           {CODES.map((code) => {
             const [a, b] = discGradStops(code);
@@ -816,16 +860,20 @@ function DiscGrid({
             );
           })}
         </defs>
-        <rect x="10" y="10" width="180" height="180" rx="14" fill="#ffffff" stroke="#e2e8f0" />
-        {quad("D", 10, 10)}
-        {quad("I", 100, 10)}
-        {quad("S", 10, 100)}
-        {quad("C", 100, 100)}
-        <line x1="100" y1="12" x2="100" y2="188" stroke="#e2e8f0" strokeWidth="1.5" />
-        <line x1="12" y1="100" x2="188" y2="100" stroke="#e2e8f0" strokeWidth="1.5" />
-        <circle cx={cx} cy={cy} r="11" fill="#ffffff" />
-        <circle cx={cx} cy={cy} r="9" fill={`url(#${gid}-${marker})`} />
-        <circle cx={cx} cy={cy} r="9" fill="none" stroke="#ffffff" strokeWidth="2.5" />
+        {tag("D", 14, "start")}
+        {tag("I", 14, "end")}
+        <rect x={GX} y={GY} width="200" height="200" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+        {quad("D", GX, GY)}
+        {quad("I", GX + 100, GY)}
+        {quad("S", GX, GY + 100)}
+        {quad("C", GX + 100, GY + 100)}
+        <line x1={GX + 100} y1={GY + 2} x2={GX + 100} y2={GY + 198} stroke="#e2e8f0" strokeWidth="1.5" />
+        <line x1={GX + 2} y1={GY + 100} x2={GX + 198} y2={GY + 100} stroke="#e2e8f0" strokeWidth="1.5" />
+        <circle cx={cx} cy={cy} r="12" fill="#ffffff" />
+        <circle cx={cx} cy={cy} r="10" fill={`url(#${gid}-${marker})`} />
+        <circle cx={cx} cy={cy} r="10" fill="none" stroke="#ffffff" strokeWidth="2.5" />
+        {tag("S", 238, "start")}
+        {tag("C", 238, "end")}
       </svg>
     </div>
   );
@@ -846,7 +894,7 @@ function DiscMap({
   const axisCls =
     "text-[10px] font-bold uppercase tracking-wide text-slate-400";
   return (
-    <div className="mx-auto max-w-[300px]">
+    <div className="mx-auto max-w-[320px]">
       <p className={`mb-1 text-center ${axisCls}`}>{t.axisTop}</p>
       <DiscGrid
         shares={shares}
@@ -900,21 +948,25 @@ function IntensityScale({
   );
 }
 
-/** Mapa de calor: intensidad de cada recurso (D/I/S/C) por situación. */
+/**
+ * Mapa de calor: intensidad de cada recurso (D/I/S/C) por situación. Sin
+ * números (el informe individual no lleva porcentajes), así que incluye una
+ * leyenda de "menos → más" para que se entienda el tono de cada celda.
+ */
 function ContextHeatmap({
   result,
   def,
   dimColor,
-  situacion,
   recurso,
   lang,
+  t,
 }: {
   result: ScoringResult;
   def: InstrumentDefinition;
   dimColor: (c: string) => string;
-  situacion: string;
   recurso: (c: string) => string;
   lang: "ca" | "es";
+  t: Dict["report"];
 }) {
   const dims = [...def.dimensions].sort((a, b) => a.order - b.order);
   const contexts = lang === "ca" ? REPORT_CONTEXTS_CA : REPORT_CONTEXTS;
@@ -925,15 +977,20 @@ function ContextHeatmap({
   if (rows.length === 0) return null;
   const pct = (scores: { dimensionCode: string; percent: number }[], code: string) =>
     scores.find((s) => s.dimensionCode === code)?.percent ?? 0;
+  const alpha = (v: number) => 0.14 + (Math.min(100, Math.max(0, v)) / 100) * 0.86;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs">
+    <div>
+      <table className="w-full table-fixed border-collapse text-xs">
         <thead>
           <tr>
-            <th className="p-1.5 text-left font-semibold text-slate-400">{situacion}</th>
+            <th className="w-[34%] p-1.5 text-left font-semibold text-slate-400 sm:w-[28%]">
+              {t.situacion}
+            </th>
             {dims.map((d) => (
               <th key={d.code} className="p-1.5 text-center font-semibold" style={{ color: dimColor(d.code) }}>
-                {recurso(d.code)}
+                {/* En móvil solo cabe la letra; el nombre completo, desde sm. */}
+                <span className="sm:hidden">{d.code}</span>
+                <span className="hidden sm:inline">{recurso(d.code)}</span>
               </th>
             ))}
           </tr>
@@ -941,26 +998,32 @@ function ContextHeatmap({
         <tbody>
           {rows.map((row) => (
             <tr key={row.label} className="border-t border-slate-100">
-              <td className="p-1.5 font-medium text-slate-600">{row.label}</td>
-              {dims.map((d) => {
-                const v = pct(row.scores, d.code);
-                return (
-                  <td key={d.code} className="p-1 text-center">
-                    <div
-                      className="mx-auto h-8 w-full max-w-[58px] rounded-lg"
-                      style={{
-                        backgroundImage: discGrad(d.code, 135),
-                        opacity: 0.14 + (Math.min(100, Math.max(0, v)) / 100) * 0.86,
-                      }}
-                      title={`${row.label} · ${recurso(d.code)}`}
-                    />
-                  </td>
-                );
-              })}
+              <td className="truncate p-1.5 font-medium text-slate-600" title={row.label}>
+                {row.label}
+              </td>
+              {dims.map((d) => (
+                <td key={d.code} className="p-1 text-center">
+                  <div
+                    className="mx-auto h-8 w-full max-w-[58px] rounded-lg"
+                    style={{ backgroundImage: discGrad(d.code, 135), opacity: alpha(pct(row.scores, d.code)) }}
+                    title={`${row.label} · ${recurso(d.code)}`}
+                  />
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="mt-3 flex flex-wrap items-center justify-end gap-2 text-[11px] text-slate-500">
+        <span>{t.heatLegend}:</span>
+        <span className="font-semibold">{t.heatLow}</span>
+        <span className="flex gap-0.5" aria-hidden>
+          {[10, 35, 60, 85, 100].map((v) => (
+            <span key={v} className="h-3 w-5 rounded bg-slate-500" style={{ opacity: alpha(v) }} />
+          ))}
+        </span>
+        <span className="font-semibold">{t.heatHigh}</span>
+      </div>
     </div>
   );
 }

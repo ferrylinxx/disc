@@ -18,7 +18,8 @@ interface Props {
 
 /**
  * Las tres lecturas (yo público / privado / percibido) como gráfico de barras,
- * con un botón para alternar cuál se muestra. Cada lectura usa su color.
+ * con un botón para alternar cuál se muestra. Sin cifras, como el resto del
+ * informe individual (Especificación del Informe Individual).
  */
 export function PositionBars({ readings, labels, dims, lead, interp }: Props) {
   const [sel, setSel] = useState<Key>("percibido");
@@ -64,13 +65,13 @@ export function PositionBars({ readings, labels, dims, lead, interp }: Props) {
               <span className="w-24 shrink-0 text-xs font-semibold text-slate-600">
                 {d.name}
               </span>
+              {/* Sin porcentajes: el informe individual muestra intensidad relativa. */}
               <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(0, v))}%`, backgroundImage: discGradStrong(d.code, 90) }}
                 />
               </div>
-              <span className="w-9 text-right text-xs font-bold text-slate-700">{v}%</span>
             </div>
           );
         })}

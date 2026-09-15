@@ -20,9 +20,9 @@ const initial: ActionState = {};
 const inputCls =
   "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 const rowBtn =
-  "rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-50";
+  "inline-flex items-center whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-50";
 
-type Filter = "ALL" | "INVITED" | "IN_PROGRESS" | "COMPLETED";
+export type ParticipantFilter = "ALL" | "INVITED" | "IN_PROGRESS" | "COMPLETED" | "FAST";
 type SortKey = "name" | "status" | "org";
 const PAGE_SIZE = 15;
 
@@ -31,6 +31,8 @@ const STATUS_LABEL: Record<string, string> = {
   IN_PROGRESS: "En curso",
   COMPLETED: "Completado",
 };
+
+const isFast = (p: AdminParticipant) => p.result?.speed?.status === "tooFast";
 
 function csvCell(v: string | number | null | undefined): string {
   const s = String(v ?? "");
@@ -57,7 +59,7 @@ function downloadCsv(rows: AdminParticipant[], showOrg: boolean) {
       STATUS_LABEL[p.status] ?? p.status,
       p.result?.profileCode ?? "",
       p.result?.eq ?? "",
-      p.result?.speed?.status === "tooFast" ? SPEED_WARNING_LABEL : "",
+      isFast(p) ? SPEED_WARNING_LABEL : "",
     ]
       .map(csvCell)
       .join(","),
@@ -116,7 +118,7 @@ function ResendButton({ id }: { id: string }) {
         type="submit"
         disabled={pending}
         title="Reenviar invitación por email"
-        className={`${rowBtn} bg-sky-50 text-sky-600 hover:bg-sky-100`}
+        className={`${rowBtn} bg-sky-50 text-sky-700 hover:bg-sky-100`}
       >
         {pending ? "Enviando…" : "✉ Reenviar"}
       </button>
@@ -134,11 +136,59 @@ function SendReportButton({ id }: { id: string }) {
         type="submit"
         disabled={pending}
         title="Enviar el informe por email al participante"
-        className={`${rowBtn} bg-brand text-white shadow-sm hover:opacity-90`}
+        className={`${rowBtn} bg-sky-50 text-sky-700 hover:bg-sky-100`}
       >
-        {pending ? "Enviando…" : "✉ Informe"}
+        {pending ? "Enviando…" : "✉ Enviar"}
       </button>
     </form>
+  );
+}
+
+/** Acciones de una fila: informe (ver/enviar) o invitación (enlace/reenviar) y borrar. */
+function RowActions({ p }: { p: AdminParticipant }) {
+  return (
+    <div className="flex flex-nowrap items-center justify-end gap-1.5">
+      {p.status === "COMPLETED" ? (
+        <>
+          <Link
+            href={`/cliente/participantes/${p.id}`}
+            className={`${rowBtn} border border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-sky-700`}
+          >
+            Ver informe
+          </Link>
+          <SendReportButton id={p.id} />
+        </>
+      ) : (
+        p.inviteToken && (
+          <>
+            <CopyLinkButton token={p.inviteToken} />
+            <ResendButton id={p.id} />
+          </>
+        )
+      )}
+      <ConfirmButton
+        action={deleteParticipant}
+        fields={{ id: p.id }}
+        title={`Eliminar a ${p.fullName}`}
+        body="Se borrarán sus invitaciones, respuestas y resultados. No se puede deshacer."
+        confirmLabel="Eliminar"
+        successMessage="Participante eliminado."
+        triggerClass={`${rowBtn} text-slate-300 hover:bg-rose-50 hover:text-rose-600`}
+        triggerLabel="✕"
+      />
+    </div>
+  );
+}
+
+/** Perfil + EQ + aviso de calidad, o guion si aún no hay resultado. */
+function ResultCell({ p }: { p: AdminParticipant }) {
+  if (!p.result) return <span className="text-xs text-slate-300">—</span>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <ProfileChip code={p.result.profileCode} />
+      <span className="whitespace-nowrap text-xs text-slate-500">EQ {p.result.eq}</span>
+      <SpeedBadge speed={p.result.speed} />
+    </span>
   );
 }
 
@@ -253,12 +303,14 @@ function BulkBar({
 export function ParticipantsTable({
   participants,
   showOrg = true,
+  initialFilter = "ALL",
 }: {
   participants: AdminParticipant[];
   showOrg?: boolean;
+  initialFilter?: ParticipantFilter;
 }) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("ALL");
+  const [filter, setFilter] = useState<ParticipantFilter>(initialFilter);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
     key: "name",
     dir: "asc",
@@ -267,10 +319,13 @@ export function ParticipantsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const term = query.trim().toLowerCase();
+  // La columna Equipo solo se muestra si alguien tiene equipo: vacía era ruido.
+  const showTeam = participants.some((p) => p.teamName);
 
   const filtered = useMemo(() => {
     const rows = participants.filter((p) => {
-      if (filter !== "ALL" && p.status !== filter) return false;
+      if (filter === "FAST" && !isFast(p)) return false;
+      if (filter !== "ALL" && filter !== "FAST" && p.status !== filter) return false;
       if (!term) return true;
       return (
         p.fullName.toLowerCase().includes(term) ||
@@ -317,11 +372,13 @@ export function ParticipantsTable({
     });
   const clearSelection = () => setSelected(new Set());
 
-  const tabs: { id: Filter; label: string; count: number }[] = [
+  const fastCount = participants.filter(isFast).length;
+  const tabs: { id: ParticipantFilter; label: string; count: number }[] = [
     { id: "ALL", label: "Todos", count: participants.length },
     { id: "COMPLETED", label: "Completados", count: participants.filter((p) => p.status === "COMPLETED").length },
     { id: "IN_PROGRESS", label: "En curso", count: participants.filter((p) => p.status === "IN_PROGRESS").length },
     { id: "INVITED", label: "Invitados", count: participants.filter((p) => p.status === "INVITED").length },
+    ...(fastCount > 0 ? [{ id: "FAST" as const, label: "Respuestas rápidas", count: fastCount }] : []),
   ];
 
   const sortable = (key: SortKey, label: string) => (
@@ -330,7 +387,7 @@ export function ParticipantsTable({
       onClick={() =>
         setSort((s) => ({ key, dir: s.key === key && s.dir === "asc" ? "desc" : "asc" }))
       }
-      className="inline-flex items-center gap-1 transition hover:text-slate-700"
+      className={tableCls.sort}
     >
       {label}
       <span className="text-slate-300">
@@ -349,28 +406,34 @@ export function ParticipantsTable({
               type="button"
               onClick={() => setFilter(t.id)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                filter === t.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                filter === t.id
+                  ? t.id === "FAST"
+                    ? "bg-amber-500 text-white"
+                    : "bg-slate-900 text-white"
+                  : t.id === "FAST"
+                    ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               {t.label}
-              <span className={`ml-1.5 ${filter === t.id ? "text-slate-300" : "text-slate-400"}`}>
+              <span className={`ml-1.5 ${filter === t.id ? "text-white/70" : "text-slate-400"}`}>
                 {t.count}
               </span>
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nombre, email, organización…"
-            className={`${inputCls} w-64 max-w-full`}
+            placeholder="Buscar persona u organización…"
+            className={`${inputCls} min-w-0 flex-1 sm:w-72 sm:flex-none`}
           />
           <button
             type="button"
             onClick={() => downloadCsv(filtered, showOrg)}
             disabled={filtered.length === 0}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
+            className="shrink-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
           >
             ↓ CSV
           </button>
@@ -392,7 +455,43 @@ export function ParticipantsTable({
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Móvil: tarjetas (la tabla obligaba a desplazarse de lado) */}
+          <ul className="space-y-2 md:hidden">
+            {paged.map((p) => (
+              <li
+                key={p.id}
+                className={`rounded-xl border border-slate-100 p-3 ${selected.has(p.id) ? "bg-sky-50/50" : "bg-white"}`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(p.id)}
+                    onChange={() => toggle(p.id)}
+                    className="mt-2.5 h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
+                    aria-label={`Seleccionar ${p.fullName}`}
+                  />
+                  <Avatar name={p.fullName} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold text-slate-900">{p.fullName}</div>
+                    <div className="truncate text-xs text-slate-400">
+                      {p.email}
+                      {showOrg ? ` · ${p.orgName}` : ""}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <StatusBadge status={p.status} />
+                      <ResultCell p={p} />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-50 pt-2">
+                  <PresenceBadge lastSeenAt={p.lastSeenAt} />
+                  <RowActions p={p} />
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className={tableCls.table}>
               <thead className={tableCls.thead}>
                 <tr>
@@ -407,7 +506,7 @@ export function ParticipantsTable({
                   </th>
                   <th className={tableCls.th}>{sortable("name", "Participante")}</th>
                   {showOrg && <th className={tableCls.th}>{sortable("org", "Organización")}</th>}
-                  <th className={tableCls.th}>Equipo</th>
+                  {showTeam && <th className={tableCls.th}>Equipo</th>}
                   <th className={tableCls.th}>{sortable("status", "Estado")}</th>
                   <th className={tableCls.th}>Conexión</th>
                   <th className={tableCls.th}>Resultado</th>
@@ -438,56 +537,19 @@ export function ParticipantsTable({
                         </div>
                       </div>
                     </td>
-                    {showOrg && <td className={`${tableCls.td} text-slate-500`}>{p.orgName}</td>}
-                    <td className={`${tableCls.td} text-slate-500`}>{p.teamName ?? "—"}</td>
+                    {showOrg && <td className={`${tableCls.td} text-slate-600`}>{p.orgName}</td>}
+                    {showTeam && <td className={`${tableCls.td} text-slate-500`}>{p.teamName ?? "—"}</td>}
                     <td className={tableCls.td}>
                       <StatusBadge status={p.status} />
                     </td>
-                    <td className={tableCls.td}>
+                    <td className={`${tableCls.td} whitespace-nowrap`}>
                       <PresenceBadge lastSeenAt={p.lastSeenAt} />
                     </td>
                     <td className={tableCls.td}>
-                      {p.result ? (
-                        <span className="inline-flex flex-wrap items-center gap-2">
-                          <ProfileChip code={p.result.profileCode} />
-                          <span className="text-xs text-slate-500">EQ {p.result.eq}</span>
-                          <SpeedBadge speed={p.result.speed} />
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-300">—</span>
-                      )}
+                      <ResultCell p={p} />
                     </td>
                     <td className={tableCls.td}>
-                      <div className="flex flex-wrap items-center justify-end gap-1.5">
-                        {p.status === "COMPLETED" ? (
-                          <>
-                            <Link
-                              href={`/cliente/participantes/${p.id}`}
-                              className={`${rowBtn} border border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:text-sky-600`}
-                            >
-                              Ver informe
-                            </Link>
-                            <SendReportButton id={p.id} />
-                          </>
-                        ) : (
-                          p.inviteToken && (
-                            <>
-                              <CopyLinkButton token={p.inviteToken} />
-                              <ResendButton id={p.id} />
-                            </>
-                          )
-                        )}
-                        <ConfirmButton
-                          action={deleteParticipant}
-                          fields={{ id: p.id }}
-                          title={`Eliminar a ${p.fullName}`}
-                          body="Se borrarán sus invitaciones, respuestas y resultados. No se puede deshacer."
-                          confirmLabel="Eliminar"
-                          successMessage="Participante eliminado."
-                          triggerClass={`${rowBtn} text-slate-300 hover:bg-rose-50 hover:text-rose-600`}
-                          triggerLabel="✕"
-                        />
-                      </div>
+                      <RowActions p={p} />
                     </td>
                   </tr>
                 ))}

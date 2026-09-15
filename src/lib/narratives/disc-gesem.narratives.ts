@@ -75,28 +75,35 @@ export interface EqBand {
   description: string;
 }
 
-/** Bandas interpretativas del índice EQ (equilibrio del perfil). */
+/**
+ * Bandas interpretativas del índice EQ. Describen cómo se REPARTEN los cuatro
+ * recursos, no el perfil: con "Perfil equilibrado" un DC de intensidad
+ * moderada parecía contradecir su propia tendencia (y se confundía con el
+ * perfil EQ, que es otra cosa).
+ */
 export const EQ_BANDS: EqBand[] = [
   {
     min: 70,
-    label: "Perfil equilibrado",
+    label: "Reparto amplio entre recursos",
     description:
-      "Tu perfil reparte la energía entre varias dimensiones. Sueles adaptarte " +
-      "con facilidad a distintos contextos y personas.",
+      "Según tus respuestas, además de tus recursos principales sueles recurrir " +
+      "también a los demás, lo que puede facilitar la adaptación a distintos " +
+      "contextos y personas.",
   },
   {
     min: 40,
-    label: "Perfil con acentos",
+    label: "Reparto con acentos",
     description:
-      "Tienes estilos claramente marcados, con buena capacidad de ajuste cuando " +
-      "la situación lo requiere.",
+      "Según tus respuestas, algunos recursos destacan claramente sobre otros; " +
+      "es probable que puedas ajustar tu forma de actuar cuando la situación lo pide.",
   },
   {
     min: 0,
-    label: "Perfil muy definido",
+    label: "Reparto concentrado",
     description:
-      "Tu estilo es nítido y predecible. Es una gran fortaleza en su terreno; " +
-      "el desarrollo pasa por flexibilizar en contextos menos naturales.",
+      "Según tus respuestas, tiendes a apoyarte sobre todo en pocos recursos. " +
+      "Puede aportar claridad y coherencia; ampliar el repertorio ayuda en " +
+      "contextos menos habituales.",
   },
 ];
 
@@ -104,24 +111,27 @@ export const EQ_BANDS: EqBand[] = [
 const EQ_BANDS_CA: EqBand[] = [
   {
     min: 70,
-    label: "Perfil equilibrat",
+    label: "Repartiment ampli entre recursos",
     description:
-      "El teu perfil reparteix l'energia entre diverses dimensions. Sols " +
-      "adaptar-te amb facilitat a diferents contextos i persones.",
+      "Segons les teves respostes, a més dels teus recursos principals sols " +
+      "recórrer també als altres, cosa que pot facilitar l'adaptació a diferents " +
+      "contextos i persones.",
   },
   {
     min: 40,
-    label: "Perfil amb accents",
+    label: "Repartiment amb accents",
     description:
-      "Tens estils clarament marcats, amb bona capacitat d'ajust quan la " +
-      "situació ho requereix.",
+      "Segons les teves respostes, alguns recursos destaquen clarament sobre " +
+      "altres; és probable que puguis ajustar la teva manera d'actuar quan la " +
+      "situació ho demana.",
   },
   {
     min: 0,
-    label: "Perfil molt definit",
+    label: "Repartiment concentrat",
     description:
-      "El teu estil és nítid i predictible. És una gran fortalesa en el seu " +
-      "terreny; el desenvolupament passa per flexibilitzar en contextos menys naturals.",
+      "Segons les teves respostes, tendeixes a recolzar-te sobretot en pocs " +
+      "recursos. Pot aportar claredat i coherència; ampliar el repertori ajuda " +
+      "en contextos menys habituals.",
   },
 ];
 

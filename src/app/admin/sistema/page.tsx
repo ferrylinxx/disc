@@ -5,7 +5,7 @@ import { isMailConfigured } from "@/lib/email/mailer";
 import { SmtpCheckButton } from "@/components/dashboard/SmtpCheckButton";
 import { Card, PageHeader } from "@/components/admin/ui";
 
-export const metadata = { title: "Sistema · Consola GESEM" };
+export const metadata = { title: "Sistema · Consola" };
 
 export default async function AdminSystemPage() {
   await requireRole("SUPERADMIN");

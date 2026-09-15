@@ -13,6 +13,22 @@ import {
 } from "@/lib/auth/password";
 import { absoluteUrl, isMailConfigured, sendMail } from "@/lib/email/mailer";
 import { passwordResetEmail } from "@/lib/email/templates";
+import { getLang } from "@/lib/i18n/server";
+import { getDict, type Dict } from "@/lib/i18n/dictionaries";
+
+/** Textos de error en el idioma del selector (el participante los ve). */
+async function authTexts(): Promise<Dict["auth"]> {
+  return getDict(await getLang()).auth;
+}
+
+/** Traduce el primer fallo de validación de contraseña a un mensaje legible. */
+function passwordIssue(issues: z.core.$ZodIssue[], t: Dict["auth"]): string {
+  const first = issues[0];
+  if (!first) return t.errCheckData;
+  if (first.path[0] === "password") return t.errPasswordMin;
+  if (first.path[0] === "confirm") return t.errPasswordsMismatch;
+  return t.errCheckData;
+}
 
 export interface SetPasswordState {
   error?: string;
@@ -21,15 +37,10 @@ export interface SetPasswordState {
 const Schema = z
   .object({
     token: z.string().min(1),
-    password: z
-      .string()
-      .min(8, { error: "La contraseña debe tener al menos 8 caracteres." }),
+    password: z.string().min(8),
     confirm: z.string().min(1),
   })
-  .refine((d) => d.password === d.confirm, {
-    error: "Las contraseñas no coinciden.",
-    path: ["confirm"],
-  });
+  .refine((d) => d.password === d.confirm, { path: ["confirm"] });
 
 /**
  * Establece (o cambia) la contraseña de una cuenta a partir de un token de un
@@ -39,21 +50,19 @@ export async function setPassword(
   _state: SetPasswordState,
   formData: FormData,
 ): Promise<SetPasswordState> {
+  const t = await authTexts();
   const parsed = Schema.safeParse({
     token: formData.get("token"),
     password: formData.get("password"),
     confirm: formData.get("confirm"),
   });
   if (!parsed.success) {
-    const first = parsed.error.issues[0]?.message ?? "Revisa los datos.";
-    return { error: first };
+    return { error: passwordIssue(parsed.error.issues, t) };
   }
 
   const userId = await consumePasswordSetToken(parsed.data.token);
   if (!userId) {
-    return {
-      error: "El enlace no es válido o ha caducado. Solicita uno nuevo.",
-    };
+    return { error: t.errLinkInvalid };
   }
 
   const passwordHash = await hashPassword(parsed.data.password);
@@ -69,15 +78,10 @@ export interface ChangePasswordState {
 
 const ChangeSchema = z
   .object({
-    password: z
-      .string()
-      .min(8, { error: "La contraseña debe tener al menos 8 caracteres." }),
+    password: z.string().min(8),
     confirm: z.string().min(1),
   })
-  .refine((d) => d.password === d.confirm, {
-    error: "Las contraseñas no coinciden.",
-    path: ["confirm"],
-  });
+  .refine((d) => d.password === d.confirm, { path: ["confirm"] });
 
 /** Cambia la contraseña del usuario autenticado (desde su panel). */
 export async function changeOwnPassword(
@@ -90,7 +94,7 @@ export async function changeOwnPassword(
     confirm: formData.get("confirm"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Revisa los datos." };
+    return { error: passwordIssue(parsed.error.issues, await authTexts()) };
   }
   const passwordHash = await hashPassword(parsed.data.password);
   await prisma.user.update({
@@ -106,7 +110,7 @@ export interface RequestResetState {
 }
 
 const RequestResetSchema = z.object({
-  email: z.email({ error: "Introduce un email válido." }).trim().toLowerCase(),
+  email: z.email().trim().toLowerCase(),
 });
 
 /**
@@ -119,7 +123,7 @@ export async function requestPasswordReset(
 ): Promise<RequestResetState> {
   const parsed = RequestResetSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Email no válido." };
+    return { error: (await authTexts()).errInvalidEmail };
   }
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
@@ -151,7 +155,7 @@ export interface UpdateNameState {
 }
 
 const NameSchema = z.object({
-  name: z.string().min(2, { error: "El nombre es demasiado corto." }).trim(),
+  name: z.string().trim().min(2),
 });
 
 /** Actualiza el nombre del usuario autenticado (y sus fichas de participante). */
@@ -162,7 +166,7 @@ export async function updateOwnName(
   const session = await requireAuth();
   const parsed = NameSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Revisa el nombre." };
+    return { error: (await authTexts()).errNameShort };
   }
   await prisma.user.update({
     where: { id: session.userId },
@@ -191,11 +195,11 @@ export async function deleteOwnAccount(
 ): Promise<DeleteAccountState> {
   const session = await requireAuth();
   if (session.globalRole === "SUPERADMIN") {
-    return { error: "Las cuentas de administrador no se pueden eliminar aquí." };
+    return { error: (await authTexts()).errAdminDelete };
   }
   const confirm = String(formData.get("confirm") ?? "").trim();
   if (confirm !== "ELIMINAR") {
-    return { error: "Escribe ELIMINAR para confirmar." };
+    return { error: (await authTexts()).errConfirmDelete };
   }
   // Borra fichas de participante (cascada: resultados, respuestas, invitaciones)
   // y luego la cuenta (cascada: membresías, cuentas OAuth, sesiones).

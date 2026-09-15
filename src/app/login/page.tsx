@@ -1,8 +1,8 @@
 import LoginForm from "@/components/LoginForm";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getLang } from "@/lib/i18n/server";
+import { getDict } from "@/lib/i18n/dictionaries";
 
-export const metadata = { title: "Acceso · DISC GESEM" };
+export const metadata = { title: "Acceso" };
 
 export default async function LoginPage({
   searchParams,
@@ -16,12 +16,11 @@ export default async function LoginPage({
 }) {
   const { reset, email, pw, next } = await searchParams;
   const lang = await getLang();
+  const t = getDict(lang).auth;
 
+  // El selector de idioma ya está en la cabecera de la web: aquí no se repite.
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-md flex-col justify-center px-6 py-12">
-      <div className="animate-fade-up mb-3 flex justify-end">
-        <LanguageSwitcher lang={lang} />
-      </div>
       <div className="animate-fade-up glass ring-brand rounded-3xl p-8">
         <div className="mb-7 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -31,26 +30,21 @@ export default async function LoginPage({
             className="mx-auto mb-5 h-12 w-auto"
           />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Bienvenido de nuevo
+            {t.loginTitle}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Accede a tu panel de DISC GESEM.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{t.loginSubtitle}</p>
         </div>
 
         {reset === "ok" && (
           <p className="mb-5 rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700">
-            Contraseña actualizada. Ya puedes iniciar sesión.
+            {t.resetOk}
           </p>
         )}
 
-        <LoginForm defaultEmail={email} defaultPassword={pw} next={next} />
+        <LoginForm lang={lang} defaultEmail={email} defaultPassword={pw} next={next} />
       </div>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
-        ¿Eres participante? Usa el correo y la contraseña que te enviamos en el
-        email de invitación.
-      </p>
+      <p className="mt-6 text-center text-sm text-slate-500">{t.participantHint}</p>
     </div>
   );
 }

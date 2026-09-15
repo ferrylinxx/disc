@@ -2,14 +2,16 @@
 
 import { useActionState } from "react";
 import { setPassword, type SetPasswordState } from "@/app/actions/account";
+import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 
 const initial: SetPasswordState = {};
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 /** Formulario para establecer/cambiar la contraseña con un token del email. */
-export default function SetPasswordForm({ token }: { token: string }) {
+export default function SetPasswordForm({ token, lang }: { token: string; lang: Lang }) {
   const [state, action, pending] = useActionState(setPassword, initial);
+  const t = getDict(lang).auth;
 
   return (
     <form action={action} className="space-y-5">
@@ -17,7 +19,7 @@ export default function SetPasswordForm({ token }: { token: string }) {
 
       <div className="space-y-1.5">
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
-          Nueva contraseña
+          {t.newPassword}
         </label>
         <input
           id="password"
@@ -26,14 +28,14 @@ export default function SetPasswordForm({ token }: { token: string }) {
           autoComplete="new-password"
           required
           minLength={8}
-          placeholder="Mínimo 8 caracteres"
+          placeholder={t.newPasswordPh}
           className={inputCls}
         />
       </div>
 
       <div className="space-y-1.5">
         <label htmlFor="confirm" className="text-sm font-medium text-slate-700">
-          Repite la contraseña
+          {t.repeatPassword}
         </label>
         <input
           id="confirm"
@@ -42,7 +44,6 @@ export default function SetPasswordForm({ token }: { token: string }) {
           autoComplete="new-password"
           required
           minLength={8}
-          placeholder="••••••••"
           className={inputCls}
         />
       </div>
@@ -58,7 +59,7 @@ export default function SetPasswordForm({ token }: { token: string }) {
         disabled={pending}
         className="bg-brand w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Guardando…" : "Guardar contraseña"}
+        {pending ? t.saving : t.savePassword}
       </button>
     </form>
   );

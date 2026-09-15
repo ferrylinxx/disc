@@ -10,7 +10,7 @@ import { getLang } from "@/lib/i18n/server";
 import { getDict } from "@/lib/i18n/dictionaries";
 
 export const metadata: Metadata = {
-  title: "Tu evaluación · DISC GESEM",
+  title: "Tu evaluación",
   description: "Cuestionario conductual DISC GESEM por invitación.",
 };
 

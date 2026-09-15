@@ -6,6 +6,7 @@ import {
   INTENSITY_MESSAGES,
   EQ_MESSAGE,
 } from "@/lib/narratives/disc-gesem.catalog";
+import { ProfileChip } from "@/components/admin/ui";
 
 /** Orden de presentación de los niveles de intensidad. */
 const INTENSITY_ORDER: Intensity[] = [
@@ -75,9 +76,7 @@ export function CatalogView({ dimensions }: { dimensions: Dimension[] }) {
               className="rounded-xl border border-slate-100 bg-white/60 p-4"
             >
               <div className="mb-1 flex items-center gap-2">
-                <span className="rounded-lg bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
-                  {code}
-                </span>
+                <ProfileChip code={code} />
                 <span className="text-sm font-semibold text-slate-800">
                   {entry.name}
                 </span>

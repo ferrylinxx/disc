@@ -35,9 +35,3 @@ export const loadGlossary = cache(async (lang: Lang): Promise<Glossary> => {
   }
   return fallback;
 });
-
-/** JSON (formateado) del glosario guardado o del valor por defecto, para el editor. */
-export async function loadGlossaryJson(lang: Lang): Promise<string> {
-  const g = await loadGlossary(lang);
-  return JSON.stringify(g, null, 2);
-}

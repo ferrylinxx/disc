@@ -5,20 +5,21 @@ import {
   requestPasswordReset,
   type RequestResetState,
 } from "@/app/actions/account";
+import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 
 const initial: RequestResetState = {};
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 /** Solicitud de enlace de restablecimiento de contraseña. */
-export default function RequestResetForm() {
+export default function RequestResetForm({ lang }: { lang: Lang }) {
   const [state, action, pending] = useActionState(requestPasswordReset, initial);
+  const t = getDict(lang).auth;
 
   if (state.ok) {
     return (
       <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-        Si el correo tiene una cuenta, te hemos enviado un enlace para
-        restablecer tu contraseña. Revisa tu bandeja de entrada.
+        {t.recoverSent}
       </p>
     );
   }
@@ -27,7 +28,7 @@ export default function RequestResetForm() {
     <form action={action} className="space-y-4">
       <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium text-slate-700">
-          Email
+          {t.email}
         </label>
         <input
           id="email"
@@ -35,7 +36,7 @@ export default function RequestResetForm() {
           type="email"
           autoComplete="email"
           required
-          placeholder="tu@empresa.com"
+          placeholder={t.emailPh}
           className={inputCls}
         />
       </div>
@@ -49,7 +50,7 @@ export default function RequestResetForm() {
         disabled={pending}
         className="bg-brand w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Enviando…" : "Enviar enlace"}
+        {pending ? t.recoverSending : t.recoverSubmit}
       </button>
     </form>
   );

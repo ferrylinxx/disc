@@ -15,6 +15,7 @@ import {
 } from "@/app/actions/org";
 import { addOrgGestor } from "@/app/actions/users";
 import { ConfirmButton, toast } from "./ui-client";
+import { btn } from "./ui";
 
 const initial: ActionState = {};
 const inputCls =
@@ -204,7 +205,7 @@ export function OrgEmailForm({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+            className={btn.primary}
           >
             {pending ? "Guardando…" : "Guardar correo"}
           </button>
@@ -212,7 +213,7 @@ export function OrgEmailForm({
             type="button"
             onClick={() => openPreview(lang)}
             disabled={previewing}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+            className={btn.secondary}
           >
             {previewing ? "Generando…" : "👁 Vista previa"}
           </button>
@@ -296,7 +297,7 @@ export function RenameOrgForm({ id, name }: { id: string; name: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+        className={btn.primary}
       >
         {pending ? "Guardando…" : "Renombrar"}
       </button>
@@ -389,7 +390,7 @@ export function AddGestorForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+          className={btn.primary}
         >
           {pending ? "Añadiendo…" : "Añadir gestor"}
         </button>
@@ -420,7 +421,7 @@ export function DeleteOrgButton({ id, name }: { id: string; name: string }) {
       title={`Eliminar la organización ${name}`}
       body="Se borrarán sus proyectos, equipos, participantes, invitaciones y resultados. Esta acción no se puede deshacer."
       confirmLabel="Eliminar organización"
-      triggerClass="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-100"
+      triggerClass={btn.danger}
       triggerLabel="Eliminar organización"
     />
   );
