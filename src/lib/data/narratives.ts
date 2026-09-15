@@ -85,6 +85,8 @@ export interface AdminBlockEntry {
   blockLabel: string;
   lengthHint: string;
   text: string;
+  /** Texto castellano del mismo bloque, como referencia al editar otro idioma. */
+  referenceText: string | null;
   status: string;
   version: number;
   author: string | null;
@@ -92,12 +94,25 @@ export interface AdminBlockEntry {
   inDb: boolean;
 }
 
-/** Perfiles con sus 9 bloques (117 entradas) para el editor de administración. */
-export async function adminBlockEntries(): Promise<
+/** Idiomas editables de la Biblioteca Narrativa. */
+export type BlockLocale = "es" | "ca";
+
+function blockText(content: unknown): string {
+  return typeof content === "object" && content !== null
+    ? String((content as { text?: unknown }).text ?? "")
+    : "";
+}
+
+/**
+ * Perfiles con sus 9 bloques (117 entradas) en un idioma, para el editor de
+ * administración. Fuera del castellano incluye el texto castellano como referencia.
+ */
+export async function adminBlockEntries(locale: BlockLocale = "es"): Promise<
   { profile: string; profileName: string; blocks: AdminBlockEntry[] }[]
 > {
   let rows: {
     key: string;
+    locale: string;
     content: unknown;
     status: string;
     version: number;
@@ -105,28 +120,32 @@ export async function adminBlockEntries(): Promise<
     updatedAt: Date;
   }[] = [];
   try {
-    rows = await prisma.narrativeEntry.findMany({ where: { scope: "BLOCK", locale: "es" } });
+    rows = await prisma.narrativeEntry.findMany({
+      where: { scope: "BLOCK", locale: { in: locale === "es" ? ["es"] : ["es", locale] } },
+    });
   } catch (e) {
     console.error("[blocks] tabla no disponible:", e);
   }
-  const byKey = new Map(rows.map((r) => [r.key, r]));
+  const byKey = new Map(rows.filter((r) => r.locale === locale).map((r) => [r.key, r]));
+  const referenceByKey =
+    locale === "es"
+      ? null
+      : new Map(rows.filter((r) => r.locale === "es").map((r) => [r.key, blockText(r.content)]));
 
   return PROFILE_CODES.map((profile) => ({
     profile,
     profileName: PROFILE_CATALOG[profile]?.name ?? profile,
     blocks: BLOCKS.map((b) => {
-      const r = byKey.get(`${profile}:${b.id}`);
-      const text =
-        r && typeof r.content === "object" && r.content !== null
-          ? String((r.content as { text?: unknown }).text ?? "")
-          : "";
+      const key = `${profile}:${b.id}`;
+      const r = byKey.get(key);
       return {
         profile,
         profileName: PROFILE_CATALOG[profile]?.name ?? profile,
         blockId: b.id,
         blockLabel: b.label,
         lengthHint: b.length,
-        text,
+        text: r ? blockText(r.content) : "",
+        referenceText: referenceByKey ? (referenceByKey.get(key) ?? "") : null,
         status: r?.status ?? "—",
         version: r?.version ?? 0,
         author: r?.author ?? null,

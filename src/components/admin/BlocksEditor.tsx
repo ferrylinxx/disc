@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { saveBlock } from "@/app/actions/narratives";
 import type { ActionState } from "@/app/actions/org";
-import type { AdminBlockEntry } from "@/lib/data/narratives";
+import type { AdminBlockEntry, BlockLocale } from "@/lib/data/narratives";
 
 function StatusBadge({ status, inDb }: { status: string; inDb: boolean }) {
   if (!inDb) {
@@ -25,7 +25,13 @@ function StatusBadge({ status, inDb }: { status: string; inDb: boolean }) {
   );
 }
 
-function BlockEditor({ entry }: { entry: AdminBlockEntry }) {
+/** Alto del área de texto según la longitud, para leer bloques largos sin desplazarse. */
+function textRows(text: string, blockId: string): number {
+  const min = blockId === "reflexion" || blockId === "recursos" ? 6 : 4;
+  return Math.min(16, Math.max(min, Math.ceil(text.length / 80)));
+}
+
+function BlockEditor({ entry, locale }: { entry: AdminBlockEntry; locale: BlockLocale }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(saveBlock, {});
   const [text, setText] = useState(entry.text);
   const [status, setStatus] = useState(entry.inDb ? entry.status : "DRAFT");
@@ -34,6 +40,7 @@ function BlockEditor({ entry }: { entry: AdminBlockEntry }) {
     <form action={action} className="rounded-xl border border-slate-200 bg-white p-3">
       <input type="hidden" name="profile" value={entry.profile} />
       <input type="hidden" name="blockId" value={entry.blockId} />
+      <input type="hidden" name="locale" value={locale} />
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-xs font-bold text-slate-800">
           {entry.blockLabel}
@@ -41,11 +48,21 @@ function BlockEditor({ entry }: { entry: AdminBlockEntry }) {
         </span>
         <StatusBadge status={entry.status} inDb={entry.inDb} />
       </div>
+      {entry.referenceText !== null && (
+        <details className="mb-2 rounded-lg bg-slate-50 px-3 py-2">
+          <summary className="cursor-pointer text-[11px] font-semibold text-slate-500">
+            Original en castellano
+          </summary>
+          <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-slate-600">
+            {entry.referenceText || "Sin texto en castellano."}
+          </p>
+        </details>
+      )}
       <textarea
         name="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        rows={entry.blockId === "reflexion" || entry.blockId === "recursos" ? 6 : 4}
+        rows={textRows(text, entry.blockId)}
         placeholder={entry.blockId === "reflexion" ? "Una pregunta por línea (5)" : "Texto del bloque…"}
         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
       />
@@ -74,11 +91,13 @@ function BlockEditor({ entry }: { entry: AdminBlockEntry }) {
   );
 }
 
-/** Editor de la Biblioteca Narrativa: 13 perfiles × 9 bloques (117). */
+/** Editor de la Biblioteca Narrativa: 13 perfiles × 9 bloques (117), en un idioma. */
 export function BlocksEditor({
   profiles,
+  locale,
 }: {
   profiles: { profile: string; profileName: string; blocks: AdminBlockEntry[] }[];
+  locale: BlockLocale;
 }) {
   return (
     <div className="space-y-2">
@@ -100,7 +119,7 @@ export function BlocksEditor({
             </summary>
             <div className="grid gap-3 border-t border-slate-100 p-4 lg:grid-cols-2">
               {p.blocks.map((b) => (
-                <BlockEditor key={b.blockId} entry={b} />
+                <BlockEditor key={`${locale}:${b.blockId}`} entry={b} locale={locale} />
               ))}
             </div>
           </details>

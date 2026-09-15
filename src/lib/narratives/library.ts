@@ -61,23 +61,21 @@ export async function buildProfileNarrativeDb(
 }
 
 /**
- * Carga el texto editorial fijo (Biblioteca V1) de un perfil: los apartados
- * publicados como bloques (scope "BLOCK", clave `<PERFIL>:<apartado>`). Devuelve
- * un mapa apartado→texto con lo que esté PUBLICADO (puede ser parcial o vacío).
- * El informe usa estos textos cuando existen y compone el resto por defecto.
+ * Carga el texto editorial fijo (Biblioteca V1) de un perfil en el idioma pedido:
+ * los apartados publicados como bloques (scope "BLOCK", clave `<PERFIL>:<apartado>`,
+ * locale "es" o "ca"). Devuelve un mapa apartado→texto con lo que esté PUBLICADO
+ * en ese idioma (puede ser parcial o vacío). El informe usa estos textos cuando
+ * existen y compone el resto desde la base del código.
  */
 export const loadProfileBlocks = cache(
   async (profileCode: string, lang: "ca" | "es" = "es"): Promise<Record<string, string>> => {
     const out: Record<string, string> = {};
-    // Los bloques editoriales de BD están en español. En catalán no hay bloques,
-    // así que el informe compone todo desde la base catalana del código.
-    if (lang === "ca") return out;
     try {
       const rows = await prisma.narrativeEntry.findMany({
         where: {
           scope: "BLOCK",
           status: "PUBLISHED",
-          locale: "es",
+          locale: lang,
           key: { startsWith: `${profileCode}:` },
         },
         select: { key: true, content: true },

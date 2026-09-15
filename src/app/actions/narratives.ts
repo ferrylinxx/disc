@@ -70,7 +70,7 @@ export async function saveNarrative(
 
 /**
  * Guarda (upsert) un bloque de la Biblioteca Narrativa (perfil × bloque).
- * scope "BLOCK", key `${perfil}:${bloque}`, contenido { text }. SUPERADMIN.
+ * scope "BLOCK", key `${perfil}:${bloque}`, locale es/ca, contenido { text }. SUPERADMIN.
  */
 export async function saveBlock(
   _state: ActionState,
@@ -81,6 +81,7 @@ export async function saveBlock(
   const blockId = String(formData.get("blockId") ?? "");
   const statusRaw = String(formData.get("status") ?? "DRAFT");
   const text = String(formData.get("text") ?? "");
+  const locale = formData.get("locale") === "ca" ? "ca" : "es";
   if (!profile || !blockId) return { error: "Faltan datos del bloque." };
 
   const status: NarrativeStatus = STATUSES.includes(statusRaw as NarrativeStatus)
@@ -90,11 +91,11 @@ export async function saveBlock(
   const key = `${profile}:${blockId}`;
 
   const existing = await prisma.narrativeEntry.findUnique({
-    where: { scope_key_locale: { scope: "BLOCK", key, locale: "es" } },
+    where: { scope_key_locale: { scope: "BLOCK", key, locale } },
     select: { version: true },
   });
   await prisma.narrativeEntry.upsert({
-    where: { scope_key_locale: { scope: "BLOCK", key, locale: "es" } },
+    where: { scope_key_locale: { scope: "BLOCK", key, locale } },
     update: {
       content: { text } as Prisma.InputJsonValue,
       status,
@@ -104,7 +105,7 @@ export async function saveBlock(
     create: {
       scope: "BLOCK",
       key,
-      locale: "es",
+      locale,
       content: { text } as Prisma.InputJsonValue,
       status,
       author,

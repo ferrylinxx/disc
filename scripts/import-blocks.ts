@@ -3,12 +3,15 @@
  * narrative_entries (scope "BLOCK"). Exporta la hoja del Excel a CSV con tres
  * columnas (cabeceras flexibles): perfil | bloque | texto.
  *
- * Uso:  npx tsx scripts/import-blocks.ts ruta/al/biblioteca.csv [--publish]
+ * Uso:  npx tsx scripts/import-blocks.ts ruta/al/biblioteca.csv [--publish] [--locale=ca] [--solo-nuevos]
  *
  *  - "perfil": DI, ID, … EQ.
  *  - "bloque": id (tendencia, recursos, …) o etiqueta ("Tendencia predominante").
  *  - "texto":  contenido del bloque. Para "reflexion", una pregunta por línea.
  *  - --publish: marca las entradas como PUBLISHED (por defecto se deja DRAFT).
+ *  - --locale=ca: idioma de las entradas (por defecto "es").
+ *  - --solo-nuevos: no toca los bloques que ya existan en ese idioma (p. ej. ya
+ *    revisados en el editor); solo crea los que faltan.
  */
 import "dotenv/config";
 import { readFileSync } from "fs";
@@ -16,12 +19,15 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PROFILE_CODES, resolveBlockId } from "../src/lib/narratives/blocks";
 
+// SSL solo contra Supabase/URLs con sslmode, como `src/lib/db.ts` (el Postgres local no usa SSL).
+const connectionString = process.env.DATABASE_URL;
+const needsSsl = !!connectionString && /sslmode=|\.supabase\.com/.test(connectionString);
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 1,
-  }),
+  adapter: new PrismaPg(
+    needsSsl
+      ? { connectionString, ssl: { rejectUnauthorized: false }, max: 1 }
+      : { connectionString, max: 1 },
+  ),
 });
 
 /** Parser CSV mínimo robusto (comillas, comas y saltos de línea escapados). */
@@ -59,6 +65,12 @@ function colIndex(header: string[], names: string[]): number {
 async function main() {
   const file = process.argv[2];
   const publish = process.argv.includes("--publish");
+  const soloNuevos = process.argv.includes("--solo-nuevos");
+  const locale = process.argv.find((a) => a.startsWith("--locale="))?.split("=")[1] ?? "es";
+  if (locale !== "es" && locale !== "ca") {
+    console.error(`Idioma no válido: ${locale}. Usa --locale=es o --locale=ca.`);
+    process.exit(1);
+  }
   if (!file) {
     console.error("Falta la ruta al CSV. Uso: npx tsx scripts/import-blocks.ts archivo.csv [--publish]");
     process.exit(1);
@@ -76,6 +88,7 @@ async function main() {
   }
 
   let ok = 0;
+  let existentes = 0;
   const skipped: string[] = [];
   for (const r of rows.slice(1)) {
     const profile = (r[pi] ?? "").trim().toUpperCase();
@@ -85,26 +98,32 @@ async function main() {
       skipped.push(`${profile}/${r[bi]}`);
       continue;
     }
+    const where = { scope_key_locale: { scope: "BLOCK", key: `${profile}:${blockId}`, locale } };
+    if (soloNuevos && (await prisma.narrativeEntry.findUnique({ where, select: { id: true } }))) {
+      existentes++;
+      continue;
+    }
     await prisma.narrativeEntry.upsert({
-      where: { scope_key_locale: { scope: "BLOCK", key: `${profile}:${blockId}`, locale: "es" } },
+      where,
       update: {
         content: { text } as Prisma.InputJsonValue,
         status: publish ? "PUBLISHED" : "DRAFT",
-        author: "import",
+        author: `import-${locale}`,
       },
       create: {
         scope: "BLOCK",
         key: `${profile}:${blockId}`,
-        locale: "es",
+        locale,
         content: { text } as Prisma.InputJsonValue,
         status: publish ? "PUBLISHED" : "DRAFT",
         version: 1,
-        author: "import",
+        author: `import-${locale}`,
       },
     });
     ok++;
   }
-  console.log(`Importadas ${ok} entradas (${publish ? "PUBLISHED" : "DRAFT"}).`);
+  console.log(`Importadas ${ok} entradas [${locale}] (${publish ? "PUBLISHED" : "DRAFT"}).`);
+  if (existentes) console.log(`Sin tocar ${existentes} que ya existían (--solo-nuevos).`);
   if (skipped.length) console.log(`Omitidas ${skipped.length}: ${skipped.slice(0, 8).join(", ")}${skipped.length > 8 ? "…" : ""}`);
 }
 
