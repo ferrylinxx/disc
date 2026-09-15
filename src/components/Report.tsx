@@ -90,7 +90,7 @@ export function Report({ result, def, narrative: narrativeProp, blocks, graphs, 
   const eqBand = resolveEqBand(result.eq, lang);
   const narrative = narrativeProp ?? buildProfileNarrative(result, lang);
   const contexts = contextLeaders(result, lang);
-  const insights = generateInsights(result);
+  const insights = generateInsights(result, lang);
   const pColor = dimColor(result.primaryDimension);
   const sColor = result.isEq ? pColor : dimColor(result.secondaryDimension);
 

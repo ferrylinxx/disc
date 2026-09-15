@@ -8,6 +8,7 @@ import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/lib
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Report } from "@/components/Report";
 import { ReportActions } from "@/components/dashboard/ReportActions";
+import { getLang } from "@/lib/i18n/server";
 
 export const metadata = { title: "Informe del participante · DISC GESEM" };
 
@@ -31,11 +32,14 @@ export default async function ParticipantReportPage({
   if (!data) notFound();
 
   const { participant, result } = data;
-  const def = getActiveInstrument();
-  const narrative = result ? await buildProfileNarrativeDb(result) : undefined;
-  const blocks = result ? await loadProfileBlocks(result.profileCode) : undefined;
+  // El informe sigue el idioma del selector (cookie `lang`), igual que la vista
+  // del participante: instrumento, narrativa, bloques de la biblioteca y fecha.
+  const lang = await getLang();
+  const def = getActiveInstrument(lang);
+  const narrative = result ? await buildProfileNarrativeDb(result, lang) : undefined;
+  const blocks = result ? await loadProfileBlocks(result.profileCode, lang) : undefined;
   const graphs = result ? ((await participantDiscGraphs(id)) ?? undefined) : undefined;
-  const reportDate = new Date().toLocaleDateString("es-ES", {
+  const reportDate = new Date().toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -73,6 +77,7 @@ export default async function ParticipantReportPage({
               narrative={narrative}
               blocks={blocks}
               graphs={graphs}
+              lang={lang}
               meta={{
                 participantName: participant.fullName,
                 clientName: participant.organizationName,

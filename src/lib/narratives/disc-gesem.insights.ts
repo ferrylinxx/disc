@@ -8,6 +8,7 @@
  * motor. En producción viven en BD con condición/prioridad/versión.
  */
 import type { ScoringResult } from "@/lib/engine/types";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
 /** Insight individual por recurso alto (clave = código de dimensión). */
 export const INDIVIDUAL_INSIGHTS: Record<string, string> = {
@@ -41,6 +42,41 @@ export const CONFLICT_INSIGHTS: Record<string, string> = {
   C: "Ante desacuerdos, tiendes a analizar antes de concluir. Puede resultar útil equilibrar comprensión y velocidad de respuesta.",
 };
 
+/** Traducción catalana de los insights (mismas claves que la versión española). */
+const INSIGHTS_CA = {
+  individual: {
+    D: "La teva tendència a actuar i decidir pot ajudar-te a generar moviment i a evitar bloquejos innecessaris. Val la pena observar com equilibres velocitat i participació quan altres persones necessiten més temps.",
+    I: "La teva capacitat per generar relació pot afavorir la participació, la confiança i el compromís. Val la pena observar com transformes les converses en acords concrets.",
+    S: "La teva capacitat per generar estabilitat i confiança pot facilitar la col·laboració i la continuïtat. Val la pena observar quan una situació requereix més rapidesa o decisió.",
+    C: "La teva tendència a analitzar i organitzar pot millorar la qualitat i la consistència de les decisions. Val la pena observar quan ja hi ha prou informació per avançar.",
+  } as Record<string, string>,
+  intensity: {
+    defined:
+      "El resultat mostra una tendència especialment definida. Això pot facilitar coherència i consistència; també pot reduir la flexibilitat si no hi ha una adaptació conscient al context.",
+    flexible:
+      "El resultat suggereix una utilització relativament equilibrada de diferents recursos. La flexibilitat pot ser útil en contextos canviants; val la pena observar quan convé mostrar una posició més clara.",
+  },
+  communication: {
+    D: "En comunicació, la teva tendència pot ajudar-te a transmetre claredat i direcció. Pot ser útil comprovar que el missatge s'ha comprès i no només escoltat.",
+    I: "En comunicació, el teu estil pot afavorir la participació i la proximitat. Val la pena observar com mantens la claredat i el focus quan hi ha múltiples perspectives.",
+    S: "En comunicació, el teu estil pot generar confiança i seguretat. Pot ser útil revisar quan una situació requereix un nivell més alt de concreció.",
+    C: "En comunicació, el teu estil pot aportar rigor i comprensió. Val la pena observar si el nivell de detall facilita o dificulta l'acció.",
+  } as Record<string, string>,
+  conflict: {
+    D: "Davant dels desacords, tendeixes a orientar-te ràpidament cap a la resolució. Pot ser útil dedicar temps a comprendre'n l'origen abans de buscar solucions.",
+    I: "Davant dels desacords, tendeixes a protegir la relació. Val la pena observar quan una conversa necessita més claredat que harmonia.",
+    S: "Davant dels desacords, tendeixes a buscar equilibri i estabilitat. Pot ser útil revisar quan cal posicionar-se explícitament.",
+    C: "Davant dels desacords, tendeixes a analitzar abans de concloure. Pot ser útil equilibrar comprensió i velocitat de resposta.",
+  } as Record<string, string>,
+};
+
+const INSIGHTS_ES = {
+  individual: INDIVIDUAL_INSIGHTS,
+  intensity: INTENSITY_INSIGHTS,
+  communication: COMMUNICATION_INSIGHTS,
+  conflict: CONFLICT_INSIGHTS,
+};
+
 /** Recurso predominante de un contexto (código de dimensión) o null. */
 function leadOf(result: ScoringResult, code: string): string | null {
   const scores = result.byContext[code];
@@ -53,7 +89,8 @@ function leadOf(result: ScoringResult, code: string): string | null {
  * 1) recurso predominante; 2) intensidad; 3) contexto (comunicación, luego
  * desacuerdos). Nunca repite mensajes.
  */
-export function generateInsights(result: ScoringResult): string[] {
+export function generateInsights(result: ScoringResult, lang: Lang = "es"): string[] {
+  const i = lang === "ca" ? INSIGHTS_CA : INSIGHTS_ES;
   const out: string[] = [];
   const push = (text: string | null | undefined) => {
     if (out.length < 3 && text && !out.includes(text)) out.push(text);
@@ -61,20 +98,20 @@ export function generateInsights(result: ScoringResult): string[] {
 
   // 1) Recurso predominante (mayor reparto proporcional global).
   const topShare = [...result.percentages].sort((a, b) => b.share - a.share)[0];
-  if (topShare) push(INDIVIDUAL_INSIGHTS[topShare.dimensionCode]);
+  if (topShare) push(i.individual[topShare.dimensionCode]);
 
   // 2) Intensidad del perfil.
   if (result.isEq || result.intensity === "FLEXIBLE") {
-    push(INTENSITY_INSIGHTS.flexible);
+    push(i.intensity.flexible);
   } else if (result.intensity === "MUY_DEFINIDA" || result.intensity === "DEFINIDA") {
-    push(INTENSITY_INSIGHTS.defined);
+    push(i.intensity.defined);
   }
 
   // 3) Contextual: comunicación y, si hay hueco, desacuerdos.
   const commLead = leadOf(result, "COMUNICACION");
-  if (commLead) push(COMMUNICATION_INSIGHTS[commLead]);
+  if (commLead) push(i.communication[commLead]);
   const conflictLead = leadOf(result, "CONFLICTO");
-  if (conflictLead) push(CONFLICT_INSIGHTS[conflictLead]);
+  if (conflictLead) push(i.conflict[conflictLead]);
 
   return out.slice(0, 3);
 }
