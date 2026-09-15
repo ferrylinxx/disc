@@ -123,7 +123,7 @@ export default async function AdminOverviewPage() {
       </PageHeader>
 
       {/* KPIs: cada tarjeta, un dato distinto (antes "Informes" repetía "Completados") */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Organizaciones"
           value={orgCount}
@@ -161,7 +161,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Analítica: embudo (ancho) + distribución DISC */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card
             title="Embudo de cumplimentación"
@@ -252,7 +252,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Actividad reciente (ancha) + Requiere atención (columna) */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card
             title="Actividad reciente"

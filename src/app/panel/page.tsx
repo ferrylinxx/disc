@@ -135,7 +135,7 @@ export default async function PanelOverviewPage() {
       {completed && result && narrative && eqBand && (
         <>
           {/* Tiles */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Tile
               label={t.primary}
               value={dimByCode.get(result.primaryDimension)?.name ?? result.primaryDimension}
@@ -154,7 +154,7 @@ export default async function PanelOverviewPage() {
             />
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             <div className="space-y-5 lg:col-span-2">
               {/* Distribución de recursos */}
               <Card title={t.distributionTitle} hint={t.distributionHint}>

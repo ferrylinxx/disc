@@ -26,7 +26,7 @@ export default async function AdminSystemPage() {
         description="Estado de los servicios, instrumento activo y volumen de datos."
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card
           title="Email (SMTP)"
           description="Envío de invitaciones e informes"
@@ -76,7 +76,7 @@ export default async function AdminSystemPage() {
       </div>
 
       <Card title="Volumen de datos" description="Registros acumulados en la base de datos">
-        <dl className="grid gap-4 sm:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             [invitations, "Invitaciones emitidas"],
             [responseSets, "Cuestionarios registrados"],

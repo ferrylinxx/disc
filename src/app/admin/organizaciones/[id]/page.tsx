@@ -75,7 +75,7 @@ export default async function AdminOrgDetailPage({
   // ni botones de borrado, que pasan a su propia pestaña.
   const resumen = (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Participantes"
           value={total}
@@ -106,7 +106,7 @@ export default async function AdminOrgDetailPage({
         />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card
           title="Progreso de la evaluación"
           description="Cuántas personas han terminado el cuestionario"
