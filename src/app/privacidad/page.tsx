@@ -246,7 +246,7 @@ const CA: Copy = {
       "responsable",
       "Responsable del tractament",
       <p key="p">
-        El responsable del tractament de les dades recollides a través d&apos;aquesta
+        El responsable del tractament de les dades recollides a través d’aquesta
         plataforma és <strong>GESEM</strong>. Per a qualsevol qüestió relacionada amb les
         teves dades personals o amb aquesta política, pots escriure a <Mail />.
       </p>,
@@ -259,17 +259,17 @@ const CA: Copy = {
         <ul className="ml-5 list-disc space-y-1.5">
           <li>
             <strong>Dades identificatives i de contacte:</strong> nom i adreça de correu
-            electrònic que facilites en iniciar l&apos;avaluació o que registra la teva
+            electrònic que facilites en iniciar l’avaluació o que registra la teva
             organització.
           </li>
           <li>
             <strong>Respostes i resultats del qüestionari:</strong> les teves eleccions al
-            qüestionari i els resultats que se&apos;n deriven (puntuacions, tendència
+            qüestionari i els resultats que se’n deriven (puntuacions, tendència
             predominant, intensitat, contextos).
           </li>
           <li>
-            <strong>Dades d&apos;ús tècniques:</strong> informació mínima necessària per al
-            funcionament i la seguretat (per exemple, la marca temporal d&apos;activitat de
+            <strong>Dades d’ús tècniques:</strong> informació mínima necessària per al
+            funcionament i la seguretat (per exemple, la marca temporal d’activitat de
             la sessió).
           </li>
         </ul>
@@ -285,14 +285,14 @@ const CA: Copy = {
       <>
         <ul className="ml-5 list-disc space-y-1.5">
           <li>
-            <strong>Generar el teu informe individual i els mapes d&apos;equip</strong>{" "}
-            d&apos;autoconeixement, comunicació i desenvolupament. Base jurídica: el teu{" "}
-            <strong>consentiment</strong> en iniciar l&apos;avaluació i/o{" "}
-            <strong>l&apos;execució del servei</strong> contractat per la teva organització.
+            <strong>Generar el teu informe individual i els mapes d’equip</strong>{" "}
+            d’autoconeixement, comunicació i desenvolupament. Base jurídica: el teu{" "}
+            <strong>consentiment</strong> en iniciar l’avaluació i/o{" "}
+            <strong>l’execució del servei</strong> contractat per la teva organització.
           </li>
           <li>
-            <strong>Enviar-te l&apos;informe per correu electrònic</strong>, quan tu o
-            l&apos;administrador de la teva organització ho sol·liciteu.
+            <strong>Enviar-te l’informe per correu electrònic</strong>, quan tu o
+            l’administrador de la teva organització ho sol·liciteu.
           </li>
           <li>
             <strong>Mantenir la seguretat i el funcionament correcte</strong> de la
@@ -300,7 +300,7 @@ const CA: Copy = {
           </li>
         </ul>
         <p>
-          Les teves dades no s&apos;utilitzen per elaborar perfils amb efectes jurídics, ni
+          Les teves dades no s’utilitzen per elaborar perfils amb efectes jurídics, ni
           per a processos de selecció, ni es cedeixen a tercers amb finalitats comercials.
         </p>
       </>,
@@ -311,7 +311,7 @@ const CA: Copy = {
       <p key="p">
         Conservem les dades mentre existeixi la relació amb la teva organització o mentre
         siguin necessàries per a les finalitats descrites. Quan deixen de ser necessàries,
-        se suprimeixen o s&apos;anonimitzen. Pots sol·licitar-ne la supressió en qualsevol
+        se suprimeixen o s’anonimitzen. Pots sol·licitar-ne la supressió en qualsevol
         moment (vegeu{" "}
         <a className="font-semibold text-sky-700 underline" href="#derechos">
           Els teus drets
@@ -329,14 +329,14 @@ const CA: Copy = {
           tracten les dades segons les nostres instruccions:
         </p>
         <ul className="ml-5 list-disc space-y-1.5">
-          <li>Proveïdor d&apos;allotjament i infraestructura de l&apos;aplicació.</li>
+          <li>Proveïdor d’allotjament i infraestructura de l’aplicació.</li>
           <li>Proveïdor de base de dades gestionada.</li>
-          <li>Proveïdor d&apos;enviament de correu electrònic (notificacions i informes).</li>
+          <li>Proveïdor d’enviament de correu electrònic (notificacions i informes).</li>
         </ul>
         <p>
           Seleccionem proveïdors que ofereixen garanties adequades de protecció de dades.
-          Quan algun tractament impliqui transferències fora de l&apos;Espai Econòmic
-          Europeu, s&apos;apliquen les garanties previstes a la normativa vigent.
+          Quan algun tractament impliqui transferències fora de l’Espai Econòmic
+          Europeu, s’apliquen les garanties previstes a la normativa vigent.
         </p>
       </>,
     ],
@@ -347,15 +347,15 @@ const CA: Copy = {
         <p>
           Pots exercir en qualsevol moment els teus drets{" "}
           <strong>
-            d&apos;accés, rectificació, supressió, oposició, limitació del tractament i
+            d’accés, rectificació, supressió, oposició, limitació del tractament i
             portabilitat
           </strong>
           , així com retirar el consentiment prestat. Per fer-ho, escriu a <Mail /> indicant
           el dret que vols exercir.
         </p>
         <p>
-          Si consideres que el tractament no s&apos;ajusta a la normativa, tens dret a
-          presentar una reclamació davant l&apos;
+          Si consideres que el tractament no s’ajusta a la normativa, tens dret a
+          presentar una reclamació davant l’
           <strong>Agència Espanyola de Protecció de Dades</strong> (<Aepd />
           ).
         </p>
@@ -366,7 +366,7 @@ const CA: Copy = {
       "Seguretat",
       <p key="p">
         Apliquem mesures tècniques i organitzatives raonables per protegir les teves dades:
-        xifratge en trànsit (HTTPS), control d&apos;accés per rols, autenticació mitjançant
+        xifratge en trànsit (HTTPS), control d’accés per rols, autenticació mitjançant
         sessions signades i separació de la informació per organització. Cap mesura no és
         infal·lible, però treballem per minimitzar els riscos.
       </p>,
@@ -375,11 +375,11 @@ const CA: Copy = {
       "resultados",
       "Naturalesa dels resultats",
       <p key="p">
-        DISC GESEM és un qüestionari d&apos;estils conductuals basat en el model DISC. Els
+        DISC GESEM és un qüestionari d’estils conductuals basat en el model DISC. Els
         resultats descriuen <strong>tendències i preferències</strong>, no constitueixen un
         diagnòstic clínic ni una mesura de capacitats, i poden variar segons el context i el
-        moment. La seva finalitat és l&apos;autoconeixement, la comunicació i el
-        desenvolupament d&apos;equips.
+        moment. La seva finalitat és l’autoconeixement, la comunicació i el
+        desenvolupament d’equips.
       </p>,
     ],
     [
@@ -387,7 +387,7 @@ const CA: Copy = {
       "Galetes",
       <p key="p">
         Només fem servir galetes tècniques: una per mantenir la sessió de les persones
-        usuàries autenticades i una altra per recordar l&apos;idioma triat. No fem servir
+        usuàries autenticades i una altra per recordar l’idioma triat. No fem servir
         galetes de publicitat ni de seguiment de tercers.
       </p>,
     ],
@@ -397,7 +397,7 @@ const CA: Copy = {
       <p key="p">
         Podem actualitzar aquesta política per reflectir canvis legals o del servei.
         Publicarem sempre la versió vigent en aquesta pàgina amb la data
-        d&apos;actualització. Per a qualsevol consulta sobre privacitat, escriu-nos a{" "}
+        d’actualització. Per a qualsevol consulta sobre privacitat, escriu-nos a{" "}
         <Mail />.
       </p>,
     ],
