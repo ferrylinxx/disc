@@ -519,7 +519,7 @@ function TeamDiscGrid({
                 fontSize="52"
                 fontWeight="800"
                 fill={`url(#tmg-${code})`}
-                fillOpacity={0.25}
+                fillOpacity={0.12}
               >
                 {code}
               </text>

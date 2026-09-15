@@ -156,7 +156,7 @@ export function BlocksEditor({
                       style={{ width: `${barPct}%` }}
                     />
                   </span>
-                  <span className={`w-28 font-semibold tabular-nums ${TONE_CLS[tone]}`}>
+                  <span className={`w-36 whitespace-nowrap font-semibold tabular-nums ${TONE_CLS[tone]}`}>
                     {words} / {PROFILE_WORD_TARGET.min} palabras
                   </span>
                 </span>

@@ -22,6 +22,9 @@ const initial: ActionState = {};
 const inputCls =
   "rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
+/** Desplegables de la fila de filtros: compactos para que quepan en una línea. */
+const filterSelectCls = `${inputCls} py-1 text-xs`;
+
 const globalRoleLabel: Record<string, string> = {
   SUPERADMIN: "Superadmin",
   USER: "Usuario",
@@ -281,7 +284,7 @@ export function UserManager({
           value={mRole}
           onChange={(e) => setMRole(e.target.value as MRole)}
           aria-label="Rol en organizaciones"
-          className={inputCls}
+          className={filterSelectCls}
         >
           <option value="ALL">Cualquier rol en organización</option>
           <option value="ADMIN">Admin cliente</option>
@@ -292,7 +295,7 @@ export function UserManager({
           value={orgFilter}
           onChange={(e) => setOrgFilter(e.target.value)}
           aria-label="Organización"
-          className={inputCls}
+          className={filterSelectCls}
         >
           <option value="ALL">Todas las organizaciones</option>
           {organizations.map((o) => (
@@ -303,7 +306,7 @@ export function UserManager({
           value={conn}
           onChange={(e) => setConn(e.target.value as Conn)}
           aria-label="Conexión"
-          className={inputCls}
+          className={filterSelectCls}
         >
           <option value="ALL">Cualquier conexión</option>
           <option value="ONLINE">En línea</option>
@@ -315,7 +318,7 @@ export function UserManager({
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
             aria-label="Ordenar"
-            className={inputCls}
+            className={filterSelectCls}
           >
             <option value="name">Ordenar: nombre</option>
             <option value="lastSeen">Ordenar: última conexión</option>

@@ -310,6 +310,7 @@ export default async function AdminOverviewPage() {
         </div>
 
         <Card
+          className="self-start"
           title="Requiere atención"
           description={allClear ? "Sin acciones pendientes" : `${pendingTotal} acciones pendientes`}
         >

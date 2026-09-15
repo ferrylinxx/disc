@@ -537,7 +537,7 @@ export function ParticipantsTable({
                         </div>
                       </div>
                     </td>
-                    {showOrg && <td className={`${tableCls.td} text-slate-600`}>{p.orgName}</td>}
+                    {showOrg && <td className={`${tableCls.td} text-[13px] text-slate-600`}>{p.orgName}</td>}
                     {showTeam && <td className={`${tableCls.td} text-slate-500`}>{p.teamName ?? "—"}</td>}
                     <td className={tableCls.td}>
                       <StatusBadge status={p.status} />

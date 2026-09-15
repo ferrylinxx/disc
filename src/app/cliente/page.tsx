@@ -36,7 +36,11 @@ export default async function ClientePage({
     searchParams,
   ]);
 
-  const org = organizations.find((o) => o.id === orgParam) ?? organizations[0];
+  // Sin ?org, se abre la primera organización que ya tiene participantes.
+  const org =
+    organizations.find((o) => o.id === orgParam) ??
+    organizations.find((o) => o._count.participants > 0) ??
+    organizations[0];
 
   if (!org) {
     return (

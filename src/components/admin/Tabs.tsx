@@ -37,7 +37,7 @@ export function Tabs({ tabs }: { tabs: TabItem[] }) {
     <div>
       <div
         role="tablist"
-        className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200"
+        className="mb-5 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-slate-200"
       >
         {tabs.map((t) => {
           const on = active === t.id;

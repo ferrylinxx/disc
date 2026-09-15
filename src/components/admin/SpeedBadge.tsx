@@ -14,6 +14,7 @@ export function SpeedBadge({ speed }: { speed: SpeedAssessment | null }) {
   const secs = DEFAULT_SPEED_THRESHOLDS.fastItemMs / 1000;
   return (
     <span
+      className="whitespace-nowrap"
       title={`${speed.fastItems} de ${speed.timedItems} ítems respondidos en menos de ${secs} s. Es probable que el resultado no refleje su estilo: revísalo antes de interpretarlo.`}
     >
       <Pill tone="amber">{SPEED_WARNING_LABEL}</Pill>
