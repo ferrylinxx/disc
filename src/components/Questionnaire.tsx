@@ -82,6 +82,7 @@ export function Questionnaire({
   const [result, setResult] = useState<ScoringResult | null>(null);
   const [narrative, setNarrative] = useState<ProfileNarrative | null>(null);
   const [graphs, setGraphs] = useState<DiscGraphs | null>(null);
+  const [blocks, setBlocks] = useState<Record<string, string> | null>(null);
   const [pending, start] = useTransition();
 
   // Trazabilidad para validación: ms acumulados y nº de cambios por ítem.
@@ -139,6 +140,7 @@ export function Questionnaire({
         setResult(res.result ?? null);
         setNarrative(res.narrative ?? null);
         setGraphs(res.graphs ?? null);
+        setBlocks(res.blocks ?? null);
         setStep("result");
       } else {
         setError(res.error ?? t.error);
@@ -595,6 +597,7 @@ export function Questionnaire({
             result={result}
             def={def}
             narrative={narrative ?? undefined}
+            blocks={blocks ?? undefined}
             graphs={graphs ?? undefined}
             lang={lang}
             meta={{

@@ -8,7 +8,7 @@ import { getActiveInstrument } from "@/lib/instruments";
 import { getLang } from "@/lib/i18n/server";
 import { score, discGraphShares } from "@/lib/engine/scoring";
 import type { ScoringResult, DiscGraphs } from "@/lib/engine/types";
-import { buildProfileNarrativeDb } from "@/lib/narratives/library";
+import { buildProfileNarrativeDb, loadProfileBlocks } from "@/lib/narratives/library";
 import type { ProfileNarrative } from "@/lib/narratives/disc-gesem.profiles";
 
 const responseSchema = z.object({
@@ -40,6 +40,8 @@ export interface EvaluateResponse {
   narrative?: ProfileNarrative;
   /** Tres lecturas DISC (público=Más, privado=Menos) para el informe. */
   graphs?: DiscGraphs;
+  /** Texto editorial fijo (Biblioteca V1) por apartado, si el perfil lo tiene publicado. */
+  blocks?: Record<string, string>;
   /** true si el resultado quedó guardado en base de datos. */
   saved?: boolean;
 }
@@ -76,6 +78,7 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
 
   const narrative = await buildProfileNarrativeDb(result, lang);
   const graphs = discGraphShares(def, parsed.data.responses);
+  const blocks = await loadProfileBlocks(result.profileCode, lang);
 
   if (parsed.data.token) {
     try {
@@ -86,14 +89,14 @@ export async function evaluate(input: unknown): Promise<EvaluateResponse> {
         parsed.data.selfPlacement,
         parsed.data.reflection,
       );
-      return { ok: true, result, narrative, graphs, saved };
+      return { ok: true, result, narrative, graphs, blocks, saved };
     } catch (e) {
       console.error("[evaluate] persistencia fallida:", e);
       return { ok: false, error: "No se pudo guardar el resultado." };
     }
   }
 
-  return { ok: true, result, narrative, graphs };
+  return { ok: true, result, narrative, graphs, blocks };
 }
 
 /**
