@@ -534,8 +534,9 @@ export function Report({
         <p className="mt-3 text-xs leading-relaxed text-slate-400">{t.observarNote}</p>
       </section>
 
-      {/* Coordinación y colaboración (bloque diferencial DISC GESEM: incluye
-          qué aportas y qué necesitas de los demás) */}
+      {/* Coordinación y colaboración (bloque diferencial DISC GESEM). Sin los
+          microbloques "Lo que probablemente aportas / necesitas": el Estándar
+          editorial V1.1 los eliminó de la narrativa. */}
       <section id="r-coordinacion" className="scroll-mt-24 rounded-2xl border border-sky-100 bg-sky-50/40 p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <Num n="06" />
@@ -564,28 +565,6 @@ export function Report({
                 </dd>
               </div>
             </dl>
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                <h4 className="text-sm font-bold text-emerald-900">{t.contributions}</h4>
-                <ul className="mt-2 space-y-1.5 text-sm text-emerald-900/80">
-                  {narrative.team.contributions.map((c) => (
-                    <li key={c} className="flex gap-2">
-                      <span className="text-emerald-500">+</span> {c}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-xl border border-sky-100 bg-white/70 p-4">
-                <h4 className="text-sm font-bold text-sky-900">{t.needs}</h4>
-                <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
-                  {narrative.team.appreciates.map((a) => (
-                    <li key={a} className="flex gap-2">
-                      <span className="text-sky-500">◆</span> {a}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
             {narrative.team.differences && (
               <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-4">
                 <h4 className="text-sm font-bold text-slate-800">{t.differences}</h4>

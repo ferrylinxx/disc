@@ -3,7 +3,7 @@
  * narrative_entries (scope "BLOCK"). Exporta la hoja del Excel a CSV con tres
  * columnas (cabeceras flexibles): perfil | bloque | texto.
  *
- * Uso:  npx tsx scripts/import-blocks.ts ruta/al/biblioteca.csv [--publish] [--locale=ca] [--solo-nuevos]
+ * Uso:  npx tsx scripts/import-blocks.ts ruta/al/biblioteca.csv [--publish] [--locale=ca] [--solo-nuevos] [--autor="Estándar V1.1"]
  *
  *  - "perfil": DI, ID, … EQ.
  *  - "bloque": id (tendencia, recursos, …) o etiqueta ("Tendencia predominante").
@@ -12,6 +12,9 @@
  *  - --locale=ca: idioma de las entradas (por defecto "es").
  *  - --solo-nuevos: no toca los bloques que ya existan en ese idioma (p. ej. ya
  *    revisados en el editor); solo crea los que faltan.
+ *  - --autor=…: autor que queda registrado (por defecto "import-<idioma>").
+ *
+ * Cada bloque que ya existía sube una versión, para distinguir las entregas.
  */
 import "dotenv/config";
 import { readFileSync } from "fs";
@@ -67,6 +70,8 @@ async function main() {
   const publish = process.argv.includes("--publish");
   const soloNuevos = process.argv.includes("--solo-nuevos");
   const locale = process.argv.find((a) => a.startsWith("--locale="))?.split("=")[1] ?? "es";
+  const author =
+    process.argv.find((a) => a.startsWith("--autor="))?.slice("--autor=".length).trim() || `import-${locale}`;
   if (locale !== "es" && locale !== "ca") {
     console.error(`Idioma no válido: ${locale}. Usa --locale=es o --locale=ca.`);
     process.exit(1);
@@ -108,7 +113,8 @@ async function main() {
       update: {
         content: { text } as Prisma.InputJsonValue,
         status: publish ? "PUBLISHED" : "DRAFT",
-        author: `import-${locale}`,
+        version: { increment: 1 },
+        author,
       },
       create: {
         scope: "BLOCK",
@@ -117,7 +123,7 @@ async function main() {
         content: { text } as Prisma.InputJsonValue,
         status: publish ? "PUBLISHED" : "DRAFT",
         version: 1,
-        author: `import-${locale}`,
+        author,
       },
     });
     ok++;

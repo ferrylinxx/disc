@@ -10,16 +10,20 @@
  */
 import type { ProfileNarrative } from "./disc-gesem.profiles";
 
-/** Los 9 bloques narrativos oficiales, en orden. */
+/**
+ * Los 9 bloques narrativos oficiales, en orden. Las extensiones son las del
+ * Estándar editorial canónico V1.1 (17/09/2026): suman 700-790 palabras, dentro
+ * del objetivo de 700-800 por perfil (las preguntas quedan fuera del recuento).
+ */
 export const BLOCKS = [
-  { id: "tendencia", label: "Tendencia predominante", length: "180-250 palabras" },
-  { id: "recursos", label: "Recursos predominantes", length: "120-180 palabras" },
-  { id: "aportacion", label: "Aportación habitual", length: "120-180 palabras" },
-  { id: "valoracion", label: "Lo que otros suelen valorar", length: "100-150 palabras" },
-  { id: "observar", label: "Aspectos que merece la pena observar", length: "120-180 palabras" },
-  { id: "coordinacion", label: "Coordinación y colaboración", length: "180-250 palabras" },
-  { id: "contextos", label: "Contextos de mejor desempeño", length: "120-180 palabras" },
-  { id: "ampliacion", label: "Ampliación de repertorio", length: "150-220 palabras" },
+  { id: "tendencia", label: "Tendencia predominante", length: "140-155 palabras" },
+  { id: "recursos", label: "Recursos predominantes", length: "85-95 palabras" },
+  { id: "aportacion", label: "Aportación habitual", length: "75-85 palabras" },
+  { id: "valoracion", label: "Lo que otros suelen valorar", length: "60-70 palabras" },
+  { id: "observar", label: "Aspectos que merece la pena observar", length: "80-90 palabras" },
+  { id: "coordinacion", label: "Coordinación y colaboración", length: "105-120 palabras" },
+  { id: "contextos", label: "Contextos de mejor desempeño", length: "65-75 palabras" },
+  { id: "ampliacion", label: "Ampliación de repertorio", length: "90-100 palabras" },
   { id: "reflexion", label: "Preguntas para la reflexión", length: "5 preguntas" },
 ] as const;
 
@@ -42,6 +46,10 @@ export function resolveBlockId(value: string): BlockId | null {
 /**
  * Deriva el texto de cada bloque a partir de la narrativa compuesta. Sirve para
  * sembrar las 117 entradas con contenido interino coherente por perfil.
+ *
+ * Coordinación no lleva los microbloques "Lo que probablemente aportas /
+ * necesitas": el Estándar editorial V1.1 los eliminó (repetían otros apartados
+ * y en DC y CD se contradecían).
  */
 export function blockTextsFromNarrative(n: ProfileNarrative): Record<BlockId, string> {
   return {
@@ -53,12 +61,6 @@ export function blockTextsFromNarrative(n: ProfileNarrative): Record<BlockId, st
     coordinacion: [
       n.coordination.coordinating,
       n.coordination.collaborating,
-      n.team.contributions.length
-        ? `Lo que probablemente aportas: ${n.team.contributions.join("; ")}.`
-        : "",
-      n.team.appreciates.length
-        ? `Lo que probablemente necesitas de otras personas: ${n.team.appreciates.join("; ")}.`
-        : "",
       n.team.differences,
     ]
       .filter(Boolean)

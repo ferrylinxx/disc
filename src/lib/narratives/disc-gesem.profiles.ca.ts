@@ -47,19 +47,6 @@ export const RESOURCE_NARRATIVES_CA: Record<string, ResourceNarrative> = {
       "Què necessites habitualment de les persones amb qui treballes per coordinar-te millor?",
       "Què poden necessitar de tu les persones amb un estil diferent del teu?",
     ],
-    teamContributions: [
-      "Impulsar l'acció i l'avenç.",
-      "Afavorir la presa de decisions.",
-      "Generar energia i moviment.",
-      "Mobilitzar altres persones.",
-      "Orientar l'equip cap als objectius.",
-    ],
-    teamAppreciates: [
-      "Claredat en els objectius.",
-      "Persones que aportin anàlisi i rigor.",
-      "Seguiment dels acords.",
-      "Espais per escoltar altres perspectives.",
-    ],
     differences:
       "Les diferències de ritme o de prioritats poden generar tensions naturals en qualsevol equip. Comprendre-les ajuda a equilibrar la velocitat amb la reflexió i a convertir-les en oportunitats de col·laboració.",
   },
@@ -104,19 +91,6 @@ export const RESOURCE_NARRATIVES_CA: Record<string, ResourceNarrative> = {
       "Quines maneres d'actuar podrien complementar els teus recursos quan una situació necessita més concreció?",
       "Què necessites habitualment de les persones amb qui treballes per coordinar-te millor?",
       "Què poden necessitar de tu les persones amb un estil diferent del teu?",
-    ],
-    teamContributions: [
-      "Connectar les persones de l'equip.",
-      "Generar participació i implicació.",
-      "Comunicar idees amb entusiasme.",
-      "Crear un clima de confiança.",
-      "Mobilitzar a través de la relació.",
-    ],
-    teamAppreciates: [
-      "Concreció i focus.",
-      "Persones que aterrin les idees en acords.",
-      "Estructura i seguiment.",
-      "Reconeixement de l'esforç.",
     ],
     differences:
       "Quan conviuen estils més directes o més analítics, les diferències de comunicació poden generar friccions. Comprendre-les ajuda a mantenir el focus sense perdre la proximitat.",
@@ -163,19 +137,6 @@ export const RESOURCE_NARRATIVES_CA: Record<string, ResourceNarrative> = {
       "Què necessites habitualment de les persones amb qui treballes per coordinar-te millor?",
       "Què poden necessitar de tu les persones amb un estil diferent del teu?",
     ],
-    teamContributions: [
-      "Aportar estabilitat i continuïtat.",
-      "Escoltar i cuidar l'equip.",
-      "Sostenir els acords en el temps.",
-      "Generar confiança i cohesió.",
-      "Acompanyar les persones en els processos.",
-    ],
-    teamAppreciates: [
-      "Claredat sobre les prioritats.",
-      "Persones que impulsin i decideixin.",
-      "Anticipació davant els canvis.",
-      "Temps per adaptar-se.",
-    ],
     differences:
       "Davant ritmes més ràpids o canvis freqüents poden aparèixer tensions. Comprendre aquestes diferències ajuda a equilibrar l'estabilitat amb la capacitat d'adaptació.",
   },
@@ -220,19 +181,6 @@ export const RESOURCE_NARRATIVES_CA: Record<string, ResourceNarrative> = {
       "Quines maneres d'actuar podrien complementar els teus recursos quan una situació necessita més velocitat?",
       "Què necessites habitualment de les persones amb qui treballes per coordinar-te millor?",
       "Què poden necessitar de tu les persones amb un estil diferent del teu?",
-    ],
-    teamContributions: [
-      "Aportar anàlisi i rigor.",
-      "Millorar la qualitat de les decisions.",
-      "Ordenar la informació i els processos.",
-      "Anticipar riscos.",
-      "Donar criteri i consistència.",
-    ],
-    teamAppreciates: [
-      "Marge per analitzar.",
-      "Persones que aportin impuls i decisió.",
-      "Objectius i criteris clars.",
-      "Espais per aprofundir.",
     ],
     differences:
       "Quan el context exigeix rapidesa, les diferències entre anàlisi i acció poden generar tensió. Comprendre-les ajuda a equilibrar el rigor amb l'agilitat.",
