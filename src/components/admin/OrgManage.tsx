@@ -10,16 +10,27 @@ import {
 import {
   improveInvitationWelcome,
   previewInvitationEmail,
+  translateInvitationWelcome,
   updateOrgEmailConfig,
   type ActionState,
 } from "@/app/actions/org";
 import { addOrgGestor } from "@/app/actions/users";
+import { insertAt } from "@/lib/text-insert";
 import { ConfirmButton, toast } from "./ui-client";
 import { btn } from "./ui";
 
 const initial: ActionState = {};
 const inputCls =
   "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
+
+/** Variables del correo: se insertan en el campo que tenga el cursor. */
+const EMAIL_VARS = [
+  { tag: "{{nombre}}", help: "Nombre de pila de la persona" },
+  { tag: "{{nombre_completo}}", help: "Nombre y apellidos" },
+  { tag: "{{email}}", help: "Correo con el que accede" },
+  { tag: "{{programa}}", help: "Nombre del programa de arriba" },
+  { tag: "{{organizacion}}", help: "Nombre de la organización" },
+] as const;
 
 /** Personalización del correo de invitación de la organización. */
 export function OrgEmailForm({
@@ -62,6 +73,26 @@ export function OrgEmailForm({
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [improving, setImproving] = useState(false);
+  const [translating, setTranslating] = useState<"ca" | "es" | null>(null);
+
+  // Las variables se insertan en el último campo que tuvo el foco (asunto o
+  // mensaje); por defecto, el mensaje de bienvenida.
+  const subjRef = useRef<HTMLInputElement>(null);
+  const introRef = useRef<HTMLTextAreaElement>(null);
+  const [target, setTarget] = useState<"subject" | "intro">("intro");
+
+  function insertVar(tag: string) {
+    const el = target === "subject" ? subjRef.current : introRef.current;
+    if (!el) return;
+    const { value, caret } = insertAt(el.value, el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length, tag);
+    if (target === "subject") setSubj(value);
+    else setIntro(value);
+    // El cursor se recoloca cuando React ya ha pintado el nuevo valor.
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
+  }
 
   async function openPreview(l: "ca" | "es") {
     setPreviewing(true);
@@ -90,6 +121,22 @@ export function OrgEmailForm({
       setIntro(r.text);
       toast("Mensaje mejorado con IA.", "success");
     } else toast(r.error ?? "No se pudo mejorar con IA.", "error");
+  }
+
+  async function translate(to: "ca" | "es") {
+    setTranslating(to);
+    const r = await translateInvitationWelcome({ text: intro, to });
+    setTranslating(null);
+    if (r.ok && r.text) {
+      setIntro(r.text);
+      const nombre = to === "ca" ? "catalán" : "castellano";
+      toast(
+        lang === to
+          ? `Mensaje traducido al ${nombre}.`
+          : `Mensaje traducido al ${nombre}. El resto del correo sigue en ${lang === "ca" ? "catalán" : "castellano"}.`,
+        "success",
+      );
+    } else toast(r.error ?? "No se pudo traducir con IA.", "error");
   }
 
   const labelCls = "mb-1 block text-xs font-semibold text-slate-500";
@@ -128,9 +175,11 @@ export function OrgEmailForm({
         <label className="block">
           <span className={labelCls}>Asunto del correo</span>
           <input
+            ref={subjRef}
             name="emailSubject"
             value={subj}
             onChange={(e) => setSubj(e.target.value)}
+            onFocus={() => setTarget("subject")}
             placeholder="Bienvenido/a al proceso {{programa}}"
             className={`${inputCls} w-full`}
           />
@@ -171,34 +220,65 @@ export function OrgEmailForm({
           />
         </label>
         <div>
-          <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-500">Mensaje de bienvenida (opcional)</span>
-            <button
-              type="button"
-              onClick={improve}
-              disabled={improving}
-              className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
-            >
-              {improving ? "Mejorando…" : "✨ Mejorar con IA"}
-            </button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {(["ca", "es"] as const).map((to) => (
+                <button
+                  key={to}
+                  type="button"
+                  onClick={() => translate(to)}
+                  disabled={translating !== null || !intro.trim()}
+                  title={
+                    intro.trim()
+                      ? `Traduce el mensaje al ${to === "ca" ? "catalán" : "castellano"} con IA`
+                      : "Escribe primero el mensaje"
+                  }
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-700 disabled:opacity-50"
+                >
+                  {translating === to ? "Traduciendo…" : to === "ca" ? "🌐 Al català" : "🌐 Al castellano"}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={improve}
+                disabled={improving}
+                className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
+              >
+                {improving ? "Mejorando…" : "✨ Mejorar con IA"}
+              </button>
+            </div>
           </div>
           <textarea
+            ref={introRef}
             name="welcomeIntro"
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
+            onFocus={() => setTarget("intro")}
             rows={4}
             placeholder="Si lo dejas vacío se usa un texto por defecto. Admite markdown: **negrita**, _cursiva_ y listas con guiones."
             className={`${inputCls} w-full resize-y`}
           />
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-slate-500">
+              Variables → {target === "subject" ? "asunto" : "mensaje"}
+            </span>
+            {EMAIL_VARS.map((v) => (
+              <button
+                key={v.tag}
+                type="button"
+                onClick={() => insertVar(v.tag)}
+                title={`${v.help} · se inserta donde tengas el cursor`}
+                className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[11px] text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+              >
+                {v.tag}
+              </button>
+            ))}
+          </div>
           <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-            Admite markdown: **negrita**, _cursiva_, listas con “- ” y enlaces [texto](https://…).
-            <br />
-            Variables (se rellenan al enviar):{" "}
-            <code className="text-slate-500">{"{{nombre}}"}</code>,{" "}
-            <code className="text-slate-500">{"{{nombre_completo}}"}</code>,{" "}
-            <code className="text-slate-500">{"{{email}}"}</code>,{" "}
-            <code className="text-slate-500">{"{{programa}}"}</code>,{" "}
-            <code className="text-slate-500">{"{{organizacion}}"}</code>.
+            Pulsa una variable para insertarla donde tengas el cursor; se rellena al enviar el
+            correo. Admite markdown: **negrita**, _cursiva_, listas con “- ” y enlaces
+            [texto](https://…).
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

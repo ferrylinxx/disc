@@ -167,37 +167,21 @@ export async function previewInvitationEmail(input: {
 }
 
 /**
- * Mejora (o redacta) el mensaje de bienvenida del correo con IA (Groq, API
- * compatible con OpenAI), respetando las reglas de redacción (tendencia, no
- * diagnóstico). Requiere GROQ_API_KEY en el entorno del servidor.
+ * Llamada de texto a la IA (Groq, API compatible con OpenAI). Devuelve el
+ * contenido del primer mensaje o un error ya redactado para la consola.
  */
-export async function improveInvitationWelcome(input: {
-  programName?: string;
-  current?: string;
-  lang?: "ca" | "es";
-}): Promise<{ ok: boolean; text?: string; error?: string }> {
-  await requireAuth();
+async function groqText(
+  system: string,
+  user: string,
+  opts: { temperature: number; maxTokens: number },
+): Promise<{ ok: boolean; text?: string; error?: string }> {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     return {
       ok: false,
-      error: "Falta GROQ_API_KEY en el servidor. Añádela al .env para activar la mejora con IA.",
+      error: "Falta GROQ_API_KEY en el servidor. Añádela al .env para activar la IA.",
     };
   }
-  const lang = input.lang === "es" ? "es" : "ca";
-  const langName = lang === "es" ? "español" : "catalán";
-  const program = (input.programName || "").trim();
-  const current = (input.current || "").trim();
-  const system =
-    "Eres redactor de GESEM y escribes el mensaje de bienvenida de un correo de invitación a un cuestionario de estilos conductuales DISC. " +
-    "Reglas obligatorias: habla de tendencias y preferencias, nunca de diagnóstico; prohibido 'eres', 'siempre', 'nunca', 'trastorno', 'capacidad'; " +
-    "tono cálido, cercano y profesional; 2 a 5 frases; sin encabezados ni firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
-    "Puedes usar markdown ligero para estructurar: **negrita** para 1-2 ideas clave y, si aporta, una lista breve con guiones. " +
-    "Puedes usar la variable {{nombre}} para dirigirte a la persona (se sustituye por su nombre al enviar). " +
-    "Responde SOLO con el texto del mensaje (markdown incluido), sin comillas ni explicaciones.";
-  const user = current
-    ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`
-    : `Escribe un mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}, que invite a la persona a completar su cuestionario DISC con calma y una mirada reflexiva antes del taller.`;
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -208,8 +192,8 @@ export async function improveInvitationWelcome(input: {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 400,
-        temperature: 0.7,
+        max_tokens: opts.maxTokens,
+        temperature: opts.temperature,
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
@@ -230,6 +214,58 @@ export async function improveInvitationWelcome(input: {
     console.error("[IA] fallo de conexión:", e);
     return { ok: false, error: "No se pudo conectar con la IA." };
   }
+}
+
+/**
+ * Mejora (o redacta) el mensaje de bienvenida del correo con IA (Groq, API
+ * compatible con OpenAI), respetando las reglas de redacción (tendencia, no
+ * diagnóstico). Requiere GROQ_API_KEY en el entorno del servidor.
+ */
+export async function improveInvitationWelcome(input: {
+  programName?: string;
+  current?: string;
+  lang?: "ca" | "es";
+}): Promise<{ ok: boolean; text?: string; error?: string }> {
+  await requireAuth();
+  const lang = input.lang === "es" ? "es" : "ca";
+  const langName = lang === "es" ? "español" : "catalán";
+  const program = (input.programName || "").trim();
+  const current = (input.current || "").trim();
+  const system =
+    "Eres redactor de GESEM y escribes el mensaje de bienvenida de un correo de invitación a un cuestionario de estilos conductuales DISC. " +
+    "Reglas obligatorias: habla de tendencias y preferencias, nunca de diagnóstico; prohibido 'eres', 'siempre', 'nunca', 'trastorno', 'capacidad'; " +
+    "tono cálido, cercano y profesional; 2 a 5 frases; sin encabezados ni firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
+    "Puedes usar markdown ligero para estructurar: **negrita** para 1-2 ideas clave y, si aporta, una lista breve con guiones. " +
+    "Puedes usar la variable {{nombre}} para dirigirte a la persona (se sustituye por su nombre al enviar). " +
+    "Responde SOLO con el texto del mensaje (markdown incluido), sin comillas ni explicaciones.";
+  const user = current
+    ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`
+    : `Escribe un mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}, que invite a la persona a completar su cuestionario DISC con calma y una mirada reflexiva antes del taller.`;
+  return groqText(system, user, { temperature: 0.7, maxTokens: 400 });
+}
+
+/**
+ * Traduce el mensaje de bienvenida entre castellano y catalán con IA (Groq),
+ * conservando el markdown y las variables {{…}}. Requiere GROQ_API_KEY.
+ */
+export async function translateInvitationWelcome(input: {
+  text?: string;
+  to?: "ca" | "es";
+}): Promise<{ ok: boolean; text?: string; error?: string }> {
+  await requireAuth();
+  const text = (input.text || "").trim();
+  if (!text) return { ok: false, error: "Escribe primero el mensaje que quieres traducir." };
+  const to = input.to === "es" ? "es" : "ca";
+  const target = to === "es" ? "castellano" : "catalán";
+  const system =
+    `Eres traductor editorial de GESEM y traduces al ${target} el mensaje de bienvenida de un correo de invitación a un cuestionario de estilos conductuales DISC. ` +
+    "Mantén el sentido, el tono cálido y profesional y el lenguaje de tendencia (nunca diagnóstico): no añadas ni quites ideas. " +
+    "Conserva EXACTAMENTE el markdown (**negrita**, _cursiva_, listas con guiones, enlaces) y la estructura de párrafos. " +
+    "Las variables entre dobles llaves ({{nombre}}, {{nombre_completo}}, {{email}}, {{programa}}, {{organizacion}}) se copian tal cual: no las traduzcas ni cambies su ortografía. " +
+    "Los nombres propios y los nombres de programa en mayúsculas se dejan como están. " +
+    `Si el texto ya está en ${target}, corrígelo solo si tiene errores. ` +
+    "Responde SOLO con el texto traducido, sin comillas ni explicaciones.";
+  return groqText(system, `Traduce al ${target}:\n\n${text}`, { temperature: 0.2, maxTokens: 500 });
 }
 
 /**
