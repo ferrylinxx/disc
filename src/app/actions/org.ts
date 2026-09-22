@@ -240,7 +240,9 @@ async function groqText(
       };
     }
     if (!text) return { ok: false, error: "La IA no devolvió texto. Inténtalo otra vez." };
-    return { ok: true, text };
+    // El modelo a veces usa guion y espacio "no separables" (fer‑ho); se
+    // cambian por los normales para que el texto sea editable con normalidad.
+    return { ok: true, text: text.replace(/‑/g, "-").replace(/[  ]/g, " ") };
   } catch (e) {
     console.error("[IA] fallo de conexión:", e);
     return { ok: false, error: "No se pudo conectar con la IA." };
