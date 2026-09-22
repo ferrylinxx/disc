@@ -167,6 +167,14 @@ export async function previewInvitationEmail(input: {
 }
 
 /**
+ * Modelos de Groq. OJO: Groq retira modelos cada pocos meses y entonces la API
+ * responde 404; si la IA deja de funcionar, comprueba
+ * `GET https://api.groq.com/openai/v1/models` y actualiza estas constantes.
+ */
+const GROQ_TEXT_MODEL = "openai/gpt-oss-120b";
+const GROQ_VISION_MODEL = "qwen/qwen3.8-27b";
+
+/**
  * Llamada de texto a la IA (Groq, API compatible con OpenAI). Devuelve el
  * contenido del primer mensaje o un error ya redactado para la consola.
  */
@@ -191,7 +199,7 @@ async function groqText(
         "user-agent": "disc-gesem/1.0",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: GROQ_TEXT_MODEL,
         max_tokens: opts.maxTokens,
         temperature: opts.temperature,
         messages: [
@@ -299,7 +307,7 @@ export async function extractRosterFromImage(input: {
         "user-agent": "disc-gesem/1.0",
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: GROQ_VISION_MODEL,
         max_tokens: 2000,
         temperature: 0,
         messages: [
