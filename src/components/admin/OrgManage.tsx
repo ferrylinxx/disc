@@ -10,6 +10,7 @@ import {
 import {
   improveInvitationWelcome,
   previewInvitationEmail,
+  suggestEmailField,
   translateInvitationWelcome,
   updateOrgEmailConfig,
   type ActionState,
@@ -31,6 +32,31 @@ const EMAIL_VARS = [
   { tag: "{{programa}}", help: "Nombre del programa de arriba" },
   { tag: "{{organizacion}}", help: "Nombre de la organización" },
 ] as const;
+
+/** Botón pequeño de IA junto a la etiqueta de un campo del correo. */
+function AiButton({
+  busy,
+  onClick,
+  title,
+  label = "✨ IA",
+}: {
+  busy: boolean;
+  onClick: () => void;
+  title: string;
+  label?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      title={title}
+      className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
+    >
+      {busy ? "Pensando…" : label}
+    </button>
+  );
+}
 
 /** Personalización del correo de invitación de la organización. */
 export function OrgEmailForm({
@@ -74,6 +100,7 @@ export function OrgEmailForm({
   const [previewing, setPreviewing] = useState(false);
   const [improving, setImproving] = useState(false);
   const [translating, setTranslating] = useState<"ca" | "es" | null>(null);
+  const [suggesting, setSuggesting] = useState<"programName" | "emailSubject" | null>(null);
 
   // Las variables se insertan en el último campo que tuvo el foco (asunto o
   // mensaje); por defecto, el mensaje de bienvenida.
@@ -123,6 +150,23 @@ export function OrgEmailForm({
     } else toast(r.error ?? "No se pudo mejorar con IA.", "error");
   }
 
+  async function suggest(field: "programName" | "emailSubject") {
+    setSuggesting(field);
+    const r = await suggestEmailField({
+      organizationId: id,
+      field,
+      current: field === "programName" ? prog : subj,
+      programName: prog,
+      lang,
+    });
+    setSuggesting(null);
+    if (r.ok && r.text) {
+      if (field === "programName") setProg(r.text);
+      else setSubj(r.text);
+      toast(field === "programName" ? "Nombre de programa sugerido." : "Asunto sugerido.", "success");
+    } else toast(r.error ?? "No se pudo sugerir con IA.", "error");
+  }
+
   async function translate(to: "ca" | "es") {
     setTranslating(to);
     const r = await translateInvitationWelcome({ text: intro, to });
@@ -162,8 +206,16 @@ export function OrgEmailForm({
             ))}
           </div>
         </div>
-        <label className="block">
-          <span className={labelCls}>Nombre del programa</span>
+        <div>
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-500">Nombre del programa</span>
+            <AiButton
+              busy={suggesting === "programName"}
+              onClick={() => suggest("programName")}
+              title={prog.trim() ? "Pule el nombre del programa con IA" : "Propón un nombre de programa con IA"}
+              label={prog.trim() ? "✨ Mejorar con IA" : "✨ Sugerir con IA"}
+            />
+          </div>
           <input
             name="programName"
             value={prog}
@@ -171,9 +223,17 @@ export function OrgEmailForm({
             placeholder="CONECTAR PARA COLABORAR"
             className={`${inputCls} w-full`}
           />
-        </label>
-        <label className="block">
-          <span className={labelCls}>Asunto del correo</span>
+        </div>
+        <div>
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-500">Asunto del correo</span>
+            <AiButton
+              busy={suggesting === "emailSubject"}
+              onClick={() => suggest("emailSubject")}
+              title={subj.trim() ? "Pule el asunto con IA" : "Propón un asunto con IA"}
+              label={subj.trim() ? "✨ Mejorar con IA" : "✨ Sugerir con IA"}
+            />
+          </div>
           <input
             ref={subjRef}
             name="emailSubject"
@@ -186,7 +246,7 @@ export function OrgEmailForm({
           <span className="mt-1 block text-[11px] text-slate-400">
             Si lo dejas vacío: “Bienvenido/a al proceso [programa]”. Admite variables.
           </span>
-        </label>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className={labelCls}>Fecha del taller</span>

@@ -277,6 +277,66 @@ export async function improveInvitationWelcome(input: {
   return groqText(system, user, { temperature: 0.7, maxTokens: budgetFor(current) });
 }
 
+/** Deja una sugerencia en una sola línea, sin comillas alrededor ni punto final. */
+function oneLine(text: string, maxChars: number): string {
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/^["'«»“”¡¿]+|["'«»“”.]+$/g, "")
+    .trim()
+    .slice(0, maxChars);
+}
+
+/**
+ * Sugiere con IA (Groq) el nombre del programa o el asunto del correo: lo
+ * redacta si está vacío y lo pule si ya hay algo. Requiere GROQ_API_KEY.
+ */
+export async function suggestEmailField(input: {
+  organizationId: string;
+  field: "programName" | "emailSubject";
+  current?: string;
+  programName?: string;
+  lang?: "ca" | "es";
+}): Promise<{ ok: boolean; text?: string; error?: string }> {
+  const session = await requireAuth();
+  if (!input.organizationId || !assertOrgAccess(session, input.organizationId)) {
+    return { ok: false, error: "Sin permiso sobre esta organización." };
+  }
+  const org = await prisma.organization.findUnique({
+    where: { id: input.organizationId },
+    select: { name: true },
+  });
+  const orgName = org?.name?.trim() || "";
+  const lang = input.lang === "es" ? "es" : "ca";
+  const langName = lang === "es" ? "español" : "catalán";
+  const current = (input.current || "").trim();
+  const program = (input.programName || "").trim();
+  const contexto = [
+    orgName ? `Organización: «${orgName}».` : "",
+    program ? `Programa: «${program}».` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const esPrograma = input.field === "programName";
+  const system = esPrograma
+    ? "Eres redactor de GESEM y nombras programas de desarrollo de equipos que empiezan con un cuestionario de estilos conductuales DISC. " +
+      "El nombre es un lema corto: de 2 a 5 palabras, evocador y claro, sin comillas, sin punto final y sin el nombre de la empresa. " +
+      "Habla de colaboración, comunicación o autoconocimiento; nunca de diagnóstico, evaluación del rendimiento ni capacidades. " +
+      "Responde SOLO con el nombre."
+    : "Eres redactor de GESEM y escribes el ASUNTO del correo que invita a una persona a completar su cuestionario de estilos conductuales DISC. " +
+      "Una sola línea de menos de 60 caracteres, concreta y cordial, sin emojis, sin comillas y sin puntos suspensivos. " +
+      "Puedes usar la variable {{programa}}, que se sustituye por el nombre del programa al enviar, y {{nombre}} para el nombre de la persona. " +
+      "Nada de urgencias ni de lenguaje de diagnóstico. Responde SOLO con el asunto.";
+  const que = esPrograma ? "el nombre del programa" : "el asunto";
+  const user = current
+    ? `Mejora ${que}, en ${langName}. ${contexto}\n\nActual: ${current}`
+    : `Propón ${que}, en ${langName}. ${contexto}`;
+
+  const r = await groqText(system, user, { temperature: 0.8, maxTokens: budgetFor(current) });
+  if (!r.ok || !r.text) return r;
+  return { ok: true, text: oneLine(r.text, 200) };
+}
+
 /**
  * Traduce el mensaje de bienvenida entre castellano y catalán con IA (Groq),
  * conservando el markdown y las variables {{…}}. Requiere GROQ_API_KEY.
