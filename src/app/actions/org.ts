@@ -175,6 +175,15 @@ const GROQ_TEXT_MODEL = "openai/gpt-oss-120b";
 const GROQ_VISION_MODEL = "qwen/qwen3.8-27b";
 
 /**
+ * Presupuesto de tokens para un texto de entrada: tiene que caber el
+ * razonamiento del modelo y la respuesta, que puede ser más larga que el
+ * original (si alguien pega un mensaje largo, la traducción también lo es).
+ */
+function budgetFor(text: string): number {
+  return Math.min(6000, 1200 + Math.ceil(text.length / 2));
+}
+
+/**
  * Llamada de texto a la IA (Groq, API compatible con OpenAI). Devuelve el
  * contenido del primer mensaje o un error ya redactado para la consola.
  */
@@ -183,6 +192,9 @@ async function groqText(
   user: string,
   opts: { temperature: number; maxTokens: number },
 ): Promise<{ ok: boolean; text?: string; error?: string }> {
+  // gpt-oss razona antes de responder y ese razonamiento gasta max_tokens: con
+  // el esfuerzo por defecto se comía el presupuesto entero y la respuesta
+  // llegaba vacía o cortada ("La IA no devolvió texto").
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     return {
@@ -201,6 +213,7 @@ async function groqText(
       body: JSON.stringify({
         model: GROQ_TEXT_MODEL,
         max_tokens: opts.maxTokens,
+        reasoning_effort: "low",
         temperature: opts.temperature,
         messages: [
           { role: "system", content: system },
@@ -213,10 +226,20 @@ async function groqText(
       return { ok: false, error: `La IA no respondió correctamente (${res.status}).` };
     }
     const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
+      choices?: { finish_reason?: string; message?: { content?: string } }[];
     };
-    const text = (data.choices?.[0]?.message?.content ?? "").trim();
-    if (!text) return { ok: false, error: "La IA no devolvió texto." };
+    const choice = data.choices?.[0];
+    const text = (choice?.message?.content ?? "").trim();
+    // Con finish_reason "length" el texto llega a medias: mejor avisar que
+    // pegar media frase en el correo.
+    if (choice?.finish_reason === "length") {
+      console.error("[IA] respuesta cortada por max_tokens:", opts.maxTokens);
+      return {
+        ok: false,
+        error: "La IA se quedó sin espacio para responder. Inténtalo otra vez o acorta el mensaje.",
+      };
+    }
+    if (!text) return { ok: false, error: "La IA no devolvió texto. Inténtalo otra vez." };
     return { ok: true, text };
   } catch (e) {
     console.error("[IA] fallo de conexión:", e);
@@ -249,7 +272,7 @@ export async function improveInvitationWelcome(input: {
   const user = current
     ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`
     : `Escribe un mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}, que invite a la persona a completar su cuestionario DISC con calma y una mirada reflexiva antes del taller.`;
-  return groqText(system, user, { temperature: 0.7, maxTokens: 400 });
+  return groqText(system, user, { temperature: 0.7, maxTokens: budgetFor(current) });
 }
 
 /**
@@ -273,7 +296,10 @@ export async function translateInvitationWelcome(input: {
     "Los nombres propios y los nombres de programa en mayúsculas se dejan como están. " +
     `Si el texto ya está en ${target}, corrígelo solo si tiene errores. ` +
     "Responde SOLO con el texto traducido, sin comillas ni explicaciones.";
-  return groqText(system, `Traduce al ${target}:\n\n${text}`, { temperature: 0.2, maxTokens: 500 });
+  return groqText(system, `Traduce al ${target}:\n\n${text}`, {
+    temperature: 0.2,
+    maxTokens: budgetFor(text),
+  });
 }
 
 /**
