@@ -6,7 +6,13 @@ import {
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import type { Lang } from "@/lib/i18n/dictionaries";
-import { fillVars, welcomeIsEmpty, welcomeToEmailHtml, welcomeToText } from "./rich-text";
+import {
+  fillVars,
+  sanitizeInlineHtml,
+  welcomeIsEmpty,
+  welcomeToEmailHtml,
+  welcomeToText,
+} from "./rich-text";
 
 const BRAND = "#00a1e0";
 
@@ -96,6 +102,8 @@ export function invitationEmail(input: {
   /** Personalización por organización (opcional): programa, taller, fecha límite y bienvenida. */
   program?: {
     name?: string | null;
+    /** El nombre con formato en línea (negrita, cursiva, color) para el cuerpo del correo. */
+    nameHtml?: string | null;
     /** Asunto personalizado (admite variables); si vacío, se usa el asunto por defecto del programa. */
     subject?: string | null;
     /** Fecha del taller en ISO (YYYY-MM-DD). */
@@ -121,6 +129,8 @@ export function invitationEmail(input: {
   const prog = input.program;
   const programName = prog?.name?.trim() || "";
   const hasProgram = programName.length > 0;
+  // En el cuerpo, el nombre puede llevar formato; asunto, bandeja y texto plano, no.
+  const programHtml = prog?.nameHtml?.trim() ? sanitizeInlineHtml(prog.nameHtml) : esc(programName);
   // Mensaje de bienvenida: HTML del editor o markdown de los mensajes antiguos.
   const welcome = prog?.welcomeIntro?.trim() ?? "";
   const hasWelcome = !welcomeIsEmpty(welcome);
@@ -234,7 +244,7 @@ export function invitationEmail(input: {
       <td style="padding:5px 0;font-size:14px;color:#0f172a;font-weight:600;vertical-align:top;">${v}</td>
     </tr>`;
   const infoRows = [
-    infoRow(W.lProgram, esc(programName)),
+    infoRow(W.lProgram, programHtml),
     sessionCell ? infoRow(W.lSession, sessionCell) : "",
     deadlineFmt ? infoRow(W.lDeadline, deadlineFmt) : "",
   ].join("");
@@ -248,7 +258,7 @@ export function invitationEmail(input: {
     : "";
   const programBlock = hasProgram
     ? `
-    <p style="margin:0 0 14px;line-height:1.6;color:#334155;font-size:15px;">${W.lead(esc(programName))}</p>${infoBox}
+    <p style="margin:0 0 14px;line-height:1.6;color:#334155;font-size:15px;">${W.lead(programHtml)}</p>${infoBox}
     <div style="margin:0 0 4px;">${welcomeToEmailHtml(hasWelcome ? welcome : W.reflective, vars)}</div>`
     : "";
 

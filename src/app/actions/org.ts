@@ -9,7 +9,14 @@ import type { SessionPayload } from "@/lib/auth/jwt";
 import { invitationEmail } from "@/lib/email/templates";
 import { absoluteUrl, isMailConfigured, mailFrom, sendMail } from "@/lib/email/mailer";
 import { checkInvitation, type EmailCheck } from "@/lib/email/checks";
-import { isWelcomeHtml, sanitizeWelcomeHtml, welcomeFromAi, welcomeIsEmpty } from "@/lib/email/rich-text";
+import {
+  inlineText,
+  isWelcomeHtml,
+  sanitizeInlineHtml,
+  sanitizeWelcomeHtml,
+  welcomeFromAi,
+  welcomeIsEmpty,
+} from "@/lib/email/rich-text";
 
 export interface ActionState {
   error?: string;
@@ -68,6 +75,7 @@ export async function createOrganization(
 const OrgEmailSchema = z.object({
   organizationId: z.string().min(1),
   programName: z.string().trim().max(200).optional(),
+  programNameHtml: z.string().trim().max(2000).optional(),
   emailSubject: z.string().trim().max(200).optional(),
   emailLang: z.enum(["ca", "es"]).optional(),
   sessionDate: z.string().trim().max(40).optional(),
@@ -87,6 +95,16 @@ function cleanWelcome(text: string | undefined): string | null {
 }
 
 /**
+ * Nombre del programa con formato, saneado. Si no aporta nada (vacío o sin
+ * formato), se guarda null y el correo usa el nombre en texto plano.
+ */
+function cleanProgramHtml(html: string | undefined, name: string | undefined): string | null {
+  if (!html || !name?.trim()) return null;
+  const clean = sanitizeInlineHtml(html);
+  return /<(strong|em|u|s|span)[\s>]/.test(clean) && inlineText(clean) ? clean : null;
+}
+
+/**
  * Guarda la personalización del correo de invitación de una organización
  * (nombre del programa, taller, fecha límite y mensaje de bienvenida). Todos
  * opcionales: sin programName, el correo usa el texto genérico por defecto.
@@ -99,6 +117,7 @@ export async function updateOrgEmailConfig(
   const parsed = OrgEmailSchema.safeParse({
     organizationId: formData.get("organizationId"),
     programName: formData.get("programName") ?? undefined,
+    programNameHtml: formData.get("programNameHtml") ?? undefined,
     emailSubject: formData.get("emailSubject") ?? undefined,
     emailLang: formData.get("emailLang") || undefined,
     sessionDate: formData.get("sessionDate") ?? undefined,
@@ -121,6 +140,7 @@ export async function updateOrgEmailConfig(
     where: { id: parsed.data.organizationId },
     data: {
       programName: parsed.data.programName || null,
+      programNameHtml: cleanProgramHtml(parsed.data.programNameHtml, parsed.data.programName),
       emailSubject: parsed.data.emailSubject || null,
       emailLang: parsed.data.emailLang || null,
       sessionDate: parsed.data.sessionDate || null,
@@ -138,6 +158,8 @@ export async function updateOrgEmailConfig(
 export interface InvitationDraft {
   organizationId: string;
   programName?: string;
+  /** El nombre con formato (negrita, cursiva, color) para el cuerpo del correo. */
+  programNameHtml?: string;
   emailSubject?: string;
   sessionDate?: string;
   sessionInfo?: string;
@@ -172,6 +194,7 @@ async function composeDraft(input: InvitationDraft) {
     program: name
       ? {
           name,
+          nameHtml: input.programNameHtml,
           subject: input.emailSubject,
           sessionDate: input.sessionDate,
           sessionInfo: input.sessionInfo,
@@ -218,6 +241,7 @@ export async function previewInvitationEmail(input: InvitationDraft): Promise<{
       sessionDate: input.sessionDate,
       deadline: input.deadline,
       showProgramBox: input.showProgramBox,
+      lang: input.lang === "es" ? "es" : "ca",
     }),
   };
 }
@@ -452,6 +476,72 @@ export async function translateInvitationWelcome(input: {
     maxTokens: budgetFor(text),
   });
   return r.ok && r.text ? { ok: true, text: welcomeFromAi(r.text) } : r;
+}
+
+/** Propuesta de la IA para arreglar el correo (sin guardar). */
+export interface AiEmailProposal {
+  programName: string;
+  emailSubject: string;
+  welcomeIntro: string;
+  /** Qué ha cambiado, en frases cortas, para enseñarlo antes de aplicarlo. */
+  changes: string[];
+}
+
+/**
+ * Revisa el correo con IA y propone una versión corregida: arregla los avisos
+ * de la revisión automática y los errores claros de ortografía y tipografía,
+ * sin cambiar el sentido ni el formato del mensaje. No guarda nada.
+ */
+export async function fixInvitationWithAi(
+  input: InvitationDraft & { problems: string[] },
+): Promise<{ ok: boolean; proposal?: AiEmailProposal; error?: string }> {
+  const session = await requireAuth();
+  if (!input.organizationId || !assertOrgAccess(session, input.organizationId)) {
+    return { ok: false, error: "Sin permiso sobre esta organización." };
+  }
+  const langName = input.lang === "es" ? "castellano" : "catalán";
+  const current = {
+    programName: (input.programName || "").trim(),
+    emailSubject: (input.emailSubject || "").trim(),
+    welcomeIntro: welcomeIsEmpty(input.welcomeIntro) ? "" : (input.welcomeIntro || "").trim(),
+  };
+  const system =
+    "Eres editor de GESEM y revisas el correo de invitación a un cuestionario de estilos conductuales DISC antes de enviarlo. " +
+    `El correo se enviará en ${langName}. Recibes sus campos en JSON y una lista de avisos. ` +
+    "Corrige lo que señalan los avisos y los errores claros de ortografía, acentos y tipografía (en catalán: apóstrofo ’, ela geminada l·l; en castellano: tildes). " +
+    "No cambies el sentido, el tono, la estructura ni la longitud; no añadas ideas nuevas. Si un campo está bien, devuélvelo igual. " +
+    "welcomeIntro es HTML: conserva todas sus etiquetas y atributos style tal cual y traduce o corrige solo el texto visible. " +
+    "El correo ya empieza con «Hola {nombre},»: si el mensaje vuelve a saludar al principio, quita ese saludo. " +
+    "emailSubject es texto plano: sin asteriscos ni formato, menos de 60 caracteres. Si está vacío, déjalo vacío. " +
+    "Copia las variables entre dobles llaves ({{nombre}}, {{programa}}…) tal cual; si una variable no existe, sustitúyela por la más parecida de: nombre, nombre_completo, email, programa, organizacion. " +
+    "Respeta siempre el lenguaje de tendencia: nunca diagnóstico. " +
+    'Responde SOLO con un objeto JSON: {"programName": string, "emailSubject": string, "welcomeIntro": string, "changes": [string]}; ' +
+    "en changes, cada cambio hecho en una frase corta en castellano (vacío si no hay cambios).";
+  const user = JSON.stringify({ ...current, avisos: input.problems.slice(0, 20) });
+  const r = await groqText(system, user, { temperature: 0.2, maxTokens: budgetFor(user) + 800 });
+  if (!r.ok || !r.text) return { ok: false, error: r.error };
+
+  let data: Partial<Record<keyof AiEmailProposal, unknown>>;
+  try {
+    const raw = r.text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    data = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+  } catch {
+    console.error("[IA] respuesta no es JSON:", r.text.slice(0, 300));
+    return { ok: false, error: "La IA no devolvió una propuesta válida. Inténtalo otra vez." };
+  }
+  const str = (v: unknown, fallback: string) => (typeof v === "string" ? v : fallback);
+  const welcome = str(data.welcomeIntro, current.welcomeIntro);
+  return {
+    ok: true,
+    proposal: {
+      programName: oneLine(str(data.programName, current.programName), 200) || current.programName,
+      emailSubject: current.emailSubject ? oneLine(str(data.emailSubject, current.emailSubject), 200) : "",
+      welcomeIntro: current.welcomeIntro && welcome.trim() ? welcomeFromAi(welcome) : current.welcomeIntro,
+      changes: Array.isArray(data.changes)
+        ? data.changes.filter((c): c is string => typeof c === "string" && c.trim() !== "").slice(0, 12)
+        : [],
+    },
+  };
 }
 
 /**

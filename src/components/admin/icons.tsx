@@ -140,6 +140,43 @@ export const IconRedo = (p: IconProps) => (
   </Icon>
 );
 
+export const IconAlert = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M10.3 4.2 2.9 17.3A2 2 0 0 0 4.6 20.3h14.8a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z" />
+    <path d="M12 9.5v4M12 16.8h.01" />
+  </Icon>
+);
+
+export const IconInfo = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 7.8h.01" />
+  </Icon>
+);
+
+export const IconCheckCircle = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12.3 2.7 2.7L16 9.5" />
+  </Icon>
+);
+
+export const IconSmile = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" />
+    <circle cx="9" cy="10" r="0.9" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="10" r="0.9" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
+export const IconWand = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20 15 9M13 7l4 4" />
+    <path d="M17 3v3M15.5 4.5h3M20 10v2M19 11h2M9 3v2M8 4h2" />
+  </Icon>
+);
+
 /** Indicador de trabajo en curso (respeta "reducir movimiento" desde globals.css). */
 export const Spinner = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" className={`animate-spin ${className}`} aria-hidden>

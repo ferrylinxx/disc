@@ -2,8 +2,21 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import type { EmailCheck } from "@/lib/email/checks";
-import { IconClose, IconMonitor, IconPhone, IconRefresh, IconSend, Spinner } from "./icons";
+import type { CheckField, EmailCheck } from "@/lib/email/checks";
+import type { EmailFields, FixId } from "@/lib/email/fixes";
+import { AiButton } from "./EmailFormControls";
+import {
+  IconAlert,
+  IconCheckCircle,
+  IconClose,
+  IconInfo,
+  IconMonitor,
+  IconPhone,
+  IconRefresh,
+  IconSend,
+  IconWand,
+  Spinner,
+} from "./icons";
 
 /**
  * Vista previa del correo de invitación a pantalla completa: el correo en
@@ -23,6 +36,12 @@ export interface PreviewData {
 export interface PreviewOptions {
   lang: "ca" | "es";
   sampleName: string;
+}
+
+/** Versión corregida que propone la IA, todavía sin aplicar al formulario. */
+export interface AiProposal {
+  fields: EmailFields;
+  changes: string[];
 }
 
 type Device = "desktop" | "mobile";
@@ -69,23 +88,44 @@ function Segmented<T extends string>({
   );
 }
 
-const CHECK_STYLE: Record<EmailCheck["level"], { icon: string; cls: string }> = {
-  warn: { icon: "⚠", cls: "border-amber-200 bg-amber-50 text-amber-900" },
-  info: { icon: "ℹ", cls: "border-sky-100 bg-sky-50 text-sky-900" },
-  ok: { icon: "✓", cls: "border-emerald-200 bg-emerald-50 text-emerald-800" },
+const CHECK_STYLE: Record<EmailCheck["level"], { icon: ReactNode; cls: string }> = {
+  warn: { icon: <IconAlert size={16} className="text-amber-600" />, cls: "border-amber-200/80 bg-amber-50/70 text-amber-950" },
+  info: { icon: <IconInfo size={16} className="text-sky-600" />, cls: "border-sky-100 bg-sky-50/60 text-slate-800" },
+  ok: { icon: <IconCheckCircle size={16} className="text-emerald-600" />, cls: "border-emerald-200 bg-emerald-50 text-emerald-900" },
 };
 
-function Section({ title, children, badge }: { title: string; children: ReactNode; badge?: ReactNode }) {
+const FIELD_LABEL: Record<CheckField, string> = {
+  program: "Programa",
+  subject: "Asunto",
+  welcome: "Mensaje de bienvenida",
+  typography: "Ortografía y tipografía",
+  dates: "Fechas",
+};
+const FIELD_ORDER: CheckField[] = ["program", "subject", "welcome", "typography", "dates"];
+
+/** Qué hace cada arreglo automático, dicho en el botón. */
+const FIX_LABEL: Record<FixId, string> = {
+  "subject-markup": "Quitar los asteriscos",
+  greeting: "Quitar el saludo del mensaje",
+  apostrophes: "Corregir los apóstrofos",
+  ela: "Corregir la ela geminada",
+  spacing: "Quitar los espacios de más",
+};
+
+function Section({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
     <section className="space-y-2.5">
-      <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-        {title}
-        {badge}
-      </h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-[13px] font-semibold text-slate-900">{title}</h3>
+        {action}
+      </div>
       {children}
     </section>
   );
 }
+
+const fixBtnCls =
+  "inline-flex h-7 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:text-slate-950 hover:ring-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50";
 
 /** "DISC GESEM <x@y>" → { name: "DISC GESEM", address: "x@y" }. */
 function splitAddress(value: string) {
@@ -99,14 +139,24 @@ export default function EmailPreview({
   configuredLang,
   load,
   sendTest,
+  onQuickFix,
+  onAiFix,
+  onApply,
   onClose,
 }: {
   initial: PreviewData;
   initialLang: "ca" | "es";
   /** Idioma con el que se enviará el correo (el del formulario). */
   configuredLang: "ca" | "es";
-  load: (opts: PreviewOptions) => Promise<PreviewData | null>;
+  /** Genera la vista previa con el formulario o, si se da, con otros campos (la propuesta de la IA). */
+  load: (opts: PreviewOptions, override?: EmailFields) => Promise<PreviewData | null>;
   sendTest: (opts: PreviewOptions) => Promise<void>;
+  /** Aplica arreglos automáticos al formulario y devuelve los campos resultantes. */
+  onQuickFix: (fixes: FixId[]) => EmailFields;
+  /** Pide a la IA una versión corregida; no toca el formulario. */
+  onAiFix: (opts: PreviewOptions, problems: string[]) => Promise<AiProposal | null>;
+  /** Aplica al formulario la propuesta de la IA. */
+  onApply: (fields: EmailFields) => void;
   onClose: () => void;
 }) {
   const [data, setData] = useState(initial);
@@ -116,6 +166,9 @@ export default function EmailPreview({
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [frameHeight, setFrameHeight] = useState(900);
+  const [proposal, setProposal] = useState<AiProposal | null>(null);
+  const [fixing, setFixing] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeRef = useRef(onClose);
   useEffect(() => {
@@ -137,11 +190,49 @@ export default function EmailPreview({
     };
   }, []);
 
-  async function refresh(opts: PreviewOptions) {
+  /**
+   * Regenera la vista previa. Sin `override`, muestra la propuesta de la IA si
+   * hay una pendiente; con `null`, lo que hay en el formulario.
+   */
+  async function refresh(opts: PreviewOptions, override?: EmailFields | null) {
+    const fields = override === undefined ? proposal?.fields : (override ?? undefined);
     setLoading(true);
-    const next = await load(opts);
+    const next = await load(opts, fields);
     setLoading(false);
     if (next) setData(next);
+  }
+
+  async function quickFix(fixes: FixId[]) {
+    const fields = onQuickFix(fixes);
+    setNotice("Arreglado en el formulario. Guarda el correo para conservarlo.");
+    await refresh({ lang, sampleName }, fields);
+  }
+
+  async function aiFix() {
+    setNotice(null);
+    setFixing(true);
+    const problems = data.checks.filter((c) => c.level !== "ok").map((c) => c.text);
+    const p = await onAiFix({ lang, sampleName }, problems);
+    setFixing(false);
+    if (!p) return;
+    if (p.changes.length === 0) {
+      setNotice("La IA no ha encontrado nada que cambiar.");
+      return;
+    }
+    setProposal(p);
+    await refresh({ lang, sampleName }, p.fields);
+  }
+
+  function applyProposal() {
+    if (!proposal) return;
+    onApply(proposal.fields);
+    setProposal(null);
+    setNotice("Propuesta aplicada al formulario. Guarda el correo para conservarla.");
+  }
+
+  async function discardProposal() {
+    setProposal(null);
+    await refresh({ lang, sampleName }, null);
   }
 
   function changeLang(l: "ca" | "es") {
@@ -162,6 +253,11 @@ export default function EmailPreview({
   }
 
   const warnings = data.checks.filter((c) => c.level === "warn").length;
+  const notes = data.checks.filter((c) => c.level === "info").length;
+  const autoFixes = [...new Set(data.checks.map((c) => c.fix).filter((f): f is FixId => !!f))];
+  const groups = FIELD_ORDER.map((f) => ({ field: f, items: data.checks.filter((c) => c.field === f) })).filter(
+    (g) => g.items.length > 0,
+  );
   const from = splitAddress(data.from);
   const to = splitAddress(data.to);
   const html = frameHtml(data.html);
@@ -249,6 +345,20 @@ export default function EmailPreview({
               </span>
             </div>
           )}
+          {proposal && (
+            <div className="sticky top-0 z-10 mx-auto mb-4 flex w-full max-w-[920px] flex-wrap items-center gap-3 rounded-2xl border border-indigo-200 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur">
+              <IconWand size={16} className="text-indigo-500" />
+              <p className="mr-auto text-[13px] font-medium text-slate-800">
+                Estás viendo la propuesta de la IA. Todavía no se ha aplicado al formulario.
+              </p>
+              <button type="button" onClick={applyProposal} className="bg-brand inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm shadow-sky-500/25">
+                Aplicar
+              </button>
+              <button type="button" onClick={() => void discardProposal()} className={fixBtnCls}>
+                Descartar
+              </button>
+            </div>
+          )}
           {device === "desktop" ? (
             <div className="mx-auto w-full max-w-[920px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="space-y-1.5 border-b border-slate-100 px-5 py-4 text-sm">
@@ -304,24 +414,96 @@ export default function EmailPreview({
         <aside className="w-full shrink-0 space-y-6 overflow-auto border-t border-slate-200 bg-white p-5 lg:w-[360px] lg:border-l lg:border-t-0">
           <Section
             title="Revisión"
-            badge={
-              warnings > 0 ? (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold normal-case tracking-normal text-amber-800">
-                  {warnings} {warnings === 1 ? "aviso" : "avisos"}
-                </span>
-              ) : null
+            action={
+              <AiButton
+                size="sm"
+                busy={fixing}
+                disabled={!!proposal}
+                onClick={() => void aiFix()}
+                label={warnings > 0 ? "Arreglar con IA" : "Revisar con IA"}
+                busyLabel="Revisando…"
+                title="La IA propone una versión corregida del programa, el asunto y el mensaje; la ves aquí antes de aplicarla"
+              />
             }
           >
-            <ul className="space-y-2">
-              {data.checks.map((c, i) => (
-                <li key={i} className={`flex gap-2 rounded-xl border px-3 py-2 text-[13px] leading-snug ${CHECK_STYLE[c.level].cls}`}>
-                  <span aria-hidden className="font-bold">
-                    {CHECK_STYLE[c.level].icon}
-                  </span>
-                  <span>{c.text}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+              {warnings > 0 ? (
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-900">
+                  {warnings} {warnings === 1 ? "aviso" : "avisos"}
+                </span>
+              ) : (
+                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-900">Sin avisos</span>
+              )}
+              {notes > 0 && (
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                  {notes} {notes === 1 ? "nota" : "notas"}
+                </span>
+              )}
+              {autoFixes.length > 1 && !proposal && (
+                <button type="button" onClick={() => void quickFix(autoFixes)} disabled={loading} className={`${fixBtnCls} ml-auto`}>
+                  <IconWand size={13} className="text-sky-600" />
+                  Arreglar lo automático ({autoFixes.length})
+                </button>
+              )}
+            </div>
+
+            {proposal && (
+              <div className="rounded-2xl border border-indigo-200 bg-gradient-to-b from-indigo-50/70 to-white p-3.5">
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-900">
+                  <IconWand size={15} className="text-indigo-500" />
+                  Propuesta de la IA
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">Ya la ves en el correo. Revísala antes de aplicarla.</p>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[13px] leading-snug text-slate-700">
+                  {proposal.changes.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={applyProposal} className="bg-brand inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm shadow-sky-500/25">
+                    Aplicar al formulario
+                  </button>
+                  <button type="button" onClick={() => void discardProposal()} className={fixBtnCls}>
+                    Descartar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {notice && (
+              <p className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-medium text-white" role="status">
+                {notice}
+              </p>
+            )}
+
+            {warnings === 0 && notes === 0 && (
+              <div className={`flex gap-2 rounded-xl border px-3 py-2.5 text-[13px] leading-snug ${CHECK_STYLE.ok.cls}`}>
+                {CHECK_STYLE.ok.icon}
+                <span>No se han detectado problemas.</span>
+              </div>
+            )}
+
+            {groups.map((g) => (
+              <div key={g.field} className="space-y-1.5">
+                <p className="text-xs font-medium text-slate-500">{FIELD_LABEL[g.field]}</p>
+                <ul className="space-y-1.5">
+                  {g.items.map((c, i) => (
+                    <li key={i} className={`rounded-xl border px-3 py-2.5 text-[13px] leading-snug ${CHECK_STYLE[c.level].cls}`}>
+                      <div className="flex gap-2">
+                        <span className="mt-px shrink-0">{CHECK_STYLE[c.level].icon}</span>
+                        <span>{c.text}</span>
+                      </div>
+                      {c.fix && !proposal && (
+                        <button type="button" onClick={() => void quickFix([c.fix!])} disabled={loading} className={`${fixBtnCls} ml-6 mt-2`}>
+                          <IconWand size={13} className="text-sky-600" />
+                          {FIX_LABEL[c.fix]}
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </Section>
 
           <Section title="Así aparece en la bandeja de entrada">

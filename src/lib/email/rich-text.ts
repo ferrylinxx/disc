@@ -134,6 +134,28 @@ export function sanitizeWelcomeHtml(html: string): string {
   }).trim();
 }
 
+/**
+ * Formato en línea de una sola línea (el nombre del programa): negrita,
+ * cursiva, subrayado, tachado y color. Los párrafos y saltos se convierten en
+ * espacios, porque el nombre se inserta dentro de una frase.
+ */
+export function sanitizeInlineHtml(html: string): string {
+  const flat = html.replace(/<\/(p|div|h[1-6]|li)>\s*<(p|div|h[1-6]|li)[^>]*>/gi, " ").replace(/<br\s*\/?>/gi, " ");
+  return sanitizeHtml(flat, {
+    allowedTags: ["strong", "em", "u", "s", "span"],
+    allowedAttributes: { span: ["style"] },
+    allowedStyles: { span: { color: COLOR } },
+    transformTags: { b: "strong", i: "em", strike: "s", del: "s" },
+  })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Texto plano de un HTML en línea (para el asunto, la bandeja o el texto plano). */
+export function inlineText(html: string): string {
+  return decodeEntities(sanitizeInlineHtml(html).replace(/<[^>]+>/g, "")).trim();
+}
+
 // ── HTML de correo ─────────────────────────────────────────────────────────
 
 /** Estilos en línea de cada bloque en el correo (lo del usuario va detrás y manda). */

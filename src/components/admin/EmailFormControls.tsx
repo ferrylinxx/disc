@@ -1,7 +1,67 @@
 "use client";
 
-import { useId } from "react";
-import { IconPlus, IconTranslate, Spinner } from "./icons";
+import { useEffect, useId, useRef, useState } from "react";
+import { IconPlus, IconSmile, IconTranslate, Spinner } from "./icons";
+
+/** Emojis habituales en asuntos de invitación a un taller. */
+const SUBJECT_EMOJIS = ["👋", "📅", "✅", "✨", "🎯", "📝", "🤝", "💬", "🚀", "⏰", "📌", "🙌"];
+
+/**
+ * El asunto no admite negrita ni colores en ningún programa de correo; los
+ * emojis sí se ven. Botón con un panel de emojis que se insertan en el cursor.
+ */
+export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        title="Añadir un emoji al asunto"
+        aria-label="Añadir un emoji al asunto"
+        className={`grid h-7 w-7 place-items-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+          open ? "bg-sky-100 text-sky-800" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        }`}
+      >
+        <IconSmile size={16} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-1.5 w-52 rounded-xl border border-slate-200 bg-white p-2.5 shadow-lg">
+          <div className="grid grid-cols-6 gap-1">
+            {SUBJECT_EMOJIS.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onMouseDown={(ev) => ev.preventDefault()}
+                onClick={() => {
+                  onPick(e);
+                  setOpen(false);
+                }}
+                className="grid h-8 w-8 place-items-center rounded-lg text-lg transition hover:bg-slate-100"
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-snug text-slate-400">
+            El asunto no admite negritas ni colores en ningún programa de correo; los emojis, sí.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Controles del formulario del correo de invitación: botón de IA (con el filo

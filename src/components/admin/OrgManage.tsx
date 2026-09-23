@@ -3,8 +3,15 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { WelcomeEditorApi } from "./WelcomeEditor";
-import EmailPreview, { type PreviewData, type PreviewOptions } from "./EmailPreview";
-import { AiButton, TranslateControl, VariableChips, type EmailVariable } from "./EmailFormControls";
+import type { InlineRichInputApi } from "./InlineRichInput";
+import EmailPreview, { type AiProposal, type PreviewData, type PreviewOptions } from "./EmailPreview";
+import {
+  AiButton,
+  EmojiPicker,
+  TranslateControl,
+  VariableChips,
+  type EmailVariable,
+} from "./EmailFormControls";
 import { IconCheck, IconEye, Spinner } from "./icons";
 import {
   deleteOrganization,
@@ -13,6 +20,7 @@ import {
   updateOrganization,
 } from "@/app/actions/admin";
 import {
+  fixInvitationWithAi,
   improveInvitationWelcome,
   previewInvitationEmail,
   sendTestInvitationEmail,
@@ -23,6 +31,7 @@ import {
 } from "@/app/actions/org";
 import { addOrgGestor } from "@/app/actions/users";
 import { insertAt } from "@/lib/text-insert";
+import { applyFix, type EmailFields, type FixId } from "@/lib/email/fixes";
 import { ConfirmButton, toast } from "./ui-client";
 import { btn } from "./ui";
 
@@ -31,6 +40,15 @@ const WelcomeEditor = dynamic(() => import("./WelcomeEditor"), {
   ssr: false,
   loading: () => <div className="h-[232px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />,
 });
+
+// Campo de una línea con formato para el nombre del programa (misma librería que el editor).
+const InlineRichInput = dynamic(() => import("./InlineRichInput"), {
+  ssr: false,
+  loading: () => <div className="h-[42px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />,
+});
+
+const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const SUBJECT_MAX = 60;
 
 /** ¿El HTML del editor tiene texto? ("<p></p>" cuenta como vacío). */
 const hasText = (html: string) => html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() !== "";
@@ -52,6 +70,7 @@ const EMAIL_VARS: readonly EmailVariable[] = [
 export function OrgEmailForm({
   id,
   programName,
+  programNameHtml,
   emailSubject,
   emailLang,
   sessionDate,
@@ -62,6 +81,7 @@ export function OrgEmailForm({
 }: {
   id: string;
   programName: string;
+  programNameHtml: string;
   emailSubject: string;
   emailLang: string;
   sessionDate: string;
@@ -81,6 +101,7 @@ export function OrgEmailForm({
 
   // Campos controlados: la vista previa y la IA usan los valores sin guardar.
   const [prog, setProg] = useState(programName);
+  const [progHtml, setProgHtml] = useState(programNameHtml);
   const [subj, setSubj] = useState(emailSubject);
   const [sDate, setSDate] = useState(sessionDate);
   const [sess, setSess] = useState(sessionInfo);
@@ -99,6 +120,7 @@ export function OrgEmailForm({
   // mensaje); por defecto, el mensaje de bienvenida.
   const subjRef = useRef<HTMLInputElement>(null);
   const editorApi = useRef<WelcomeEditorApi | null>(null);
+  const programApi = useRef<InlineRichInputApi | null>(null);
   const [target, setTarget] = useState<"subject" | "intro">("intro");
   const introHasText = hasText(intro);
 
@@ -118,28 +140,72 @@ export function OrgEmailForm({
     });
   }
 
+  function insertEmoji(emoji: string) {
+    const el = subjRef.current;
+    if (!el) return;
+    setTarget("subject");
+    const { value, caret } = insertAt(el.value, el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length, emoji);
+    setSubj(value);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
+  }
+
+  /** Cambia el nombre del programa en el campo con formato y en el formulario. */
+  function replaceProgram(name: string, html: string) {
+    setProg(name);
+    setProgHtml(html);
+    programApi.current?.setHtml(html || escapeHtml(name));
+  }
+
   /** Sustituye el mensaje (p. ej. con lo que devuelve la IA) en el editor y en el formulario. */
   function replaceIntro(html: string) {
     setIntro(html);
     editorApi.current?.setHtml(html);
   }
 
-  /** El correo tal y como está en el formulario (sin guardar), para la vista previa o la prueba. */
-  const draft = (opts: PreviewOptions) => ({
-    organizationId: id,
+  /** Los campos de texto del correo tal y como están ahora en el formulario. */
+  const currentFields = (): EmailFields => ({
     programName: prog,
+    programNameHtml: progHtml,
     emailSubject: subj,
+    welcomeIntro: intro,
+  });
+
+  /** Aplica campos nuevos (arreglos o propuesta de la IA) al formulario y a los editores. */
+  function applyFields(f: EmailFields) {
+    if (f.programName !== prog || f.programNameHtml !== progHtml) replaceProgram(f.programName, f.programNameHtml);
+    if (f.emailSubject !== subj) setSubj(f.emailSubject);
+    if (f.welcomeIntro !== intro) replaceIntro(f.welcomeIntro);
+  }
+
+  function quickFix(fixes: FixId[]): EmailFields {
+    const next = fixes.reduce((f, fix) => applyFix(f, fix), currentFields());
+    applyFields(next);
+    return next;
+  }
+
+  /**
+   * El correo tal y como está en el formulario (sin guardar), para la vista
+   * previa, la prueba o la IA; `override` sustituye los campos de texto.
+   */
+  const draft = (opts: PreviewOptions, override?: EmailFields) => ({
+    organizationId: id,
+    programName: override?.programName ?? prog,
+    programNameHtml: override?.programNameHtml ?? progHtml,
+    emailSubject: override?.emailSubject ?? subj,
     sessionDate: sDate,
     sessionInfo: sess,
     deadline: dead,
-    welcomeIntro: intro,
+    welcomeIntro: override?.welcomeIntro ?? intro,
     showProgramBox: showBox,
     lang: opts.lang,
     sampleName: opts.sampleName,
   });
 
-  async function loadPreview(opts: PreviewOptions): Promise<PreviewData | null> {
-    const r = await previewInvitationEmail(draft(opts));
+  async function loadPreview(opts: PreviewOptions, override?: EmailFields): Promise<PreviewData | null> {
+    const r = await previewInvitationEmail(draft(opts, override));
     if (r.ok && r.html) {
       return {
         subject: r.subject ?? "",
@@ -159,6 +225,25 @@ export function OrgEmailForm({
     const data = await loadPreview({ lang, sampleName: "Laura Ejemplo" });
     setPreviewing(false);
     if (data) setPreview(data);
+  }
+
+  async function aiFix(opts: PreviewOptions, problems: string[]): Promise<AiProposal | null> {
+    const r = await fixInvitationWithAi({ ...draft(opts), problems });
+    if (!r.ok || !r.proposal) {
+      toast(r.error ?? "La IA no pudo revisar el correo.", "error");
+      return null;
+    }
+    const p = r.proposal;
+    return {
+      fields: {
+        programName: p.programName,
+        // Si la IA cambia el nombre, se pierde su formato; si no, se conserva.
+        programNameHtml: p.programName === prog ? progHtml : "",
+        emailSubject: p.emailSubject,
+        welcomeIntro: p.welcomeIntro,
+      },
+      changes: p.changes,
+    };
   }
 
   async function sendTest(opts: PreviewOptions) {
@@ -188,7 +273,7 @@ export function OrgEmailForm({
     });
     setSuggesting(null);
     if (r.ok && r.text) {
-      if (field === "programName") setProg(r.text);
+      if (field === "programName") replaceProgram(r.text, "");
       else setSubj(r.text);
       toast(field === "programName" ? "Nombre de programa sugerido." : "Asunto sugerido.", "success");
     } else toast(r.error ?? "No se pudo sugerir con IA.", "error");
@@ -245,13 +330,23 @@ export function OrgEmailForm({
               size="sm"
             />
           </div>
-          <input
-            name="programName"
-            value={prog}
-            onChange={(e) => setProg(e.target.value)}
+          <input type="hidden" name="programName" value={prog} />
+          <input type="hidden" name="programNameHtml" value={progHtml} />
+          <InlineRichInput
+            initialHtml={programNameHtml || escapeHtml(programName)}
             placeholder="CONECTAR PARA COLABORAR"
-            className={`${inputCls} w-full`}
+            ariaLabel="Nombre del programa"
+            onChange={(html, text) => {
+              setProg(text);
+              setProgHtml(html);
+            }}
+            onReady={(api) => {
+              programApi.current = api;
+            }}
           />
+          <span className="mt-1 block text-[11px] text-slate-400">
+            El formato se ve en el cuerpo del correo; en el asunto y en la bandeja de entrada va sin formato.
+          </span>
         </div>
         <div>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
@@ -264,17 +359,29 @@ export function OrgEmailForm({
               size="sm"
             />
           </div>
-          <input
-            ref={subjRef}
-            name="emailSubject"
-            value={subj}
-            onChange={(e) => setSubj(e.target.value)}
-            onFocus={() => setTarget("subject")}
-            placeholder="Bienvenido/a al proceso {{programa}}"
-            className={`${inputCls} w-full`}
-          />
+          <div className="relative">
+            <input
+              ref={subjRef}
+              name="emailSubject"
+              value={subj}
+              onChange={(e) => setSubj(e.target.value)}
+              onFocus={() => setTarget("subject")}
+              placeholder="Bienvenido/a al proceso {{programa}}"
+              className={`${inputCls} w-full pr-24`}
+            />
+            <div className="absolute inset-y-0 right-1.5 flex items-center gap-1">
+              <span
+                className={`text-[11px] font-semibold tabular-nums ${subj.length > SUBJECT_MAX ? "text-amber-600" : "text-slate-400"}`}
+                title="En el móvil, el asunto se suele cortar a partir de unos 60 caracteres"
+              >
+                {subj.length}/{SUBJECT_MAX}
+              </span>
+              <EmojiPicker onPick={insertEmoji} />
+            </div>
+          </div>
           <span className="mt-1 block text-[11px] text-slate-400">
-            Si lo dejas vacío: “Bienvenido/a al proceso [programa]”. Admite variables.
+            Si lo dejas vacío: “Bienvenido/a al proceso [programa]”. Admite datos y emojis; el formato (negrita,
+            colores) no existe en los asuntos de correo.
           </span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -391,6 +498,9 @@ export function OrgEmailForm({
           configuredLang={lang}
           load={loadPreview}
           sendTest={sendTest}
+          onQuickFix={quickFix}
+          onAiFix={aiFix}
+          onApply={applyFields}
           onClose={() => setPreview(null)}
         />
       )}

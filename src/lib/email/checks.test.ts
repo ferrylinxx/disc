@@ -34,7 +34,7 @@ describe("revisión automática del correo de invitación", () => {
 
   it("avisa de variables inexistentes y acepta las conocidas y sus alias", () => {
     expect(warns({ ...ok, welcomeIntro: "<p>{{apellido}} y {{ Nombre }}</p>" })).toEqual([
-      "La variable {{apellido}} no existe y saldrá escrita tal cual. Usa los botones de variables.",
+      "La variable {{apellido}} no existe y saldrá escrita tal cual. Usa los botones de «Insertar».",
     ]);
   });
 
@@ -54,4 +54,41 @@ describe("revisión automática del correo de invitación", () => {
     expect(r.filter((c) => c.level === "info").map((c) => c.text).join()).toMatch(/75 caracteres.*recuadro de fechas está oculto/);
     expect(r[0].level).toBe("ok");
   });
+
+  it("detecta apóstrofos con acento y ela geminada, con arreglo automático", () => {
+    const r = checkInvitation({
+      ...ok,
+      programName: "CONNECTAR PER A COL.LABORAR",
+      welcomeIntro: "<p>Et donem la benvinguda el 14 d´octubre a les vostres instal.lacions.</p>",
+      today: today(),
+    });
+    const apos = r.find((c) => c.fix === "apostrophes");
+    const ela = r.find((c) => c.fix === "ela");
+    expect(apos?.text).toContain("«d´octubre»");
+    expect(ela?.text).toContain("«COL.LABORAR» y «instal.lacions»");
+    expect(apos?.field).toBe("typography");
+  });
+
+  it("asocia cada aviso a su campo y a su arreglo", () => {
+    const r = checkInvitation({ ...ok, subject: "Hola **x**", welcomeIntro: "<p>Hola {{nombre}},</p>", today: today() });
+    expect(r.find((c) => c.fix === "subject-markup")?.field).toBe("subject");
+    expect(r.find((c) => c.fix === "greeting")?.field).toBe("welcome");
+  });
+
+  it("avisa si el mensaje está en el otro idioma", () => {
+    const es = "<p>Te damos la bienvenida y te pedimos que completes el cuestionario con calma antes de la sesión, para que puedas llegar con tus ideas. Es muy breve y te ayudará también a preparar el taller con los compañeros.</p>";
+    expect(warns({ ...ok, welcomeIntro: es, lang: "ca" } as Parameters<typeof checkInvitation>[0]).join()).toContain("parece estar en castellano");
+    expect(warns({ ...ok, welcomeIntro: es, lang: "es" } as Parameters<typeof checkInvitation>[0])).toHaveLength(0);
+  });
+
+  it("el mensaje real de CSUC (en catalán, con «amb tu mateix») no se toma por castellano", () => {
+    const ca = "<p>Més que respondre un qüestionari, et convidem a regalar-te uns minuts amb tu mateix: un espai per reflexionar, conèixer-te millor i arribar al taller amb una mirada més conscient. Perquè entendre com ens comuniquem també ens ajuda.</p>";
+    expect(warns({ ...ok, welcomeIntro: ca, lang: "ca" } as Parameters<typeof checkInvitation>[0])).toHaveLength(0);
+  });
+
+  it("informa del asunto en mayúsculas", () => {
+    const r = checkInvitation({ ...ok, subject: "BENVINGUT AL TALLER", today: today() });
+    expect(r.map((c) => c.text).join()).toContain("todo en mayúsculas");
+  });
 });
+

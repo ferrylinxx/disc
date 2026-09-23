@@ -99,6 +99,7 @@ async function sendAccountInvite(input: {
         select: {
           name: true,
           programName: true,
+          programNameHtml: true,
           emailSubject: true,
           emailLang: true,
           sessionDate: true,
@@ -112,6 +113,7 @@ async function sendAccountInvite(input: {
       if (org?.programName) {
         program = {
           name: org.programName,
+          nameHtml: org.programNameHtml,
           subject: org.emailSubject,
           sessionDate: org.sessionDate,
           sessionInfo: org.sessionInfo,

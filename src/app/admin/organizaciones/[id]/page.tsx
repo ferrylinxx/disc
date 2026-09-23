@@ -209,6 +209,7 @@ export default async function AdminOrgDetailPage({
       <OrgEmailForm
         id={org.id}
         programName={org.programName ?? ""}
+        programNameHtml={org.programNameHtml ?? ""}
         emailSubject={org.emailSubject ?? ""}
         emailLang={org.emailLang ?? ""}
         sessionDate={org.sessionDate ?? ""}

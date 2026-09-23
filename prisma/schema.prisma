@@ -77,6 +77,9 @@ model Organization {
   // Personalización del correo de invitación (por organización). Todos opcionales:
   // si no hay programName, el correo usa el texto genérico por defecto.
   programName  String? // Nombre del proceso/programa (asunto y bienvenida).
+  // El mismo nombre con formato en línea (negrita, cursiva, color) para el cuerpo
+  // del correo; el asunto y la bandeja usan siempre programName. ALTER TABLE directo.
+  programNameHtml String?
   emailSubject String? // Asunto del correo (admite variables); si vacío, usa el asunto por defecto del programa.
   emailLang    String? // Idioma del correo de invitación de la organización ("ca" | "es").
   sessionDate  String? // Fecha del taller en ISO (YYYY-MM-DD), elegida con calendario.
