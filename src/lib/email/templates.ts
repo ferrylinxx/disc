@@ -27,18 +27,27 @@ function fmtDate(value: string | null | undefined, lang: Lang): string {
 /**
  * Marco del correo: banda blanca con el logo (PNG hospedado), franja de marca
  * con el título, cuerpo y pie con el aviso legal. Maquetado con tablas para que
- * Outlook lo centre y limite bien el ancho.
+ * Outlook lo centre y limite bien el ancho. Con `preheader`, añade el texto
+ * oculto que los clientes de correo muestran junto al asunto en la bandeja.
  */
-function shell(title: string, body: string, lang: Lang = "es"): string {
+function shell(title: string, body: string, lang: Lang = "es", preheader?: string): string {
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(
     /\/+$/,
     "",
   );
+  // Tras el texto, espacios invisibles para que el resto del cuerpo ("GESEM El
+  // teu compte…") no se cuele en la vista previa de la bandeja.
+  const hidden = preheader
+    ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">${preheader
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}${"&#847;&zwnj;&nbsp;".repeat(60)}</div>`
+    : "";
   const footer =
     lang === "ca"
       ? "Qüestionari d'estils conductuals DISC GESEM. Els resultats descriuen tendències i no constitueixen un diagnòstic."
       : "Cuestionario de estilos conductuales DISC GESEM. Los resultados describen tendencias y no constituyen un diagnóstico.";
-  return `<!doctype html><html><body style="margin:0;background:#eef1f7;padding:30px 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">
+  return `<!doctype html><html><body style="margin:0;background:#eef1f7;padding:30px 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">${hidden}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;"><tr><td align="center" style="padding:0 16px;">
     <table role="presentation" width="840" cellpadding="0" cellspacing="0" style="width:100%;max-width:840px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e6eaf1;box-shadow:0 12px 34px rgba(15,23,42,0.07);">
       <tr><td style="padding:24px 36px 20px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
@@ -95,7 +104,7 @@ export function invitationEmail(input: {
     /** Recuadro con programa, taller y fecha límite (por defecto, sí). */
     showInfo?: boolean | null;
   };
-}): { subject: string; html: string; text: string } {
+}): { subject: string; preheader: string; html: string; text: string } {
   const lang = input.lang ?? "ca";
   const account = input.account ?? false;
   const first = input.participantName.split(" ")[0] || "";
@@ -306,9 +315,20 @@ export function invitationEmail(input: {
     `${T.fAccess} ${input.loginUrl}`,
     `${T.fChange} ${input.setPasswordUrl}`,
   ].filter(Boolean);
+  // Texto de la bandeja de entrada: el programa (y la fecha límite, si se
+  // muestra) o, sin programa, la frase de invitación genérica.
+  const preheader = hasProgram
+    ? [
+        ca ? `Benvingut/da al procés ${programName}` : `Bienvenido/a al proceso ${programName}`,
+        showInfo && deadlineFmt ? `${W.lDeadline}: ${deadlineFmt}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : (account ? T.introAccount : T.intro).replace(/<[^>]+>/g, "").slice(0, 140);
   return {
     subject,
-    html: shell(T.shellTitle, body, lang),
+    preheader,
+    html: shell(T.shellTitle, body, lang, preheader),
     text: textLines.join("\n"),
   };
 }

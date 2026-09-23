@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { WelcomeEditorApi } from "./WelcomeEditor";
+import EmailPreview, { type PreviewData, type PreviewOptions } from "./EmailPreview";
 import {
   deleteOrganization,
   deleteProject,
@@ -12,6 +13,7 @@ import {
 import {
   improveInvitationWelcome,
   previewInvitationEmail,
+  sendTestInvitationEmail,
   suggestEmailField,
   translateInvitationWelcome,
   updateOrgEmailConfig,
@@ -110,7 +112,7 @@ export function OrgEmailForm({
   const [showBox, setShowBox] = useState(showProgramBox);
   // Idioma del correo de la org: es también el idioma de la vista previa.
   const [lang, setLang] = useState<"ca" | "es">(emailLang === "es" ? "es" : "ca");
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [preview, setPreview] = useState<PreviewData | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [improving, setImproving] = useState(false);
   const [translating, setTranslating] = useState<"ca" | "es" | null>(null);
@@ -145,24 +147,47 @@ export function OrgEmailForm({
     editorApi.current?.setHtml(html);
   }
 
-  async function openPreview(l: "ca" | "es") {
-    setPreviewing(true);
-    const r = await previewInvitationEmail({
-      organizationId: id,
-      programName: prog,
-      emailSubject: subj,
-      sessionDate: sDate,
-      sessionInfo: sess,
-      deadline: dead,
-      welcomeIntro: intro,
-      showProgramBox: showBox,
-      lang: l,
-    });
-    setPreviewing(false);
+  /** El correo tal y como está en el formulario (sin guardar), para la vista previa o la prueba. */
+  const draft = (opts: PreviewOptions) => ({
+    organizationId: id,
+    programName: prog,
+    emailSubject: subj,
+    sessionDate: sDate,
+    sessionInfo: sess,
+    deadline: dead,
+    welcomeIntro: intro,
+    showProgramBox: showBox,
+    lang: opts.lang,
+    sampleName: opts.sampleName,
+  });
+
+  async function loadPreview(opts: PreviewOptions): Promise<PreviewData | null> {
+    const r = await previewInvitationEmail(draft(opts));
     if (r.ok && r.html) {
-      setLang(l);
-      setPreview({ subject: r.subject ?? "", html: r.html });
-    } else toast(r.error ?? "No se pudo generar la vista previa.", "error");
+      return {
+        subject: r.subject ?? "",
+        preheader: r.preheader ?? "",
+        html: r.html,
+        from: r.from ?? "",
+        to: r.to ?? "",
+        checks: r.checks ?? [],
+      };
+    }
+    toast(r.error ?? "No se pudo generar la vista previa.", "error");
+    return null;
+  }
+
+  async function openPreview() {
+    setPreviewing(true);
+    const data = await loadPreview({ lang, sampleName: "Laura Ejemplo" });
+    setPreviewing(false);
+    if (data) setPreview(data);
+  }
+
+  async function sendTest(opts: PreviewOptions) {
+    const r = await sendTestInvitationEmail(draft(opts));
+    if (r.ok) toast(`Correo de prueba enviado a ${r.to}.`, "success");
+    else toast(r.error ?? "No se pudo enviar la prueba.", "error");
   }
 
   async function improve() {
@@ -391,7 +416,7 @@ export function OrgEmailForm({
           </button>
           <button
             type="button"
-            onClick={() => openPreview(lang)}
+            onClick={openPreview}
             disabled={previewing}
             className={btn.secondary}
           >
@@ -404,54 +429,14 @@ export function OrgEmailForm({
       </form>
 
       {preview && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-          onClick={() => setPreview(null)}
-        >
-          <div
-            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  Asunto
-                </p>
-                <p className="truncate text-sm font-bold text-slate-800">{preview.subject}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <div className="flex rounded-lg border border-slate-200 p-0.5 text-xs font-semibold">
-                  {(["ca", "es"] as const).map((l) => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => openPreview(l)}
-                      className={`rounded-md px-2 py-1 transition ${
-                        lang === l ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100"
-                      }`}
-                    >
-                      {l.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPreview(null)}
-                  className="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-100"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            <iframe
-              // Sin permisos: el correo es HTML estático y no debe ejecutar nada.
-              sandbox=""
-              srcDoc={preview.html}
-              title="Vista previa del correo"
-              className="h-[70vh] w-full bg-white"
-            />
-          </div>
-        </div>
+        <EmailPreview
+          initial={preview}
+          initialLang={lang}
+          configuredLang={lang}
+          load={loadPreview}
+          sendTest={sendTest}
+          onClose={() => setPreview(null)}
+        />
       )}
     </>
   );

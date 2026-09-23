@@ -22,6 +22,11 @@ function readConfig() {
   return { host, user, pass, port, secure, from };
 }
 
+/** Remitente con el que salen los correos (p. ej. "DISC GESEM <comunicacions@…>"). */
+export function mailFrom(): string {
+  return readConfig().from ?? "DISC GESEM";
+}
+
 /** ¿Hay configuración SMTP suficiente para enviar correos? */
 export function isMailConfigured(): boolean {
   const { host, user, pass } = readConfig();

@@ -7,7 +7,8 @@ import { requireAuth, requireRole } from "@/lib/auth/dal";
 import { adminOrganizationIds, effectiveRoles } from "@/lib/auth/rbac";
 import type { SessionPayload } from "@/lib/auth/jwt";
 import { invitationEmail } from "@/lib/email/templates";
-import { absoluteUrl } from "@/lib/email/mailer";
+import { absoluteUrl, isMailConfigured, mailFrom, sendMail } from "@/lib/email/mailer";
+import { checkInvitation, type EmailCheck } from "@/lib/email/checks";
 import { isWelcomeHtml, sanitizeWelcomeHtml, welcomeFromAi, welcomeIsEmpty } from "@/lib/email/rich-text";
 
 export interface ActionState {
@@ -133,12 +134,8 @@ export async function updateOrgEmailConfig(
   return { ok: true };
 }
 
-/**
- * Compone el correo de invitación con los valores dados (sin guardar) y lo
- * devuelve para previsualizarlo antes de enviar. Usa credenciales/enlaces de
- * ejemplo (solo para la vista previa).
- */
-export async function previewInvitationEmail(input: {
+/** Datos del formulario del correo, sin guardar, para previsualizarlo o probarlo. */
+export interface InvitationDraft {
   organizationId: string;
   programName?: string;
   emailSubject?: string;
@@ -148,24 +145,30 @@ export async function previewInvitationEmail(input: {
   welcomeIntro?: string;
   showProgramBox?: boolean;
   lang?: "ca" | "es";
-}): Promise<{ ok: boolean; subject?: string; html?: string; error?: string }> {
-  const session = await requireAuth();
-  if (!input.organizationId || !assertOrgAccess(session, input.organizationId)) {
-    return { ok: false, error: "Sin permiso sobre esta organización." };
-  }
-  const lang = input.lang === "es" ? "es" : "ca";
+  /** Nombre de la persona de ejemplo, para ver cómo se rellenan las variables. */
+  sampleName?: string;
+}
+
+const SAMPLE_EMAIL = "participante@ejemplo.com";
+const sampleNameOf = (d: InvitationDraft) => (d.sampleName || "").trim().slice(0, 80) || "Laura Ejemplo";
+
+/**
+ * Compone el correo de invitación con los valores del formulario. Las
+ * credenciales y los enlaces son de ejemplo: nunca los de una persona real.
+ */
+async function composeDraft(input: InvitationDraft) {
   const name = (input.programName || "").trim();
   const org = await prisma.organization.findUnique({
     where: { id: input.organizationId },
     select: { name: true },
   });
-  const email = invitationEmail({
-    participantName: "Laura Ejemplo",
-    accountEmail: "participante@ejemplo.com",
+  return invitationEmail({
+    participantName: sampleNameOf(input),
+    accountEmail: SAMPLE_EMAIL,
     password: "Ej3mplo-2026",
-    loginUrl: absoluteUrl("/login?next=/evaluacion&email=participante@ejemplo.com"),
+    loginUrl: absoluteUrl(`/login?next=/evaluacion&email=${SAMPLE_EMAIL}`),
     setPasswordUrl: absoluteUrl("/restablecer/ejemplo-token"),
-    lang,
+    lang: input.lang === "es" ? "es" : "ca",
     program: name
       ? {
           name,
@@ -179,7 +182,74 @@ export async function previewInvitationEmail(input: {
         }
       : undefined,
   });
-  return { ok: true, subject: email.subject, html: email.html };
+}
+
+/**
+ * Vista previa del correo de invitación (sin guardar): el HTML, lo que verá la
+ * persona en su bandeja (remitente, asunto y texto de vista previa) y una
+ * revisión automática de los despistes habituales.
+ */
+export async function previewInvitationEmail(input: InvitationDraft): Promise<{
+  ok: boolean;
+  subject?: string;
+  preheader?: string;
+  html?: string;
+  from?: string;
+  to?: string;
+  checks?: EmailCheck[];
+  error?: string;
+}> {
+  const session = await requireAuth();
+  if (!input.organizationId || !assertOrgAccess(session, input.organizationId)) {
+    return { ok: false, error: "Sin permiso sobre esta organización." };
+  }
+  const email = await composeDraft(input);
+  return {
+    ok: true,
+    subject: email.subject,
+    preheader: email.preheader,
+    html: email.html,
+    from: mailFrom(),
+    to: `${sampleNameOf(input)} <${SAMPLE_EMAIL}>`,
+    checks: checkInvitation({
+      programName: input.programName,
+      subject: input.emailSubject,
+      welcomeIntro: input.welcomeIntro,
+      sessionDate: input.sessionDate,
+      deadline: input.deadline,
+      showProgramBox: input.showProgramBox,
+    }),
+  };
+}
+
+/**
+ * Envía el correo tal y como está en el formulario (sin guardar) a quien lo
+ * pide, para verlo en su bandeja real (Outlook, Gmail, el móvil…). El asunto
+ * lleva "[Prueba]" y los datos de acceso del cuerpo son de ejemplo.
+ */
+export async function sendTestInvitationEmail(
+  input: InvitationDraft,
+): Promise<{ ok: boolean; to?: string; error?: string }> {
+  const session = await requireAuth();
+  if (!input.organizationId || !assertOrgAccess(session, input.organizationId)) {
+    return { ok: false, error: "Sin permiso sobre esta organización." };
+  }
+  if (!isMailConfigured()) {
+    return { ok: false, error: "El envío de correo (SMTP) no está configurado en el servidor." };
+  }
+  const email = await composeDraft(input);
+  try {
+    await sendMail({
+      to: session.email,
+      subject: `[Prueba] ${email.subject}`,
+      html: email.html,
+      text: email.text,
+    });
+    return { ok: true, to: session.email };
+  } catch (e) {
+    console.error("[correo de prueba] fallo al enviar:", e);
+    return { ok: false, error: "No se pudo enviar el correo de prueba. Revisa el SMTP en Sistema." };
+  }
 }
 
 /**
