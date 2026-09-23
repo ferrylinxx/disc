@@ -383,6 +383,8 @@ export default function WelcomeEditor({
   useEffect(() => {
     cb.current = { onChange, onFocus, onReady };
   });
+  // Para el texto de ayuda: se calcula al cargar y en cada cambio del editor.
+  const [empty, setEmpty] = useState(() => initialHtml.replace(/<[^>]*>/g, "").trim() === "");
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -405,7 +407,10 @@ export default function WelcomeEditor({
     editorProps: {
       attributes: { class: CONTENT_CLS, "aria-label": "Mensaje de bienvenida", role: "textbox", "aria-multiline": "true" },
     },
-    onUpdate: ({ editor: e }) => cb.current.onChange(e.getHTML(), e.getText()),
+    onUpdate: ({ editor: e }) => {
+      setEmpty(e.isEmpty);
+      cb.current.onChange(e.getHTML(), e.getText());
+    },
     onFocus: () => cb.current.onFocus?.(),
   });
 
@@ -424,8 +429,6 @@ export default function WelcomeEditor({
       },
     });
   }, [editor]);
-
-  const empty = useEditorState({ editor, selector: ({ editor: e }) => e?.isEmpty ?? true });
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100">
