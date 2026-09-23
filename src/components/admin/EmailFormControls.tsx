@@ -16,10 +16,11 @@ function Sparkle({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden className="shrink-0">
       <defs>
+        {/* De arriba a la izquierda (D) a abajo a la derecha (C), como en el mapa DISC. */}
         <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#d1133a" />
-          <stop offset="0.38" stopColor="#ffae00" />
-          <stop offset="0.66" stopColor="#30c67c" />
+          <stop offset="0.4" stopColor="#ffae00" />
+          <stop offset="0.7" stopColor="#30c67c" />
           <stop offset="1" stopColor="#6f7bf7" />
         </linearGradient>
       </defs>
