@@ -215,6 +215,7 @@ export default async function AdminOrgDetailPage({
         sessionInfo={org.sessionInfo ?? ""}
         deadline={org.deadline ?? ""}
         welcomeIntro={welcomeForEditor(org.welcomeIntro)}
+        showProgramBox={org.showProgramBox}
       />
     </Card>
   );

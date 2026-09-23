@@ -79,6 +79,7 @@ export function OrgEmailForm({
   sessionInfo,
   deadline,
   welcomeIntro,
+  showProgramBox,
 }: {
   id: string;
   programName: string;
@@ -88,6 +89,7 @@ export function OrgEmailForm({
   sessionInfo: string;
   deadline: string;
   welcomeIntro: string;
+  showProgramBox: boolean;
 }) {
   const [state, action, pending] = useActionState(updateOrgEmailConfig, initial);
   const seen = useRef<ActionState | null>(null);
@@ -105,6 +107,7 @@ export function OrgEmailForm({
   const [sess, setSess] = useState(sessionInfo);
   const [dead, setDead] = useState(deadline);
   const [intro, setIntro] = useState(welcomeIntro);
+  const [showBox, setShowBox] = useState(showProgramBox);
   // Idioma del correo de la org: es también el idioma de la vista previa.
   const [lang, setLang] = useState<"ca" | "es">(emailLang === "es" ? "es" : "ca");
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
@@ -152,6 +155,7 @@ export function OrgEmailForm({
       sessionInfo: sess,
       deadline: dead,
       welcomeIntro: intro,
+      showProgramBox: showBox,
       lang: l,
     });
     setPreviewing(false);
@@ -299,6 +303,22 @@ export function OrgEmailForm({
             placeholder="vuestras instalaciones"
             className={`${inputCls} w-full`}
           />
+        </label>
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5">
+          <input
+            type="checkbox"
+            name="showProgramBox"
+            value="1"
+            checked={showBox}
+            onChange={(e) => setShowBox(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-sky-600"
+          />
+          <span className="text-sm text-slate-700">
+            Mostrar el recuadro azul con el programa, el taller y la fecha límite
+            <span className="mt-0.5 block text-[11px] text-slate-400">
+              Desmárcalo si ya das las fechas en el mensaje de bienvenida, para no repetirlas.
+            </span>
+          </span>
         </label>
         <div>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">

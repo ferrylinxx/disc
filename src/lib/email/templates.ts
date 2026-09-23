@@ -92,6 +92,8 @@ export function invitationEmail(input: {
     welcomeIntro?: string | null;
     /** Nombre de la organización (para la variable {{organizacion}}). */
     orgName?: string | null;
+    /** Recuadro con programa, taller y fecha límite (por defecto, sí). */
+    showInfo?: boolean | null;
   };
 }): { subject: string; html: string; text: string } {
   const lang = input.lang ?? "ca";
@@ -220,12 +222,17 @@ export function invitationEmail(input: {
     sessionCell ? infoRow(W.lSession, sessionCell) : "",
     deadlineFmt ? infoRow(W.lDeadline, deadlineFmt) : "",
   ].join("");
-  const programBlock = hasProgram
+  // Se puede ocultar por organización, p. ej. si el mensaje ya da las fechas.
+  const showInfo = prog?.showInfo !== false;
+  const infoBox = showInfo
     ? `
-    <p style="margin:0 0 14px;line-height:1.6;color:#334155;font-size:15px;">${W.lead(esc(programName))}</p>
     <div style="background:#f2f9ff;border:1px solid #d6ebfb;border-radius:16px;padding:16px 20px;margin:0 0 18px;">
       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">${infoRows}</table>
-    </div>
+    </div>`
+    : "";
+  const programBlock = hasProgram
+    ? `
+    <p style="margin:0 0 14px;line-height:1.6;color:#334155;font-size:15px;">${W.lead(esc(programName))}</p>${infoBox}
     <div style="margin:0 0 4px;">${welcomeToEmailHtml(hasWelcome ? welcome : W.reflective, vars)}</div>`
     : "";
 
@@ -290,8 +297,8 @@ export function invitationEmail(input: {
         ? `Benvingut/da al procés ${programName}.`
         : `Bienvenido/a al proceso ${programName}.`
       : "",
-    hasProgram && sessionText ? `${W.lSession}: ${sessionText}` : "",
-    deadlineFmt ? `${W.lDeadline}: ${deadlineFmt}` : "",
+    hasProgram && showInfo && sessionText ? `${W.lSession}: ${sessionText}` : "",
+    showInfo && deadlineFmt ? `${W.lDeadline}: ${deadlineFmt}` : "",
     hasProgram && hasWelcome ? welcomeToText(welcome, vars) : "",
     T.intro.replace(/<[^>]+>/g, ""),
     `${T.correo} ${input.accountEmail}`,

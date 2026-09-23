@@ -73,6 +73,7 @@ const OrgEmailSchema = z.object({
   sessionInfo: z.string().trim().max(300).optional(),
   deadline: z.string().trim().max(40).optional(),
   welcomeIntro: z.string().trim().max(20000).optional(),
+  showProgramBox: z.boolean(),
 });
 
 /**
@@ -103,6 +104,8 @@ export async function updateOrgEmailConfig(
     sessionInfo: formData.get("sessionInfo") ?? undefined,
     deadline: formData.get("deadline") ?? undefined,
     welcomeIntro: formData.get("welcomeIntro") ?? undefined,
+    // Casilla: el formulario manda "1" si está marcada y nada si no.
+    showProgramBox: formData.get("showProgramBox") === "1",
   });
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -123,6 +126,7 @@ export async function updateOrgEmailConfig(
       sessionInfo: parsed.data.sessionInfo || null,
       deadline: parsed.data.deadline || null,
       welcomeIntro: cleanWelcome(parsed.data.welcomeIntro),
+      showProgramBox: parsed.data.showProgramBox,
     },
   });
   revalidatePath(`/admin/organizaciones/${parsed.data.organizationId}`);
@@ -142,6 +146,7 @@ export async function previewInvitationEmail(input: {
   sessionInfo?: string;
   deadline?: string;
   welcomeIntro?: string;
+  showProgramBox?: boolean;
   lang?: "ca" | "es";
 }): Promise<{ ok: boolean; subject?: string; html?: string; error?: string }> {
   const session = await requireAuth();
@@ -170,6 +175,7 @@ export async function previewInvitationEmail(input: {
           deadline: input.deadline,
           welcomeIntro: input.welcomeIntro,
           orgName: org?.name ?? null,
+          showInfo: input.showProgramBox !== false,
         }
       : undefined,
   });

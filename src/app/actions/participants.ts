@@ -105,6 +105,7 @@ async function sendAccountInvite(input: {
           sessionInfo: true,
           deadline: true,
           welcomeIntro: true,
+          showProgramBox: true,
         },
       });
       if (org?.emailLang === "ca" || org?.emailLang === "es") orgLang = org.emailLang;
@@ -117,6 +118,7 @@ async function sendAccountInvite(input: {
           deadline: org.deadline,
           welcomeIntro: org.welcomeIntro,
           orgName: org.name,
+          showInfo: org.showProgramBox,
         };
       }
     }

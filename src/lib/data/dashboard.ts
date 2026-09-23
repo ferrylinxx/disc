@@ -371,6 +371,7 @@ export async function adminOrganizationDetail(id: string) {
       sessionInfo: true,
       deadline: true,
       welcomeIntro: true,
+      showProgramBox: true,
       projects: {
         orderBy: { createdAt: "desc" },
         select: {

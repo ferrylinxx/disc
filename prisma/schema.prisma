@@ -82,7 +82,10 @@ model Organization {
   sessionDate  String? // Fecha del taller en ISO (YYYY-MM-DD), elegida con calendario.
   sessionInfo  String? // Lugar del taller (p. ej. "vuestras instalaciones").
   deadline     String? // Fecha límite en ISO (YYYY-MM-DD), elegida con calendario.
-  welcomeIntro String? // Mensaje de bienvenida (admite markdown); si está vacío se usa uno por defecto.
+  welcomeIntro String? // Mensaje de bienvenida (HTML del editor o markdown antiguo); si está vacío se usa uno por defecto.
+  // Recuadro azul del correo con programa, taller y fecha límite. Se añadió con
+  // ALTER TABLE directo (como el resto de campos del correo, sin migración).
+  showProgramBox Boolean @default(true)
 
   members      Membership[]
   projects     Project[]
