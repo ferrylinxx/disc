@@ -509,16 +509,17 @@ export async function fixInvitationWithAi(
     "Eres editor de GESEM y revisas el correo de invitación a un cuestionario de estilos conductuales DISC antes de enviarlo. " +
     `El correo se enviará en ${langName}. Recibes sus campos en JSON y una lista de avisos. ` +
     "Corrige lo que señalan los avisos y los errores claros de ortografía, acentos y tipografía (en catalán: apóstrofo ’, ela geminada l·l; en castellano: tildes). " +
-    "No cambies el sentido, el tono, la estructura ni la longitud; no añadas ideas nuevas. Si un campo está bien, devuélvelo igual. " +
+    "Corrige palabras concretas: NO acortes, resumas ni reescribas frases, y no cambies el sentido, el tono ni la estructura; no añadas ideas nuevas. Si un campo está bien, devuélvelo exactamente igual. " +
+    "La ela geminada (l·l) solo va en palabras catalanas que la llevan de verdad (col·laborar, instal·lacions, il·lusió); nunca la pongas en otras palabras ni en nombres propios. " +
     "welcomeIntro es HTML: conserva todas sus etiquetas y atributos style tal cual y traduce o corrige solo el texto visible. " +
     "El correo ya empieza con «Hola {nombre},»: si el mensaje vuelve a saludar al principio, quita ese saludo. " +
     "emailSubject es texto plano: sin asteriscos ni formato, menos de 60 caracteres. Si está vacío, déjalo vacío. " +
     "Copia las variables entre dobles llaves ({{nombre}}, {{programa}}…) tal cual; si una variable no existe, sustitúyela por la más parecida de: nombre, nombre_completo, email, programa, organizacion. " +
     "Respeta siempre el lenguaje de tendencia: nunca diagnóstico. " +
     'Responde SOLO con un objeto JSON: {"programName": string, "emailSubject": string, "welcomeIntro": string, "changes": [string]}; ' +
-    "en changes, cada cambio hecho en una frase corta en castellano (vacío si no hay cambios).";
+    "en changes, cada cambio hecho en una frase corta ESCRITA EN CASTELLANO aunque el correo esté en catalán, citando la palabra antes y después (p. ej. «Nom´es» → «Només»); vacío si no hay cambios.";
   const user = JSON.stringify({ ...current, avisos: input.problems.slice(0, 20) });
-  const r = await groqText(system, user, { temperature: 0.2, maxTokens: budgetFor(user) + 800 });
+  const r = await groqText(system, user, { temperature: 0.1, maxTokens: budgetFor(user) + 800 });
   if (!r.ok || !r.text) return { ok: false, error: r.error };
 
   let data: Partial<Record<keyof AiEmailProposal, unknown>>;

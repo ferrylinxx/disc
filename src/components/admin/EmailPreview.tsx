@@ -211,7 +211,8 @@ export default function EmailPreview({
   async function aiFix() {
     setNotice(null);
     setFixing(true);
-    const problems = data.checks.filter((c) => c.level !== "ok").map((c) => c.text);
+    // Solo los avisos: las notas (longitud, recuadro oculto) no son algo que "arreglar".
+    const problems = data.checks.filter((c) => c.level === "warn").map((c) => c.text);
     const p = await onAiFix({ lang, sampleName }, problems);
     setFixing(false);
     if (!p) return;
