@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { EmailCheck } from "@/lib/email/checks";
 
 /**
@@ -162,7 +163,9 @@ export default function EmailPreview({
   const to = splitAddress(data.to);
   const html = frameHtml(data.html);
 
-  return (
+  // Portal al <body>: si no, un antepasado con transform (las animaciones de
+  // entrada de la consola) hace que "fixed" se mida contra él y no contra la ventana.
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex flex-col bg-slate-100"
       role="dialog"
@@ -362,6 +365,7 @@ export default function EmailPreview({
           </Section>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
