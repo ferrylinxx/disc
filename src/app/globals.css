@@ -200,6 +200,11 @@ body {
   background-image:
     linear-gradient(#fff, #fff),
     conic-gradient(from var(--ai-angle), #d1133a, #ffae00 25%, #6f7bf7 50%, #30c67c 75%, #d1133a);
+  /* En OKLCH el verde pasa al rojo por el amarillo, no por un marrón apagado
+     (los navegadores que no lo entienden se quedan con la línea de arriba). */
+  background-image:
+    linear-gradient(#fff, #fff),
+    conic-gradient(in oklch from var(--ai-angle), #d1133a, #ffae00 25%, #6f7bf7 50%, #30c67c 75%, #d1133a);
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }
