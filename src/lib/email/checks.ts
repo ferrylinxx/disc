@@ -6,6 +6,7 @@
  */
 import { welcomeIsEmpty, welcomeToText } from "./rich-text";
 import { countSpacing, findApostrophes, findEla, GREETING, type FixId } from "./fixes";
+import { hasUnicodeStyle, visibleLength } from "@/lib/unicode-style";
 
 export type CheckLevel = "warn" | "info" | "ok";
 /** Dónde está el problema, para agruparlo en la vista previa. */
@@ -105,11 +106,19 @@ export function checkInvitation(input: {
       text: "El asunto no admite formato: los asteriscos (o guiones bajos) llegarán tal cual.",
     });
   }
-  if (subject.length > SUBJECT_MAX) {
+  const subjectLength = visibleLength(subject);
+  if (subjectLength > SUBJECT_MAX) {
     out.push({
       level: "info",
       field: "subject",
-      text: `El asunto tiene ${subject.length} caracteres: en el móvil se suele cortar a partir de unos ${SUBJECT_MAX}.`,
+      text: `El asunto tiene ${subjectLength} caracteres: en el móvil se suele cortar a partir de unos ${SUBJECT_MAX}.`,
+    });
+  }
+  if (hasUnicodeStyle(subject)) {
+    out.push({
+      level: "info",
+      field: "subject",
+      text: "El asunto usa letras especiales para la negrita o la cursiva: se ven bien, pero los lectores de pantalla las leen mal y el buscador del correo no las encuentra. Mejor en una o dos palabras.",
     });
   }
   const letters = subject.replace(/\{\{[^}]*\}\}/g, "").replace(/[^A-Za-zÀ-ÿ]/g, "");

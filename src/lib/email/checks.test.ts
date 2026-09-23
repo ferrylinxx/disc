@@ -86,6 +86,14 @@ describe("revisión automática del correo de invitación", () => {
     expect(warns({ ...ok, welcomeIntro: ca, lang: "ca" } as Parameters<typeof checkInvitation>[0])).toHaveLength(0);
   });
 
+  it("cuenta la longitud visible y avisa de las letras especiales en el asunto", () => {
+    const r = checkInvitation({ ...ok, subject: "Benvinguda al taller 𝗘𝘀𝘁𝗶𝗹𝘀", today: today() });
+    const texts = r.map((c) => c.text).join();
+    expect(texts).toContain("letras especiales");
+    expect(texts).not.toContain("caracteres");
+    expect(r[0].level).toBe("ok");
+  });
+
   it("informa del asunto en mayúsculas", () => {
     const r = checkInvitation({ ...ok, subject: "BENVINGUT AL TALLER", today: today() });
     expect(r.map((c) => c.text).join()).toContain("todo en mayúsculas");

@@ -1,7 +1,125 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
-import { IconPlus, IconSmile, IconTranslate, Spinner } from "./icons";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { insertAt } from "@/lib/text-insert";
+import { hasStyle, toggleStyle, visibleLength, type UnicodeStyle } from "@/lib/unicode-style";
+import { Sep, ToolButton } from "./EditorToolbar";
+import { IconInfo, IconPlus, IconSmile, IconTranslate, Spinner } from "./icons";
+
+/** A partir de aquí, el móvil suele cortar el asunto. */
+export const SUBJECT_MAX = 60;
+
+/** Palabra bajo el cursor si no hay selección: [inicio, fin]. */
+function selectionOrWord(el: HTMLInputElement): [number, number] {
+  let start = el.selectionStart ?? 0;
+  let end = el.selectionEnd ?? start;
+  if (start === end) {
+    const v = el.value;
+    while (start > 0 && !/\s/.test(v[start - 1])) start--;
+    while (end < v.length && !/\s/.test(v[end])) end++;
+  }
+  return [start, end];
+}
+
+/**
+ * Asunto del correo con su barra de estilo. Un asunto es texto plano en todos
+ * los programas de correo: la negrita y la cursiva se hacen con letras Unicode
+ * especiales (src/lib/unicode-style.ts) y se pueden añadir emojis. Color,
+ * tamaño y tipografía no existen en un asunto: los decide cada programa.
+ */
+export function SubjectInput({
+  value,
+  onChange,
+  inputRef,
+  onFocus,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  inputRef: RefObject<HTMLInputElement | null>;
+  onFocus?: () => void;
+  placeholder: string;
+}) {
+  const [active, setActive] = useState({ bold: false, italic: false });
+  const length = visibleLength(value);
+
+  function readActive() {
+    const el = inputRef.current;
+    if (!el) return;
+    const [a, b] = selectionOrWord(el);
+    const sel = el.value.slice(a, b);
+    setActive({ bold: hasStyle(sel, "bold"), italic: hasStyle(sel, "italic") });
+  }
+
+  function applyStyle(style: UnicodeStyle) {
+    const el = inputRef.current;
+    if (!el) return;
+    const [start, end] = selectionOrWord(el);
+    if (start === end) return;
+    const before = el.value.slice(0, start);
+    const styled = toggleStyle(el.value.slice(start, end), style);
+    onChange(before + styled + el.value.slice(end));
+    setActive((s) => ({ ...s, [style]: hasStyle(styled, style) }));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(before.length, before.length + styled.length);
+    });
+  }
+
+  function insertEmoji(emoji: string) {
+    const el = inputRef.current;
+    if (!el) return;
+    const { value: next, caret } = insertAt(el.value, el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length, emoji);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
+  }
+
+  const styleHelp =
+    "con letras especiales Unicode: se ve en Gmail, Outlook y el móvil, pero los lectores de pantalla las leen mal y el buscador del correo no las encuentra. Úsala en una o dos palabras.";
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100">
+      <div className="flex flex-wrap items-center gap-0.5 rounded-t-xl border-b border-slate-200 bg-slate-50/80 px-1.5 py-1">
+        <ToolButton active={active.bold} onClick={() => applyStyle("bold")} title={`Negrita ${styleHelp}`}>
+          <b>B</b>
+        </ToolButton>
+        <ToolButton active={active.italic} onClick={() => applyStyle("italic")} title={`Cursiva ${styleHelp}`}>
+          <i className="font-serif">I</i>
+        </ToolButton>
+        <Sep />
+        <EmojiPicker onPick={insertEmoji} />
+        <Sep />
+        <span
+          className="flex min-w-0 flex-1 items-center gap-1.5 truncate px-1 text-[11px] text-slate-400"
+          title="Un asunto es texto plano: el color, el tamaño y la tipografía los pone el programa de correo de cada persona."
+        >
+          <IconInfo size={13} className="shrink-0" />
+          <span className="truncate">Color, tamaño y tipografía no existen en un asunto</span>
+        </span>
+        <span
+          className={`ml-auto shrink-0 px-1.5 text-[11px] font-semibold tabular-nums ${length > SUBJECT_MAX ? "text-amber-600" : "text-slate-400"}`}
+          title={`En el móvil, el asunto se suele cortar a partir de unos ${SUBJECT_MAX} caracteres`}
+        >
+          {length}/{SUBJECT_MAX}
+        </span>
+      </div>
+      <input
+        ref={inputRef}
+        name="emailSubject"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
+        onSelect={readActive}
+        onKeyUp={readActive}
+        placeholder={placeholder}
+        className="w-full rounded-b-xl bg-transparent px-3.5 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+      />
+    </div>
+  );
+}
 
 /** Emojis habituales en asuntos de invitación a un taller. */
 const SUBJECT_EMOJIS = ["👋", "📅", "✅", "✨", "🎯", "📝", "🤝", "💬", "🚀", "⏰", "📌", "🙌"];

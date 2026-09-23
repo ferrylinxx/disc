@@ -513,7 +513,7 @@ export async function fixInvitationWithAi(
     "La ela geminada (l·l) solo va en palabras catalanas que la llevan de verdad (col·laborar, instal·lacions, il·lusió); nunca la pongas en otras palabras ni en nombres propios. " +
     "welcomeIntro es HTML: conserva todas sus etiquetas y atributos style tal cual y traduce o corrige solo el texto visible. " +
     "El correo ya empieza con «Hola {nombre},»: si el mensaje vuelve a saludar al principio, quita ese saludo. " +
-    "emailSubject es texto plano: sin asteriscos ni formato, menos de 60 caracteres. Si está vacío, déjalo vacío. " +
+    "emailSubject es texto plano: sin asteriscos, menos de 60 caracteres. Si lleva letras especiales de negrita o cursiva (𝗮, 𝘢), consérvalas tal cual. Si está vacío, déjalo vacío. " +
     "Copia las variables entre dobles llaves ({{nombre}}, {{programa}}…) tal cual; si una variable no existe, sustitúyela por la más parecida de: nombre, nombre_completo, email, programa, organizacion. " +
     "Respeta siempre el lenguaje de tendencia: nunca diagnóstico. " +
     'Responde SOLO con un objeto JSON: {"programName": string, "emailSubject": string, "welcomeIntro": string, "changes": [string]}; ' +

@@ -7,7 +7,7 @@ import type { InlineRichInputApi } from "./InlineRichInput";
 import EmailPreview, { type AiProposal, type PreviewData, type PreviewOptions } from "./EmailPreview";
 import {
   AiButton,
-  EmojiPicker,
+  SubjectInput,
   TranslateControl,
   VariableChips,
   type EmailVariable,
@@ -48,7 +48,6 @@ const InlineRichInput = dynamic(() => import("./InlineRichInput"), {
 });
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const SUBJECT_MAX = 60;
 
 /** ¿El HTML del editor tiene texto? ("<p></p>" cuenta como vacío). */
 const hasText = (html: string) => html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() !== "";
@@ -134,18 +133,6 @@ export function OrgEmailForm({
     const { value, caret } = insertAt(el.value, el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length, tag);
     setSubj(value);
     // El cursor se recoloca cuando React ya ha pintado el nuevo valor.
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(caret, caret);
-    });
-  }
-
-  function insertEmoji(emoji: string) {
-    const el = subjRef.current;
-    if (!el) return;
-    setTarget("subject");
-    const { value, caret } = insertAt(el.value, el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length, emoji);
-    setSubj(value);
     requestAnimationFrame(() => {
       el.focus();
       el.setSelectionRange(caret, caret);
@@ -359,29 +346,15 @@ export function OrgEmailForm({
               size="sm"
             />
           </div>
-          <div className="relative">
-            <input
-              ref={subjRef}
-              name="emailSubject"
-              value={subj}
-              onChange={(e) => setSubj(e.target.value)}
-              onFocus={() => setTarget("subject")}
-              placeholder="Bienvenido/a al proceso {{programa}}"
-              className={`${inputCls} w-full pr-24`}
-            />
-            <div className="absolute inset-y-0 right-1.5 flex items-center gap-1">
-              <span
-                className={`text-[11px] font-semibold tabular-nums ${subj.length > SUBJECT_MAX ? "text-amber-600" : "text-slate-400"}`}
-                title="En el móvil, el asunto se suele cortar a partir de unos 60 caracteres"
-              >
-                {subj.length}/{SUBJECT_MAX}
-              </span>
-              <EmojiPicker onPick={insertEmoji} />
-            </div>
-          </div>
+          <SubjectInput
+            value={subj}
+            onChange={setSubj}
+            inputRef={subjRef}
+            onFocus={() => setTarget("subject")}
+            placeholder="Bienvenido/a al proceso {{programa}}"
+          />
           <span className="mt-1 block text-[11px] text-slate-400">
-            Si lo dejas vacío: “Bienvenido/a al proceso [programa]”. Admite datos y emojis; el formato (negrita,
-            colores) no existe en los asuntos de correo.
+            Si lo dejas vacío: “Bienvenido/a al proceso [programa]”. Admite datos, emojis y negrita o cursiva.
           </span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
