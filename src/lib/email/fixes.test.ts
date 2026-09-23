@@ -30,6 +30,8 @@ describe("arreglos automáticos del correo", () => {
   it("corrige el apóstrofo con acento, también ante comillas", () => {
     expect(fixApostrophes("d´octubre i d`una i d´\"Estils\"")).toBe("d’octubre i d’una i d’\"Estils\"");
     expect(findApostrophes("el 14 d´octubre, d´una")).toEqual(["d´octubre", "d´una"]);
+    // El aviso solo cita lo que el arreglo corrige: "Nom´¨es" queda para la IA.
+    expect(findApostrophes("Nom´¨es necessitaràs")).toEqual([]);
     // Un acento suelto que no va entre letras no se toca.
     expect(fixApostrophes("un ´ suelto")).toBe("un ´ suelto");
   });

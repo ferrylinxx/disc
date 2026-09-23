@@ -30,9 +30,13 @@ function mapText(html: string, fn: (text: string) => string): string {
     .join("");
 }
 
-/** Palabras con apóstrofo escrito con acento (d´octubre), para los avisos. */
+/**
+ * Palabras con apóstrofo escrito con acento (d´octubre), para los avisos. Solo
+ * las que `fixApostrophes` sabe corregir (acento entre letras); un acento suelto
+ * como en "Nom´¨es" es otra errata, que queda para la IA.
+ */
 export function findApostrophes(text: string): string[] {
-  return [...text.matchAll(new RegExp(`[${L}]*[${L}][´\`][${L}"“«]*`, "g"))].map((m) => m[0]);
+  return [...text.matchAll(new RegExp(`[${L}]*[${L}][´\`](?=[${L}"“«])[${L}"“«]*`, "g"))].map((m) => m[0]);
 }
 
 /** Palabras con "l.l" en lugar de "l·l" (col.laborar), sin contar correos ni webs. */
