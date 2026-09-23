@@ -29,6 +29,7 @@ import { Avatar, ProgressRing } from "@/components/dashboard/AdminWidgets";
 import { Card, EmptyState, PageHeader, Progress, StatCard, btn } from "@/components/admin/ui";
 import { discGradStops } from "@/lib/disc-gradient";
 import { styleShort } from "@/lib/narratives/disc-gesem.catalog";
+import { welcomeForEditor } from "@/lib/email/rich-text";
 
 export const metadata = { title: "Organización · Consola" };
 
@@ -213,7 +214,7 @@ export default async function AdminOrgDetailPage({
         sessionDate={org.sessionDate ?? ""}
         sessionInfo={org.sessionInfo ?? ""}
         deadline={org.deadline ?? ""}
-        welcomeIntro={org.welcomeIntro ?? ""}
+        welcomeIntro={welcomeForEditor(org.welcomeIntro)}
       />
     </Card>
   );

@@ -8,6 +8,7 @@ import { adminOrganizationIds, effectiveRoles } from "@/lib/auth/rbac";
 import type { SessionPayload } from "@/lib/auth/jwt";
 import { invitationEmail } from "@/lib/email/templates";
 import { absoluteUrl } from "@/lib/email/mailer";
+import { isWelcomeHtml, sanitizeWelcomeHtml, welcomeFromAi, welcomeIsEmpty } from "@/lib/email/rich-text";
 
 export interface ActionState {
   error?: string;
@@ -71,8 +72,17 @@ const OrgEmailSchema = z.object({
   sessionDate: z.string().trim().max(40).optional(),
   sessionInfo: z.string().trim().max(300).optional(),
   deadline: z.string().trim().max(40).optional(),
-  welcomeIntro: z.string().trim().max(6000).optional(),
+  welcomeIntro: z.string().trim().max(20000).optional(),
 });
+
+/**
+ * Mensaje de bienvenida tal y como se guarda: el HTML del editor, saneado; el
+ * markdown de los mensajes antiguos, tal cual; vacío (p. ej. "<p></p>"), null.
+ */
+function cleanWelcome(text: string | undefined): string | null {
+  if (!text || welcomeIsEmpty(text)) return null;
+  return isWelcomeHtml(text) ? sanitizeWelcomeHtml(text) : text;
+}
 
 /**
  * Guarda la personalización del correo de invitación de una organización
@@ -112,7 +122,7 @@ export async function updateOrgEmailConfig(
       sessionDate: parsed.data.sessionDate || null,
       sessionInfo: parsed.data.sessionInfo || null,
       deadline: parsed.data.deadline || null,
-      welcomeIntro: parsed.data.welcomeIntro || null,
+      welcomeIntro: cleanWelcome(parsed.data.welcomeIntro),
     },
   });
   revalidatePath(`/admin/organizaciones/${parsed.data.organizationId}`);
@@ -263,18 +273,21 @@ export async function improveInvitationWelcome(input: {
   const lang = input.lang === "es" ? "es" : "ca";
   const langName = lang === "es" ? "español" : "catalán";
   const program = (input.programName || "").trim();
-  const current = (input.current || "").trim();
+  // El editor manda HTML ("<p></p>" si está vacío); los mensajes antiguos, markdown.
+  const current = welcomeIsEmpty(input.current) ? "" : (input.current || "").trim();
   const system =
     "Eres redactor de GESEM y escribes el mensaje de bienvenida de un correo de invitación a un cuestionario de estilos conductuales DISC. " +
     "Reglas obligatorias: habla de tendencias y preferencias, nunca de diagnóstico; prohibido 'eres', 'siempre', 'nunca', 'trastorno', 'capacidad'; " +
-    "tono cálido, cercano y profesional; 2 a 5 frases; sin encabezados ni firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
-    "Puedes usar markdown ligero para estructurar: **negrita** para 1-2 ideas clave y, si aporta, una lista breve con guiones. " +
-    "Puedes usar la variable {{nombre}} para dirigirte a la persona (se sustituye por su nombre al enviar). " +
-    "Responde SOLO con el texto del mensaje (markdown incluido), sin comillas ni explicaciones.";
+    "tono cálido, cercano y profesional; 2 a 5 frases; sin firma; no menciones contraseñas, enlaces ni respuestas 'Más/Menos'. " +
+    "Escribe en HTML sencillo: párrafos <p>, <strong> para 1-2 ideas clave y, si aporta, una lista <ul><li>. " +
+    "Si el mensaje actual ya tiene formato (títulos, negritas, colores, tamaños, tipografías, alineación, destacados), consérvalo: mantén sus etiquetas y sus atributos style tal cual y no añadas estilos nuevos. " +
+    "Puedes usar la variable {{nombre}} para dirigirte a la persona (se sustituye por su nombre al enviar); copia las variables {{…}} tal cual. " +
+    "Responde SOLO con el HTML del mensaje, sin bloque de código ni explicaciones.";
   const user = current
     ? `Mejora este mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}:\n\n${current}`
     : `Escribe un mensaje de bienvenida${program ? ` para el programa «${program}»` : ""}, en ${langName}, que invite a la persona a completar su cuestionario DISC con calma y una mirada reflexiva antes del taller.`;
-  return groqText(system, user, { temperature: 0.7, maxTokens: budgetFor(current) });
+  const r = await groqText(system, user, { temperature: 0.7, maxTokens: budgetFor(current) });
+  return r.ok && r.text ? { ok: true, text: welcomeFromAi(r.text) } : r;
 }
 
 /** Deja una sugerencia en una sola línea, sin comillas alrededor ni punto final. */
@@ -347,21 +360,22 @@ export async function translateInvitationWelcome(input: {
 }): Promise<{ ok: boolean; text?: string; error?: string }> {
   await requireAuth();
   const text = (input.text || "").trim();
-  if (!text) return { ok: false, error: "Escribe primero el mensaje que quieres traducir." };
+  if (welcomeIsEmpty(text)) return { ok: false, error: "Escribe primero el mensaje que quieres traducir." };
   const to = input.to === "es" ? "es" : "ca";
   const target = to === "es" ? "castellano" : "catalán";
   const system =
     `Eres traductor editorial de GESEM y traduces al ${target} el mensaje de bienvenida de un correo de invitación a un cuestionario de estilos conductuales DISC. ` +
     "Mantén el sentido, el tono cálido y profesional y el lenguaje de tendencia (nunca diagnóstico): no añadas ni quites ideas. " +
-    "Conserva EXACTAMENTE el markdown (**negrita**, _cursiva_, listas con guiones, enlaces) y la estructura de párrafos. " +
+    "Conserva EXACTAMENTE el formato: todas las etiquetas HTML y sus atributos (style, href) se copian tal cual y solo se traduce el texto visible; si llega en markdown, conserva el markdown. " +
     "Las variables entre dobles llaves ({{nombre}}, {{nombre_completo}}, {{email}}, {{programa}}, {{organizacion}}) se copian tal cual: no las traduzcas ni cambies su ortografía. " +
     "Los nombres propios y los nombres de programa en mayúsculas se dejan como están. " +
     `Si el texto ya está en ${target}, corrígelo solo si tiene errores. ` +
-    "Responde SOLO con el texto traducido, sin comillas ni explicaciones.";
-  return groqText(system, `Traduce al ${target}:\n\n${text}`, {
+    "Responde SOLO con el texto traducido, sin bloque de código, comillas ni explicaciones.";
+  const r = await groqText(system, `Traduce al ${target}:\n\n${text}`, {
     temperature: 0.2,
     maxTokens: budgetFor(text),
   });
+  return r.ok && r.text ? { ok: true, text: welcomeFromAi(r.text) } : r;
 }
 
 /**

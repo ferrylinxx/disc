@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import type { WelcomeEditorApi } from "./WelcomeEditor";
 import {
   deleteOrganization,
   deleteProject,
@@ -19,6 +21,15 @@ import { addOrgGestor } from "@/app/actions/users";
 import { insertAt } from "@/lib/text-insert";
 import { ConfirmButton, toast } from "./ui-client";
 import { btn } from "./ui";
+
+// El editor con formato solo se descarga al abrir el formulario del correo.
+const WelcomeEditor = dynamic(() => import("./WelcomeEditor"), {
+  ssr: false,
+  loading: () => <div className="h-[232px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />,
+});
+
+/** ¿El HTML del editor tiene texto? ("<p></p>" cuenta como vacío). */
+const hasText = (html: string) => html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() !== "";
 
 const initial: ActionState = {};
 const inputCls =
@@ -105,20 +116,30 @@ export function OrgEmailForm({
   // Las variables se insertan en el último campo que tuvo el foco (asunto o
   // mensaje); por defecto, el mensaje de bienvenida.
   const subjRef = useRef<HTMLInputElement>(null);
-  const introRef = useRef<HTMLTextAreaElement>(null);
+  const editorApi = useRef<WelcomeEditorApi | null>(null);
   const [target, setTarget] = useState<"subject" | "intro">("intro");
+  const introHasText = hasText(intro);
 
   function insertVar(tag: string) {
-    const el = target === "subject" ? subjRef.current : introRef.current;
+    if (target === "intro") {
+      editorApi.current?.insertText(tag);
+      return;
+    }
+    const el = subjRef.current;
     if (!el) return;
     const { value, caret } = insertAt(el.value, el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length, tag);
-    if (target === "subject") setSubj(value);
-    else setIntro(value);
+    setSubj(value);
     // El cursor se recoloca cuando React ya ha pintado el nuevo valor.
     requestAnimationFrame(() => {
       el.focus();
       el.setSelectionRange(caret, caret);
     });
+  }
+
+  /** Sustituye el mensaje (p. ej. con lo que devuelve la IA) en el editor y en el formulario. */
+  function replaceIntro(html: string) {
+    setIntro(html);
+    editorApi.current?.setHtml(html);
   }
 
   async function openPreview(l: "ca" | "es") {
@@ -145,7 +166,7 @@ export function OrgEmailForm({
     const r = await improveInvitationWelcome({ programName: prog, current: intro, lang });
     setImproving(false);
     if (r.ok && r.text) {
-      setIntro(r.text);
+      replaceIntro(r.text);
       toast("Mensaje mejorado con IA.", "success");
     } else toast(r.error ?? "No se pudo mejorar con IA.", "error");
   }
@@ -172,7 +193,7 @@ export function OrgEmailForm({
     const r = await translateInvitationWelcome({ text: intro, to });
     setTranslating(null);
     if (r.ok && r.text) {
-      setIntro(r.text);
+      replaceIntro(r.text);
       const nombre = to === "ca" ? "catalán" : "castellano";
       toast(
         lang === to
@@ -288,9 +309,9 @@ export function OrgEmailForm({
                   key={to}
                   type="button"
                   onClick={() => translate(to)}
-                  disabled={translating !== null || !intro.trim()}
+                  disabled={translating !== null || !introHasText}
                   title={
-                    intro.trim()
+                    introHasText
                       ? `Traduce el mensaje al ${to === "ca" ? "catalán" : "castellano"} con IA`
                       : "Escribe primero el mensaje"
                   }
@@ -309,15 +330,14 @@ export function OrgEmailForm({
               </button>
             </div>
           </div>
-          <textarea
-            ref={introRef}
-            name="welcomeIntro"
-            value={intro}
-            onChange={(e) => setIntro(e.target.value)}
+          <input type="hidden" name="welcomeIntro" value={intro} />
+          <WelcomeEditor
+            initialHtml={welcomeIntro}
+            onChange={(html) => setIntro(html)}
             onFocus={() => setTarget("intro")}
-            rows={4}
-            placeholder="Si lo dejas vacío se usa un texto por defecto. Admite markdown: **negrita**, _cursiva_ y listas con guiones."
-            className={`${inputCls} w-full resize-y`}
+            onReady={(api) => {
+              editorApi.current = api;
+            }}
           />
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] font-semibold text-slate-500">
@@ -336,9 +356,9 @@ export function OrgEmailForm({
             ))}
           </div>
           <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-            Pulsa una variable para insertarla donde tengas el cursor; se rellena al enviar el
-            correo. Admite markdown: **negrita**, _cursiva_, listas con “- ” y enlaces
-            [texto](https://…).
+            Selecciona texto y usa la barra para darle formato; también puedes pegar desde Word
+            y se conserva lo básico. Las variables se insertan donde tengas el cursor y se
+            rellenan al enviar. Comprueba el resultado con «Vista previa».
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -404,6 +424,8 @@ export function OrgEmailForm({
               </div>
             </div>
             <iframe
+              // Sin permisos: el correo es HTML estático y no debe ejecutar nada.
+              sandbox=""
               srcDoc={preview.html}
               title="Vista previa del correo"
               className="h-[70vh] w-full bg-white"

@@ -6,6 +6,7 @@ import {
   type ProfileNarrative,
 } from "@/lib/narratives/disc-gesem.profiles";
 import type { Lang } from "@/lib/i18n/dictionaries";
+import { fillVars, welcomeIsEmpty, welcomeToEmailHtml, welcomeToText } from "./rich-text";
 
 const BRAND = "#00a1e0";
 
@@ -21,66 +22,6 @@ function fmtDate(value: string | null | undefined, lang: Lang): string {
     month: "long",
     year: "numeric",
   }).format(d);
-}
-
-/**
- * Sustituye variables {{nombre}}, {{email}}, {{programa}}, {{organizacion}}… por
- * los datos reales del participante. Las desconocidas o vacías se dejan tal cual.
- */
-function fillVars(text: string, vars: Record<string, string>): string {
-  return text.replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (m, key: string) => {
-    const v = vars[key.toLowerCase()];
-    return v !== undefined && v !== "" ? v : m;
-  });
-}
-
-/**
- * Markdown mínimo → HTML para el cuerpo del correo (negrita, cursiva, enlaces,
- * listas). Los saltos de línea simples se tratan como espacios (unen líneas
- * envueltas); solo una línea en blanco separa párrafos. Agrupa listas y
- * párrafos aunque estén mezclados sin línea en blanco entre medias.
- */
-function mdToHtml(src: string): string {
-  const inline = (s: string) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/_([^_]+)_/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" style="color:#00a1e0;">$1</a>');
-  const isItem = (l: string) => /^\s*[-*]\s+/.test(l);
-  const out: string[] = [];
-  for (const block of src.replace(/\r\n/g, "\n").trim().split(/\n\s*\n/)) {
-    const lines = block.split("\n");
-    let i = 0;
-    while (i < lines.length) {
-      if (isItem(lines[i])) {
-        const items: string[] = [];
-        while (i < lines.length && isItem(lines[i])) {
-          items.push(
-            `<li style="margin:0 0 4px;">${inline(lines[i].replace(/^\s*[-*]\s+/, "").trim())}</li>`,
-          );
-          i++;
-        }
-        out.push(
-          `<ul style="margin:0 0 12px;padding-left:18px;color:#475569;font-size:14px;line-height:1.6;">${items.join("")}</ul>`,
-        );
-      } else {
-        const para: string[] = [];
-        while (i < lines.length && !isItem(lines[i])) {
-          const t = lines[i].trim();
-          if (t) para.push(t);
-          i++;
-        }
-        if (para.length) {
-          const text = inline(para.join(" ")).replace(/[ \t]{2,}/g, " ");
-          out.push(`<p style="margin:0 0 12px;line-height:1.6;color:#475569;">${text}</p>`);
-        }
-      }
-    }
-  }
-  return out.join("");
 }
 
 /**
@@ -162,6 +103,9 @@ export function invitationEmail(input: {
   const prog = input.program;
   const programName = prog?.name?.trim() || "";
   const hasProgram = programName.length > 0;
+  // Mensaje de bienvenida: HTML del editor o markdown de los mensajes antiguos.
+  const welcome = prog?.welcomeIntro?.trim() ?? "";
+  const hasWelcome = !welcomeIsEmpty(welcome);
   // Variables sustituibles en el mensaje de bienvenida ({{nombre}}, {{email}}…).
   const fullName = input.participantName.trim();
   const vars: Record<string, string> = {
@@ -282,7 +226,7 @@ export function invitationEmail(input: {
     <div style="background:#f2f9ff;border:1px solid #d6ebfb;border-radius:16px;padding:16px 20px;margin:0 0 18px;">
       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">${infoRows}</table>
     </div>
-    <div style="margin:0 0 4px;">${mdToHtml(fillVars(prog?.welcomeIntro?.trim() || W.reflective, vars))}</div>`
+    <div style="margin:0 0 4px;">${welcomeToEmailHtml(hasWelcome ? welcome : W.reflective, vars)}</div>`
     : "";
 
   // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
@@ -348,7 +292,7 @@ export function invitationEmail(input: {
       : "",
     hasProgram && sessionText ? `${W.lSession}: ${sessionText}` : "",
     deadlineFmt ? `${W.lDeadline}: ${deadlineFmt}` : "",
-    hasProgram && prog?.welcomeIntro?.trim() ? fillVars(prog.welcomeIntro.trim(), vars) : "",
+    hasProgram && hasWelcome ? welcomeToText(welcome, vars) : "",
     T.intro.replace(/<[^>]+>/g, ""),
     `${T.correo} ${input.accountEmail}`,
     input.password ? `${T.tPwd} ${input.password}` : "",
