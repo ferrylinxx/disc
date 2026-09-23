@@ -573,7 +573,8 @@ export async function extractRosterFromImage(input: {
   }
   const prompt =
     "Extrae de la imagen la tabla de personas (nombre y correo electrónico). " +
-    "Devuelve SOLO líneas con el formato «Nombre Apellido, correo@dominio», una persona por línea. " +
+    "Devuelve SOLO líneas con el formato «Nombre Apellidos, correo@dominio», una persona por línea y con una sola coma. " +
+    "Si la tabla tiene columnas separadas para apellidos y nombre, júntalos en orden natural, primero el nombre y después los apellidos (p. ej. «Albert Portugal Brugada, albert.portugal@empresa.cat»). " +
     "Sin cabecera, sin numeración, sin viñetas y sin ninguna explicación. " +
     "Si una fila no tiene un correo claro, omítela. No inventes correos ni nombres.";
   try {

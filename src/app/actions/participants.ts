@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { parseRoster } from "@/lib/roster";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/dal";
@@ -55,13 +56,15 @@ async function issueParticipantPassword(
 async function ensureParticipantAccount(
   email: string,
   fullName: string,
+  /** false al añadir sin enviar correo: una contraseña nueva que nadie recibe dejaría a la persona sin acceso. */
+  resetPassword = true,
 ): Promise<{ userId: string; tempPassword?: string }> {
   const existing = await prisma.user.findUnique({
     where: { email },
     select: { id: true },
   });
   if (existing) {
-    const tempPassword = await issueParticipantPassword(existing.id);
+    const tempPassword = resetPassword ? await issueParticipantPassword(existing.id) : undefined;
     return { userId: existing.id, tempPassword };
   }
 
@@ -72,6 +75,26 @@ async function ensureParticipantAccount(
     select: { id: true },
   });
   return { userId: user.id, tempPassword };
+}
+
+/**
+ * Deja constancia de que la invitación se ha enviado por correo: así la lista
+ * distingue a quien se añadió sin enviar ("Sin enviar") de quien ya la tiene.
+ */
+async function markInvitationSent(participantId: string) {
+  await prisma.invitation.updateMany({
+    where: { participantId, status: { in: ["PENDING", "SENT"] } },
+    data: { status: "SENT", sentAt: new Date() },
+  });
+}
+
+/** ¿Ya hay un participante con este correo en la organización? (sin distinguir mayúsculas) */
+async function existingEmails(organizationId: string): Promise<Set<string>> {
+  const rows = await prisma.participant.findMany({
+    where: { organizationId },
+    select: { email: true },
+  });
+  return new Set(rows.map((r) => r.email.trim().toLowerCase()));
 }
 
 /**
@@ -214,6 +237,11 @@ export async function inviteParticipant(
   if (!assertOrgAccess(session, parsed.data.organizationId)) {
     return { error: "Sin permiso sobre esta organización." };
   }
+  // "Añadir sin enviar": se da de alta y la invitación se envía después desde la lista.
+  const sendEmail = formData.get("mode") !== "add";
+  if ((await existingEmails(parsed.data.organizationId)).has(parsed.data.email)) {
+    return { error: `${parsed.data.email} ya está en esta organización.` };
+  }
 
   const versionId = await activeVersionId();
   if (!versionId) {
@@ -233,6 +261,7 @@ export async function inviteParticipant(
   const account = await ensureParticipantAccount(
     parsed.data.email,
     parsed.data.fullName,
+    sendEmail,
   );
 
   const participant = await prisma.participant.create({
@@ -264,6 +293,16 @@ export async function inviteParticipant(
     },
   });
 
+  if (!sendEmail) {
+    if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);
+    revalidatePath("/cliente");
+    revalidatePath("/facilitador");
+    return {
+      ok: true,
+      message: "Participante añadido sin enviar el correo. Envíale la invitación desde la lista cuando quieras.",
+    };
+  }
+
   const lang: Lang = formData.get("lang") === "es" ? "es" : "ca";
   const emailed = await sendAccountInvite({
     to: parsed.data.email,
@@ -273,6 +312,7 @@ export async function inviteParticipant(
     lang,
     organizationId: parsed.data.organizationId,
   });
+  if (emailed) await markInvitationSent(participant.id);
 
   if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);
   revalidatePath("/cliente");
@@ -351,28 +391,8 @@ export async function resendInvitation(
   if (!sent) {
     return { error: "No se pudo enviar el correo. Revisa la configuración SMTP." };
   }
+  await markInvitationSent(participantId);
   return { ok: true };
-}
-
-/**
- * Parsea filas "Nombre, email" (CSV/Excel pegado). Acepta coma, punto y coma o
- * tabulador como separador, ignora cabecera y líneas vacías. No valida aquí el
- * email: eso lo hace Zod por fila al crear.
- */
-function parseRoster(raw: string): { fullName: string; email: string }[] {
-  const out: { fullName: string; email: string }[] = [];
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const parts = trimmed.split(/[,;\t]/).map((p) => p.trim());
-    if (parts.length < 2) continue;
-    const [fullName, email] = parts;
-    if (/^(nombre|name)$/i.test(fullName) && /^(email|correo)$/i.test(email)) {
-      continue; // cabecera
-    }
-    out.push({ fullName, email });
-  }
-  return out;
 }
 
 const BulkSchema = z.object({
@@ -410,6 +430,9 @@ export async function bulkInviteParticipants(
   if (rows.length === 0) {
     return { error: "No se reconoció ninguna fila Nombre, email." };
   }
+  const sendEmail = formData.get("mode") !== "add";
+  // Correos ya dados de alta (y los repetidos dentro de la propia lista).
+  const seen = await existingEmails(parsed.data.organizationId);
 
   const teamId = parsed.data.teamId || null;
   let projectId: string | null = null;
@@ -428,6 +451,7 @@ export async function bulkInviteParticipants(
 
   let created = 0;
   let skipped = 0;
+  let duplicated = 0;
   let emailed = 0;
   for (const row of rows) {
     const valid = ParticipantSchema.safeParse({
@@ -440,9 +464,15 @@ export async function bulkInviteParticipants(
       skipped += 1;
       continue;
     }
+    if (seen.has(valid.data.email)) {
+      duplicated += 1;
+      continue;
+    }
+    seen.add(valid.data.email);
     const account = await ensureParticipantAccount(
       valid.data.email,
       valid.data.fullName,
+      sendEmail,
     );
     const participant = await prisma.participant.create({
       data: {
@@ -465,6 +495,7 @@ export async function bulkInviteParticipants(
       },
     });
     created += 1;
+    if (!sendEmail) continue;
     const sent = await sendAccountInvite({
       to: valid.data.email,
       fullName: valid.data.fullName,
@@ -472,16 +503,24 @@ export async function bulkInviteParticipants(
       tempPassword: account.tempPassword,
       organizationId: parsed.data.organizationId,
     });
-    if (sent) emailed += 1;
+    if (sent) {
+      emailed += 1;
+      await markInvitationSent(participant.id);
+    }
   }
 
   if (teamId) revalidatePath(`/cliente/equipos/${teamId}`);
   revalidatePath("/cliente");
   revalidatePath("/facilitador");
 
-  const parts = [`${created} participantes creados`];
-  if (emailed > 0) parts.push(`${emailed} emails enviados`);
-  if (skipped > 0) parts.push(`${skipped} filas omitidas`);
+  const parts = [
+    sendEmail
+      ? `${created} ${created === 1 ? "participante añadido" : "participantes añadidos"}`
+      : `${created} ${created === 1 ? "participante añadido" : "participantes añadidos"} sin enviar correo`,
+  ];
+  if (sendEmail) parts.push(`${emailed} ${emailed === 1 ? "correo enviado" : "correos enviados"}`);
+  if (duplicated > 0) parts.push(`${duplicated} ya ${duplicated === 1 ? "estaba" : "estaban"} en la organización`);
+  if (skipped > 0) parts.push(`${skipped} ${skipped === 1 ? "fila sin correo válido" : "filas sin correo válido"}`);
   return { ok: true, message: parts.join(" · ") + "." };
 }
 
@@ -549,7 +588,10 @@ export async function bulkParticipantAction(
       tempPassword,
       organizationId: t.organizationId,
     });
-    if (ok) sent += 1;
+    if (ok) {
+      sent += 1;
+      await markInvitationSent(t.id);
+    }
   }
-  return { ok: true, message: `${sent} invitaciones reenviadas.` };
+  return { ok: true, message: `${sent} ${sent === 1 ? "invitación enviada" : "invitaciones enviadas"}.` };
 }

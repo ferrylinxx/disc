@@ -15,6 +15,8 @@ export interface DirectoryRow {
   orgName?: string;
   result: { profileCode: string; eq: number } | null;
   inviteToken: string | null;
+  /** ¿Se le ha enviado ya el correo? (Se puede añadir a alguien sin enviárselo.) */
+  inviteSent?: boolean;
 }
 
 type Filter = "ALL" | "INVITED" | "IN_PROGRESS" | "COMPLETED";
@@ -131,6 +133,14 @@ export function ParticipantDirectory({
                         </>
                       )}
                       <StatusBadge status={p.status} />
+                      {p.status === "INVITED" && p.inviteSent === false && (
+                        <span
+                          className="whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200"
+                          title="Se añadió sin enviar el correo: todavía no ha recibido la invitación"
+                        >
+                          Sin enviar
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-end gap-1.5 sm:w-52">
                       {p.status === "COMPLETED" && canManage ? (
@@ -145,7 +155,7 @@ export function ParticipantDirectory({
                         p.inviteToken && (
                           <>
                             <CopyInviteButton path={`/evaluacion/${p.inviteToken}`} />
-                            {canManage && <ResendInviteButton participantId={p.id} />}
+                            {canManage && <ResendInviteButton participantId={p.id} sent={p.inviteSent !== false} />}
                           </>
                         )
                       )}

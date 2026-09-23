@@ -319,7 +319,7 @@ export async function adminParticipants(organizationId?: string) {
         where: { status: { in: ["PENDING", "SENT", "OPENED"] } },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { token: true },
+        select: { token: true, sentAt: true },
       },
     },
   });
@@ -337,6 +337,8 @@ export async function adminParticipants(organizationId?: string) {
     teamName: p.team?.name ?? null,
     lastSeenAt: p.user?.lastSeenAt ?? null,
     inviteToken: p.invitations[0]?.token ?? null,
+    // ¿Se le ha enviado ya el correo? (Se puede añadir a alguien sin enviárselo.)
+    inviteSent: Boolean(p.invitations[0]?.sentAt),
     result: p.results[0]
       ? {
           eq: p.results[0].eq,
@@ -508,7 +510,7 @@ export async function orgParticipants(organizationIds: string[]) {
         where: { status: { in: ["PENDING", "SENT", "OPENED"] } },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { token: true },
+        select: { token: true, sentAt: true },
       },
     },
   });
@@ -527,6 +529,8 @@ export async function orgParticipants(organizationIds: string[]) {
         }
       : null,
     inviteToken: p.invitations[0]?.token ?? null,
+    // ¿Se le ha enviado ya el correo? (Se puede añadir a alguien sin enviárselo.)
+    inviteSent: Boolean(p.invitations[0]?.sentAt),
   }));
 }
 
@@ -556,7 +560,7 @@ export async function facilitatorOverview(organizationIds: string[]) {
         where: { status: { in: ["PENDING", "SENT", "OPENED"] } },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { token: true, expiresAt: true },
+        select: { token: true, expiresAt: true, sentAt: true },
       },
     },
   });

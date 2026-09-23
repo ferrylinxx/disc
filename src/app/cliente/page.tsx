@@ -123,6 +123,7 @@ export default async function ClientePage({
               teamName: p.teamName,
               result: p.result ? { profileCode: p.result.profileCode, eq: p.result.eq } : null,
               inviteToken: p.inviteToken,
+              inviteSent: p.inviteSent,
             }))}
           />
         )}

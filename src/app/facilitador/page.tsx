@@ -59,6 +59,7 @@ export default async function FacilitadorPage() {
               orgName: p.organization.name,
               result: null,
               inviteToken: p.invitations[0]?.token ?? null,
+              inviteSent: Boolean(p.invitations[0]?.sentAt),
             }))}
           />
         )}

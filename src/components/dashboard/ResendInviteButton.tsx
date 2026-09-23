@@ -6,11 +6,14 @@ import type { ActionState } from "@/app/actions/org";
 
 const initial: ActionState = {};
 
-/** Botón para reenviar por email la invitación activa de un participante. */
+/** Botón para enviar (o reenviar) por email la invitación activa de un participante. */
 export function ResendInviteButton({
   participantId,
+  sent = true,
 }: {
   participantId: string;
+  /** false si se añadió sin enviar el correo: el botón dice "Enviar". */
+  sent?: boolean;
 }) {
   const [state, action, pending] = useActionState(resendInvitation, initial);
 
@@ -22,7 +25,7 @@ export function ResendInviteButton({
         disabled={pending}
         className="shrink-0 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-600 transition hover:bg-sky-100 disabled:opacity-60"
       >
-        {pending ? "Enviando…" : "✉ Reenviar"}
+        {pending ? "Enviando…" : sent ? "✉ Reenviar" : "✉ Enviar"}
       </button>
       {state.error && (
         <span className="text-[11px] font-semibold text-rose-600">

@@ -22,7 +22,7 @@ const inputCls =
 const rowBtn =
   "inline-flex items-center whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-50";
 
-export type ParticipantFilter = "ALL" | "INVITED" | "IN_PROGRESS" | "COMPLETED" | "FAST";
+export type ParticipantFilter = "ALL" | "INVITED" | "IN_PROGRESS" | "COMPLETED" | "FAST" | "UNSENT";
 type SortKey = "name" | "status" | "org";
 const PAGE_SIZE = 15;
 
@@ -33,6 +33,19 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const isFast = (p: AdminParticipant) => p.result?.speed?.status === "tooFast";
+/** Añadido sin enviarle el correo de invitación (todavía no ha recibido nada). */
+const isUnsent = (p: AdminParticipant) => p.status === "INVITED" && !p.inviteSent;
+
+function UnsentChip() {
+  return (
+    <span
+      className="inline-flex items-center whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200"
+      title="Se añadió sin enviar el correo: todavía no ha recibido la invitación"
+    >
+      Sin enviar
+    </span>
+  );
+}
 
 function csvCell(v: string | number | null | undefined): string {
   const s = String(v ?? "");
@@ -108,19 +121,19 @@ function CopyLinkButton({ token }: { token: string }) {
   );
 }
 
-function ResendButton({ id }: { id: string }) {
+function ResendButton({ id, sent }: { id: string; sent: boolean }) {
   const [state, action, pending] = useActionState(resendInvitation, initial);
-  useToastOnResult(state, "Invitación reenviada.");
+  useToastOnResult(state, sent ? "Invitación reenviada." : "Invitación enviada.");
   return (
     <form action={action} className="inline">
       <input type="hidden" name="participantId" value={id} />
       <button
         type="submit"
         disabled={pending}
-        title="Reenviar invitación por email"
-        className={`${rowBtn} bg-sky-50 text-sky-700 hover:bg-sky-100`}
+        title={sent ? "Reenviar la invitación por email" : "Enviar la invitación por email"}
+        className={`${rowBtn} ${sent ? "bg-sky-50 text-sky-700 hover:bg-sky-100" : "bg-brand text-white shadow-sm shadow-sky-500/25"}`}
       >
-        {pending ? "Enviando…" : "✉ Reenviar"}
+        {pending ? "Enviando…" : sent ? "✉ Reenviar" : "✉ Enviar"}
       </button>
     </form>
   );
@@ -162,7 +175,7 @@ function RowActions({ p }: { p: AdminParticipant }) {
         p.inviteToken && (
           <>
             <CopyLinkButton token={p.inviteToken} />
-            <ResendButton id={p.id} />
+            <ResendButton id={p.id} sent={p.inviteSent} />
           </>
         )
       )}
@@ -240,7 +253,7 @@ function BulkBar({
           disabled={pending}
           className={`${rowBtn} bg-white text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100`}
         >
-          ✉ Reenviar invitación
+          ✉ Enviar invitación
         </button>
         <button
           type="button"
@@ -325,7 +338,8 @@ export function ParticipantsTable({
   const filtered = useMemo(() => {
     const rows = participants.filter((p) => {
       if (filter === "FAST" && !isFast(p)) return false;
-      if (filter !== "ALL" && filter !== "FAST" && p.status !== filter) return false;
+      if (filter === "UNSENT" && !isUnsent(p)) return false;
+      if (filter !== "ALL" && filter !== "FAST" && filter !== "UNSENT" && p.status !== filter) return false;
       if (!term) return true;
       return (
         p.fullName.toLowerCase().includes(term) ||
@@ -373,11 +387,13 @@ export function ParticipantsTable({
   const clearSelection = () => setSelected(new Set());
 
   const fastCount = participants.filter(isFast).length;
+  const unsentCount = participants.filter(isUnsent).length;
   const tabs: { id: ParticipantFilter; label: string; count: number }[] = [
     { id: "ALL", label: "Todos", count: participants.length },
     { id: "COMPLETED", label: "Completados", count: participants.filter((p) => p.status === "COMPLETED").length },
     { id: "IN_PROGRESS", label: "En curso", count: participants.filter((p) => p.status === "IN_PROGRESS").length },
     { id: "INVITED", label: "Invitados", count: participants.filter((p) => p.status === "INVITED").length },
+    ...(unsentCount > 0 ? [{ id: "UNSENT" as const, label: "Sin enviar", count: unsentCount }] : []),
     ...(fastCount > 0 ? [{ id: "FAST" as const, label: "Respuestas rápidas", count: fastCount }] : []),
   ];
 
@@ -479,6 +495,7 @@ export function ParticipantsTable({
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <StatusBadge status={p.status} />
+                      {isUnsent(p) && <UnsentChip />}
                       <ResultCell p={p} />
                     </div>
                   </div>
@@ -540,7 +557,10 @@ export function ParticipantsTable({
                     {showOrg && <td className={`${tableCls.td} text-[13px] text-slate-600`}>{p.orgName}</td>}
                     {showTeam && <td className={`${tableCls.td} text-slate-500`}>{p.teamName ?? "—"}</td>}
                     <td className={tableCls.td}>
-                      <StatusBadge status={p.status} />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={p.status} />
+                        {isUnsent(p) && <UnsentChip />}
+                      </div>
                     </td>
                     <td className={`${tableCls.td} whitespace-nowrap`}>
                       <PresenceBadge lastSeenAt={p.lastSeenAt} />

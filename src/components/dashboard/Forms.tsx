@@ -125,6 +125,41 @@ function Submit({ pending, label }: { pending: boolean; label: string }) {
   );
 }
 
+/**
+ * Dos formas de dar de alta participantes: enviando ya el correo de invitación
+ * (principal) o sin enviarlo, para mandarlo después desde la lista ("Enviar").
+ * El botón pulsado viaja en el formulario como `mode` ("send" | "add").
+ */
+function InviteSubmitPair({ pending, sendLabel, addLabel }: { pending: boolean; sendLabel: string; addLabel: string }) {
+  const [mode, setMode] = useState<"send" | "add">("send");
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="submit"
+        name="mode"
+        value="send"
+        onClick={() => setMode("send")}
+        disabled={pending}
+        title="Da de alta y envía ahora el correo de invitación"
+        className={`${btn.primary} py-2.5 disabled:cursor-not-allowed`}
+      >
+        {pending && mode === "send" ? "Enviando…" : sendLabel}
+      </button>
+      <button
+        type="submit"
+        name="mode"
+        value="add"
+        onClick={() => setMode("add")}
+        disabled={pending}
+        title="Da de alta sin enviar nada. Luego podrás enviar la invitación desde la lista (botón «Enviar» o filtro «Sin enviar»)"
+        className={`${btn.secondary} py-2.5 disabled:cursor-not-allowed`}
+      >
+        {pending && mode === "add" ? "Añadiendo…" : addLabel}
+      </button>
+    </div>
+  );
+}
+
 /** Alta de proyecto en una organización (ADMIN cliente). */
 export function CreateProjectForm({ organizationId }: { organizationId: string }) {
   const [state, action, pending] = useActionState(createProject, initial);
@@ -214,7 +249,7 @@ export function InviteParticipantForm({
           <option value="ca">Correo en catalán</option>
           <option value="es">Correo en castellano</option>
         </select>
-        <Submit pending={pending} label="Invitar" />
+        <InviteSubmitPair pending={pending} sendLabel="Invitar" addLabel="Añadir sin enviar" />
       </div>
       <Feedback state={state} />
     </form>
@@ -375,11 +410,12 @@ export function BulkInviteForm({
             ))}
           </select>
         )}
-        <Submit pending={pending} label="Invitar a todos" />
+        <InviteSubmitPair pending={pending} sendLabel="Invitar a todos" addLabel="Añadir sin enviar correo" />
       </div>
-      <p className="text-[11px] text-slate-400">
-        Sube un CSV o pega las filas: una persona por línea, nombre y email
-        separados por coma. La primera fila de cabecera (Nombre, email) se ignora.
+      <p className="text-[11px] leading-relaxed text-slate-400">
+        Una persona por línea: «Nombre Apellidos, correo» o «Apellidos, Nombre, correo» (se reordena
+        solo). La cabecera se ignora y quien ya esté en la organización no se duplica. «Invitar a
+        todos» envía el correo ahora; «Añadir sin enviar correo» solo los da de alta.
       </p>
       {state.message ? (
         <p className="text-xs font-medium text-emerald-600">{state.message}</p>
