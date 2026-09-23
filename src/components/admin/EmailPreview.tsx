@@ -33,7 +33,9 @@ const LANG_NAME = { ca: "catalán", es: "castellano" } as const;
  * (así se pueden comprobar sin salir de la vista previa).
  */
 function frameHtml(html: string) {
-  return html.replace("<html>", '<html><head><base target="_blank"></head>');
+  return html.includes("<head>")
+    ? html.replace("<head>", '<head><base target="_blank">')
+    : html.replace("<html>", '<html><head><base target="_blank"></head>');
 }
 
 function Segmented<T extends string>({

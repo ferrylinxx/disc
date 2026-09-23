@@ -25,6 +25,13 @@ function fmtDate(value: string | null | undefined, lang: Lang): string {
 }
 
 /**
+ * Cabecera del correo: en pantallas estrechas reduce los márgenes laterales
+ * (36 px por lado dejaban un correo más ancho que el móvil). Los clientes que
+ * no leen <style> se quedan con los estilos en línea de siempre.
+ */
+const EMAIL_HEAD = `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>@media only screen and (max-width:600px){.m-outer{padding-left:8px !important;padding-right:8px !important}.m-pad{padding-left:20px !important;padding-right:20px !important}}</style></head>`;
+
+/**
  * Marco del correo: banda blanca con el logo (PNG hospedado), franja de marca
  * con el título, cuerpo y pie con el aviso legal. Maquetado con tablas para que
  * Outlook lo centre y limite bien el ancho. Con `preheader`, añade el texto
@@ -47,18 +54,18 @@ function shell(title: string, body: string, lang: Lang = "es", preheader?: strin
     lang === "ca"
       ? "Qüestionari d'estils conductuals DISC GESEM. Els resultats descriuen tendències i no constitueixen un diagnòstic."
       : "Cuestionario de estilos conductuales DISC GESEM. Los resultados describen tendencias y no constituyen un diagnóstico.";
-  return `<!doctype html><html><body style="margin:0;background:#eef1f7;padding:30px 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">${hidden}
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;"><tr><td align="center" style="padding:0 16px;">
+  return `<!doctype html><html>${EMAIL_HEAD}<body style="margin:0;background:#eef1f7;padding:30px 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">${hidden}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;"><tr><td align="center" class="m-outer" style="padding:0 16px;">
     <table role="presentation" width="840" cellpadding="0" cellspacing="0" style="width:100%;max-width:840px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e6eaf1;box-shadow:0 12px 34px rgba(15,23,42,0.07);">
-      <tr><td style="padding:24px 36px 20px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
+      <tr><td class="m-pad" style="padding:24px 36px 20px;background:#ffffff;border-bottom:1px solid #f1f5f9;">
         <img src="${appUrl}/brand/gesem-logo-email.png" alt="GESEM DISC" width="130" style="display:block;border:0;height:auto;width:130px;" />
       </td></tr>
-      <tr><td style="background-color:#00a1e0;background-image:linear-gradient(125deg,#0092ce 0%,#00a1e0 48%,#59c2dc 100%);padding:26px 36px;">
+      <tr><td style="background-color:#00a1e0;background-image:linear-gradient(125deg,#0092ce 0%,#00a1e0 48%,#59c2dc 100%);padding:26px 36px;" class="m-pad">
         <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.82);">GESEM</div>
         <div style="font-size:22px;font-weight:800;line-height:1.3;color:#ffffff;margin-top:5px;">${title}</div>
       </td></tr>
-      <tr><td style="padding:28px 36px 30px;">${body}</td></tr>
-      <tr><td style="padding:22px 36px 26px;background:#f8fafc;border-top:1px solid #eef2f7;">
+      <tr><td class="m-pad" style="padding:28px 36px 30px;">${body}</td></tr>
+      <tr><td class="m-pad" style="padding:22px 36px 26px;background:#f8fafc;border-top:1px solid #eef2f7;">
         <div style="color:#94a3b8;font-size:12px;line-height:1.6;">${footer}</div>
       </td></tr>
     </table>
@@ -248,7 +255,7 @@ export function invitationEmail(input: {
   // Valor en "pastilla" monoespaciada: user-select:all permite seleccionarlo de
   // un clic en los clientes que lo soportan (resto: triple clic).
   const val = (v: string) =>
-    `<span style="display:inline-block;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:3px 9px;font-family:Consolas,Menlo,monospace;font-size:14px;font-weight:700;color:#0f172a;-webkit-user-select:all;user-select:all;">${v}</span>`;
+    `<span style="display:inline-block;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:3px 9px;font-family:Consolas,Menlo,monospace;font-size:14px;font-weight:700;color:#0f172a;-webkit-user-select:all;user-select:all;max-width:100%;word-break:break-all;">${v}</span>`;
   const row = (k: string, v: string) =>
     `<tr>
       <td style="padding:6px 12px 6px 0;font-size:13px;color:#64748b;white-space:nowrap;vertical-align:middle;">${k}</td>
