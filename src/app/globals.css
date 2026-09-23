@@ -183,6 +183,29 @@ body {
   50% { background-position: 100% 50%; }
 }
 
+/*
+ * Botones de IA: filo con los cuatro colores DISC (D, I, S, C) sobre fondo
+ * blanco. Mientras la IA trabaja (aria-busy), los colores fluyen por el borde.
+ */
+.ai-edge {
+  border: 1.5px solid transparent;
+  background-image:
+    linear-gradient(#fff, #fff),
+    linear-gradient(100deg, #d1133a, #ffae00 30%, #30c67c 62%, #6f7bf7 88%, #d1133a);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-size: 100% 100%, 200% 100%;
+}
+.ai-edge:hover:not(:disabled) {
+  box-shadow: 0 6px 18px -8px rgba(111, 123, 247, 0.55), 0 2px 6px -3px rgba(209, 19, 58, 0.25);
+}
+.ai-edge[aria-busy="true"] {
+  animation: ai-flow 1.4s linear infinite;
+}
+@keyframes ai-flow {
+  to { background-position: 0 0, -200% 0; }
+}
+
 /* Halo cónico giratorio tras el mockup del hero. */
 @keyframes spin-slow {
   to { transform: rotate(360deg); }
@@ -207,7 +230,8 @@ body {
   .animate-marquee,
   .animate-bar,
   .bg-brand-animated,
-  .animate-spin-slow {
+  .animate-spin-slow,
+  .ai-edge[aria-busy="true"] {
     animation: none !important;
   }
 }

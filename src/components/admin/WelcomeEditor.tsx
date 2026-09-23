@@ -5,6 +5,16 @@ import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/r
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import { TextAlign } from "@tiptap/extension-text-align";
+import {
+  IconClearFormat,
+  IconDivider,
+  IconLink,
+  IconListBullet,
+  IconListOrdered,
+  IconQuote,
+  IconRedo,
+  IconUndo,
+} from "./icons";
 
 /**
  * Editor con formato del mensaje de bienvenida del correo de invitación
@@ -92,8 +102,10 @@ function ToolButton({
       title={title}
       aria-label={title}
       aria-pressed={active}
-      className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text-sm transition disabled:opacity-35 ${
-        active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+      className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-35 ${
+        active
+          ? "bg-sky-100 text-sky-800 ring-1 ring-sky-200"
+          : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm hover:ring-1 hover:ring-slate-200"
       }`}
     >
       {children}
@@ -103,7 +115,7 @@ function ToolButton({
 
 const Sep = () => <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />;
 const selectCls =
-  "h-8 rounded-md border border-transparent bg-transparent px-1.5 text-xs font-semibold text-slate-600 outline-none transition hover:bg-slate-100 focus:border-sky-300";
+  "h-8 rounded-lg border border-transparent bg-transparent px-1.5 text-xs font-semibold text-slate-600 outline-none transition hover:bg-white hover:shadow-sm hover:ring-1 hover:ring-slate-200 focus:border-sky-300";
 
 type Panel = "color" | "highlight" | "link" | null;
 
@@ -250,29 +262,29 @@ function Toolbar({ editor }: { editor: Editor }) {
       </ToolButton>
       <Sep />
       <ToolButton active={s.bullet} onClick={() => run().toggleBulletList().run()} title="Lista con viñetas">
-        <span className="text-base leading-none">•≡</span>
+        <IconListBullet size={17} />
       </ToolButton>
       <ToolButton active={s.ordered} onClick={() => run().toggleOrderedList().run()} title="Lista numerada">
-        <span className="text-xs font-bold">1.</span>
+        <IconListOrdered size={17} />
       </ToolButton>
       <ToolButton active={s.quote} onClick={() => run().toggleBlockquote().run()} title="Destacado (recuadro azul)">
-        <span className="text-lg leading-none">❝</span>
+        <IconQuote size={17} />
       </ToolButton>
       <ToolButton onClick={() => run().setHorizontalRule().run()} title="Línea separadora">
-        <span className="text-xs font-bold">—</span>
+        <IconDivider size={17} />
       </ToolButton>
       <ToolButton active={s.link || panel === "link"} onClick={openLink} title="Enlace">
-        <span className="text-sm">🔗</span>
+        <IconLink size={16} />
       </ToolButton>
       <Sep />
       <ToolButton onClick={() => run().unsetAllMarks().clearNodes().run()} title="Quitar formato">
-        <span className="text-xs font-bold">T<sub>×</sub></span>
+        <IconClearFormat size={16} />
       </ToolButton>
       <ToolButton disabled={!s.canUndo} onClick={() => run().undo().run()} title="Deshacer (Ctrl+Z)">
-        ↶
+        <IconUndo size={16} />
       </ToolButton>
       <ToolButton disabled={!s.canRedo} onClick={() => run().redo().run()} title="Rehacer (Ctrl+Y)">
-        ↷
+        <IconRedo size={16} />
       </ToolButton>
 
       {(panel === "color" || panel === "highlight") && (
@@ -344,9 +356,9 @@ function Toolbar({ editor }: { editor: Editor }) {
           <button
             type="button"
             onClick={applyLink}
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+            className="bg-brand rounded-full px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-sky-500/25"
           >
-            {href.trim() ? "Aplicar" : "Quitar"}
+            {href.trim() ? "Aplicar" : "Quitar enlace"}
           </button>
         </div>
       )}

@@ -4,6 +4,8 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { WelcomeEditorApi } from "./WelcomeEditor";
 import EmailPreview, { type PreviewData, type PreviewOptions } from "./EmailPreview";
+import { AiButton, TranslateControl, VariableChips, type EmailVariable } from "./EmailFormControls";
+import { IconCheck, IconEye, Spinner } from "./icons";
 import {
   deleteOrganization,
   deleteProject,
@@ -38,38 +40,13 @@ const inputCls =
   "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 
 /** Variables del correo: se insertan en el campo que tenga el cursor. */
-const EMAIL_VARS = [
-  { tag: "{{nombre}}", help: "Nombre de pila de la persona" },
-  { tag: "{{nombre_completo}}", help: "Nombre y apellidos" },
-  { tag: "{{email}}", help: "Correo con el que accede" },
-  { tag: "{{programa}}", help: "Nombre del programa de arriba" },
-  { tag: "{{organizacion}}", help: "Nombre de la organización" },
-] as const;
-
-/** Botón pequeño de IA junto a la etiqueta de un campo del correo. */
-function AiButton({
-  busy,
-  onClick,
-  title,
-  label = "✨ IA",
-}: {
-  busy: boolean;
-  onClick: () => void;
-  title: string;
-  label?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={busy}
-      title={title}
-      className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
-    >
-      {busy ? "Pensando…" : label}
-    </button>
-  );
-}
+const EMAIL_VARS: readonly EmailVariable[] = [
+  { tag: "{{nombre}}", label: "Nombre", help: "Nombre de pila de cada persona" },
+  { tag: "{{nombre_completo}}", label: "Nombre y apellidos", help: "Nombre y apellidos de cada persona" },
+  { tag: "{{email}}", label: "Correo", help: "Correo con el que accede" },
+  { tag: "{{programa}}", label: "Programa", help: "Nombre del programa de arriba" },
+  { tag: "{{organizacion}}", label: "Organización", help: "Nombre de la organización" },
+];
 
 /** Personalización del correo de invitación de la organización. */
 export function OrgEmailForm({
@@ -241,14 +218,15 @@ export function OrgEmailForm({
         <input type="hidden" name="emailLang" value={lang} />
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold text-slate-500">Idioma del correo</span>
-          <div className="flex rounded-lg border border-slate-200 p-0.5 text-xs font-semibold">
+          <div role="group" aria-label="Idioma del correo" className="flex rounded-full border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
             {(["ca", "es"] as const).map((l) => (
               <button
                 key={l}
                 type="button"
                 onClick={() => setLang(l)}
-                className={`rounded-md px-3 py-1 transition ${
-                  lang === l ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100"
+                aria-pressed={lang === l}
+                className={`rounded-full px-3.5 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                  lang === l ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 {l === "ca" ? "Català" : "Español"}
@@ -263,7 +241,8 @@ export function OrgEmailForm({
               busy={suggesting === "programName"}
               onClick={() => suggest("programName")}
               title={prog.trim() ? "Pule el nombre del programa con IA" : "Propón un nombre de programa con IA"}
-              label={prog.trim() ? "✨ Mejorar con IA" : "✨ Sugerir con IA"}
+              label={prog.trim() ? "Mejorar con IA" : "Sugerir con IA"}
+              size="sm"
             />
           </div>
           <input
@@ -281,7 +260,8 @@ export function OrgEmailForm({
               busy={suggesting === "emailSubject"}
               onClick={() => suggest("emailSubject")}
               title={subj.trim() ? "Pule el asunto con IA" : "Propón un asunto con IA"}
-              label={subj.trim() ? "✨ Mejorar con IA" : "✨ Sugerir con IA"}
+              label={subj.trim() ? "Mejorar con IA" : "Sugerir con IA"}
+              size="sm"
             />
           </div>
           <input
@@ -348,31 +328,19 @@ export function OrgEmailForm({
         <div>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-500">Mensaje de bienvenida (opcional)</span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {(["ca", "es"] as const).map((to) => (
-                <button
-                  key={to}
-                  type="button"
-                  onClick={() => translate(to)}
-                  disabled={translating !== null || !introHasText}
-                  title={
-                    introHasText
-                      ? `Traduce el mensaje al ${to === "ca" ? "catalán" : "castellano"} con IA`
-                      : "Escribe primero el mensaje"
-                  }
-                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-700 disabled:opacity-50"
-                >
-                  {translating === to ? "Traduciendo…" : to === "ca" ? "🌐 Al català" : "🌐 Al castellano"}
-                </button>
-              ))}
-              <button
-                type="button"
+            <div className="flex flex-wrap items-center gap-2">
+              <TranslateControl busy={translating} disabled={!introHasText} onTranslate={translate} />
+              <AiButton
+                busy={improving}
                 onClick={improve}
-                disabled={improving}
-                className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
-              >
-                {improving ? "Mejorando…" : "✨ Mejorar con IA"}
-              </button>
+                label={introHasText ? "Mejorar con IA" : "Escribir con IA"}
+                busyLabel={introHasText ? "Mejorando…" : "Escribiendo…"}
+                title={
+                  introHasText
+                    ? "Pule el mensaje con IA conservando el formato"
+                    : "Redacta un mensaje de bienvenida con IA"
+                }
+              />
             </div>
           </div>
           <input type="hidden" name="welcomeIntro" value={intro} />
@@ -384,43 +352,31 @@ export function OrgEmailForm({
               editorApi.current = api;
             }}
           />
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-slate-500">
-              Variables → {target === "subject" ? "asunto" : "mensaje"}
-            </span>
-            {EMAIL_VARS.map((v) => (
-              <button
-                key={v.tag}
-                type="button"
-                onClick={() => insertVar(v.tag)}
-                title={`${v.help} · se inserta donde tengas el cursor`}
-                className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[11px] text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
-              >
-                {v.tag}
-              </button>
-            ))}
+          <div className="mt-2.5">
+            <VariableChips target={target} vars={EMAIL_VARS} onInsert={insertVar} />
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-            Selecciona texto y usa la barra para darle formato; también puedes pegar desde Word
-            y se conserva lo básico. Las variables se insertan donde tengas el cursor y se
-            rellenan al enviar. Comprueba el resultado con «Vista previa».
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+            Selecciona texto y usa la barra para darle formato; si pegas desde Word se conserva
+            lo básico. Los datos se rellenan con los de cada persona al enviar.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
             disabled={pending}
-            className={btn.primary}
+            className="bg-brand inline-flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold text-white shadow-md shadow-sky-500/25 transition hover:-translate-y-px hover:shadow-lg hover:shadow-sky-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:opacity-60"
           >
+            {pending ? <Spinner size={15} /> : <IconCheck size={17} strokeWidth={2.2} />}
             {pending ? "Guardando…" : "Guardar correo"}
           </button>
           <button
             type="button"
             onClick={openPreview}
             disabled={previewing}
-            className={btn.secondary}
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-200/60 transition hover:-translate-y-px hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:opacity-60"
           >
-            {previewing ? "Generando…" : "👁 Vista previa"}
+            {previewing ? <Spinner size={15} className="text-sky-600" /> : <IconEye size={17} className="text-sky-600" />}
+            {previewing ? "Preparando…" : "Vista previa"}
           </button>
           <span className="text-xs text-slate-400">
             Si el programa está vacío, el correo usa el texto genérico.

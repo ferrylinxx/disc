@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { EmailCheck } from "@/lib/email/checks";
+import { IconClose, IconMonitor, IconPhone, IconRefresh, IconSend, Spinner } from "./icons";
 
 /**
  * Vista previa del correo de invitación a pantalla completa: el correo en
@@ -45,20 +46,20 @@ function Segmented<T extends string>({
   label,
 }: {
   value: T;
-  options: { value: T; label: string }[];
+  options: { value: T; label: ReactNode }[];
   onChange: (v: T) => void;
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
+    <div role="group" aria-label={label} className="flex rounded-full border border-slate-200 bg-slate-100/70 p-0.5 text-xs font-semibold">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
-          className={`rounded-md px-3 py-1.5 transition ${
-            value === o.value ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-900"
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+            value === o.value ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-900"
           }`}
         >
           {o.label}
@@ -186,8 +187,8 @@ export default function EmailPreview({
           value={device}
           onChange={setDevice}
           options={[
-            { value: "desktop", label: "🖥 Escritorio" },
-            { value: "mobile", label: "📱 Móvil" },
+            { value: "desktop", label: <><IconMonitor size={15} /> Escritorio</> },
+            { value: "mobile", label: <><IconPhone size={15} /> Móvil</> },
           ]}
         />
         <Segmented
@@ -212,28 +213,30 @@ export default function EmailPreview({
           type="button"
           onClick={() => void refresh({ lang, sampleName })}
           disabled={loading}
-          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-60"
           title="Vuelve a generar el correo"
         >
-          {loading ? "Actualizando…" : "↻ Actualizar"}
+          {loading ? <Spinner size={13} className="text-sky-600" /> : <IconRefresh size={15} className="text-sky-600" />}
+          {loading ? "Actualizando…" : "Actualizar"}
         </button>
         <button
           type="button"
           onClick={onSend}
           disabled={sending}
-          className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
+          className="bg-brand inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-md shadow-sky-500/25 transition hover:-translate-y-px hover:shadow-lg hover:shadow-sky-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:opacity-60"
           title="Te envía este correo a tu dirección, con [Prueba] en el asunto y datos de acceso de ejemplo"
         >
-          {sending ? "Enviando…" : "✉ Enviarme una prueba"}
+          {sending ? <Spinner size={13} /> : <IconSend size={15} />}
+          {sending ? "Enviando…" : "Enviarme una prueba"}
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg px-2.5 py-1.5 text-lg leading-none text-slate-400 transition hover:bg-slate-100 hover:text-slate-800"
+          className="grid h-8 w-8 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
           title="Cerrar (Esc)"
           aria-label="Cerrar la vista previa"
         >
-          ✕
+          <IconClose size={18} />
         </button>
       </header>
 
