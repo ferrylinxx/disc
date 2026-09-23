@@ -74,6 +74,11 @@ describe("mensaje de bienvenida en el correo", () => {
     expect(out).not.toContain("data-tight");
   });
 
+  it("también cuando el elemento de lista está alineado", () => {
+    const out = welcomeToEmailHtml('<ul><li><p style="text-align: center;">un</p></li></ul>', vars);
+    expect(out).toMatch(/<li style="margin:0 0 4px;?"><p style="margin:0;line-height:1.6;text-align:center">un<\/p>/);
+  });
+
   it("sustituye las variables y escapa sus valores", () => {
     const out = welcomeToEmailHtml("<p>Hola {{nombre}}</p>", { nombre: "<b>Anna</b>" });
     expect(out).toContain("Hola &lt;b&gt;Anna&lt;/b&gt;");

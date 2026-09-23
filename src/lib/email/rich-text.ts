@@ -166,7 +166,7 @@ export function welcomeToEmailHtml(stored: string, vars: Record<string, string>)
   if (!isWelcomeHtml(stored)) return markdownToHtml(fillVars(stored, vars));
   const clean = fillVars(sanitizeWelcomeHtml(stored), vars, true)
     // El editor envuelve cada elemento de lista en <p>: se marca para quitarle el margen.
-    .replace(/<li><p>/g, '<li><p data-tight="1">')
+    .replace(/<li><p(?=[\s>])/g, '<li><p data-tight="1"')
     .replace(
       /<blockquote><p((?:(?!<p[\s>])[\s\S])*?)<\/p><\/blockquote>/g,
       '<blockquote><p data-tight="1"$1</p></blockquote>',
