@@ -539,7 +539,16 @@ export async function fixInvitationWithAi(
       emailSubject: current.emailSubject ? oneLine(str(data.emailSubject, current.emailSubject), 200) : "",
       welcomeIntro: current.welcomeIntro && welcome.trim() ? welcomeFromAi(welcome) : current.welcomeIntro,
       changes: Array.isArray(data.changes)
-        ? data.changes.filter((c): c is string => typeof c === "string" && c.trim() !== "").slice(0, 12)
+        ? data.changes
+            .filter((c): c is string => typeof c === "string" && c.trim() !== "")
+            // A veces la IA antepone el nombre interno del campo.
+            .map((c) =>
+              c
+                .replace(/^\s*emailSubject\s*:\s*/i, "Asunto: ")
+                .replace(/^\s*welcomeIntro\s*:\s*/i, "Mensaje: ")
+                .replace(/^\s*programName\s*:\s*/i, "Programa: "),
+            )
+            .slice(0, 12)
         : [],
     },
   };
