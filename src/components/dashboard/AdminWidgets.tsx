@@ -116,7 +116,8 @@ function initialsOf(name: string): string {
 
 /**
  * Avatar circular con iniciales y color estable derivado del nombre. Los
- * superadmin llevan aro de oro con pulso y corona (estilos .royal en globals.css).
+ * superadmin llevan aro de oro, ondas que salen hacia fuera y corona (estilos
+ * .royal en globals.css).
  */
 export function Avatar({
   name,
@@ -143,6 +144,8 @@ export function Avatar({
   if (!superadmin) return face;
   return (
     <span className="royal" title="Superadministrador">
+      <span className="royal-wave" aria-hidden />
+      <span className="royal-wave" aria-hidden />
       {face}
       <RoyalCrown
         size={size === "sm" ? 17 : 21}

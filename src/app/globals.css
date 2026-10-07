@@ -219,15 +219,9 @@ body {
 }
 
 /*
- * Avatar de superadmin: aro de oro (degradado cónico con brillo que gira muy
- * despacio), un pulso dorado que se expande y la corona (RoyalCrown.tsx).
- * Entre la cara y el aro queda un filo blanco para que el oro respire.
+ * Avatar de superadmin: aro de oro pegado a la cara (sin hueco), ondas doradas
+ * que salen hacia fuera y se desvanecen, y la corona (RoyalCrown.tsx).
  */
-@property --royal-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
 .royal {
   position: relative;
   display: inline-flex;
@@ -235,39 +229,45 @@ body {
   border-radius: 9999px;
   isolation: isolate;
 }
+/* Aro: 3 px de oro desde el borde de la cara; medio píxel por debajo de ella
+   para que no asome una línea clara entre ambos. */
 .royal::before {
   content: "";
   position: absolute;
-  inset: -4.5px;
+  inset: -3px;
   z-index: 0;
   border-radius: 9999px;
   background: conic-gradient(
-    from var(--royal-angle),
+    from 210deg,
     #fff6cc,
-    #fcd34d 10%,
-    #b7791f 24%,
-    #fde68a 38%,
-    #eab308 52%,
-    #8a5a0b 66%,
-    #fcd34d 80%,
+    #fcd34d 12%,
+    #b7791f 30%,
+    #fde68a 46%,
+    #eab308 62%,
+    #8a5a0b 80%,
     #fff6cc
   );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.6px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.6px));
-  animation: royal-sheen 7s linear infinite;
-}
-.royal::after {
-  content: "";
-  position: absolute;
-  inset: -4.5px;
-  z-index: -1;
-  border-radius: 9999px;
-  animation: royal-pulse 2.6s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.1px));
 }
 .royal-face {
   position: relative;
   z-index: 1;
-  box-shadow: 0 0 0 2px #fff;
+}
+/* Ondas: nacen en el aro, crecen hacia fuera y se apagan (dos, desfasadas). */
+.royal-wave {
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: 9999px;
+  border: 2px solid rgba(234, 179, 8, 0.85);
+  box-shadow: 0 0 6px rgba(234, 179, 8, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  animation: royal-wave 2.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+}
+.royal-wave + .royal-wave {
+  animation-delay: 1.4s;
 }
 .royal-crown {
   position: absolute;
@@ -282,18 +282,14 @@ body {
   transform-origin: center;
   animation: royal-twinkle 3.4s ease-in-out infinite;
 }
-@keyframes royal-sheen {
-  to { --royal-angle: 360deg; }
-}
-@keyframes royal-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.55); }
-  70% { box-shadow: 0 0 0 9px rgba(234, 179, 8, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+@keyframes royal-wave {
+  0% { transform: scale(1); opacity: 0.85; }
+  100% { transform: scale(1.7); opacity: 0; }
 }
 @keyframes royal-twinkle {
-  0%, 60%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-  72% { opacity: 1; transform: scale(1) rotate(45deg); }
-  86% { opacity: 0; transform: scale(0.4) rotate(90deg); }
+  0%, 60%, 100% { opacity: 0; transform: scale(0.3); }
+  72% { opacity: 1; transform: scale(1); }
+  86% { opacity: 0; transform: scale(0.4); }
 }
 
 /* Halo cónico giratorio tras el mockup del hero. */
@@ -322,8 +318,7 @@ body {
   .bg-brand-animated,
   .animate-spin-slow,
   .ai-edge[aria-busy="true"],
-  .royal::before,
-  .royal::after,
+  .royal-wave,
   .royal-twinkle {
     animation: none !important;
   }
