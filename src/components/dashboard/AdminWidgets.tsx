@@ -147,9 +147,10 @@ export function Avatar({
       <span className="royal-wave" aria-hidden />
       <span className="royal-wave" aria-hidden />
       {face}
+      {/* Recta y centrada encima, con la base apoyada en el aro. */}
       <RoyalCrown
-        size={size === "sm" ? 17 : 21}
-        className={size === "sm" ? "-right-[8px] -top-[11px] rotate-[18deg]" : "-right-[9px] -top-[13px] rotate-[18deg]"}
+        width={size === "sm" ? 20 : 26}
+        className={size === "sm" ? "left-1/2 -top-[11px] -translate-x-1/2" : "left-1/2 -top-[14px] -translate-x-1/2"}
       />
       <span className="sr-only">Superadministrador</span>
     </span>
