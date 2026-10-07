@@ -54,6 +54,13 @@ const Icons = {
       <path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2zM17 21a2 2 0 0 0 2-2V6M8 7h6M8 11h6" />
     </svg>
   ),
+  profile: (
+    <svg viewBox="0 0 24 24" className={ic} {...svg}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="10" r="3" />
+      <path d="M6.6 18.4a6 6 0 0 1 10.8 0" />
+    </svg>
+  ),
   external: (
     <svg viewBox="0 0 24 24" className={ic} {...svg}>
       <path d="M14 5h5v5M19 5l-8 8M19 13v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
@@ -115,6 +122,7 @@ export function AdminSidebar({
         { href: "/admin/sistema", label: "Sistema", icon: Icons.system },
       ],
     },
+    { label: "Cuenta", items: [{ href: "/admin/perfil", label: "Mi perfil", icon: Icons.profile }] },
   ];
 
   const isActive = (href: string) =>

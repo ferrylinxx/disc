@@ -102,7 +102,11 @@ model User {
   id           String     @id @default(cuid())
   email        String     @unique
   name         String?
+  // URL de la foto de perfil (/api/avatar/<id>?v=…); los bytes viven en user_avatars.
   image        String?
+  // Datos de perfil que el propio usuario edita en "Mi perfil".
+  jobTitle     String?
+  phone        String?
   // Hash bcrypt para login por credenciales (null si solo usa OAuth/magic link).
   passwordHash String?
   globalRole   GlobalRole @default(USER)
@@ -114,8 +118,21 @@ model User {
   participants Participant[]
   accounts     Account[]
   sessions     Session[]
+  avatar       UserAvatar?
 
   @@map("users")
+}
+
+/// Foto de perfil (ya recortada y reducida en el navegador). Aparte de users
+/// para no arrastrar los bytes en cada consulta de usuarios.
+model UserAvatar {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data      Bytes
+  mimeType  String
+  updatedAt DateTime @updatedAt
+
+  @@map("user_avatars")
 }
 
 model Membership {

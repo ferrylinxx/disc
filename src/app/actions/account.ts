@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/dal";
 import { deleteSession } from "@/lib/auth/session";
@@ -146,37 +145,6 @@ export async function requestPasswordReset(
       console.error("[requestPasswordReset] envío fallido:", e);
     }
   }
-  return { ok: true };
-}
-
-export interface UpdateNameState {
-  error?: string;
-  ok?: boolean;
-}
-
-const NameSchema = z.object({
-  name: z.string().trim().min(2),
-});
-
-/** Actualiza el nombre del usuario autenticado (y sus fichas de participante). */
-export async function updateOwnName(
-  _state: UpdateNameState,
-  formData: FormData,
-): Promise<UpdateNameState> {
-  const session = await requireAuth();
-  const parsed = NameSchema.safeParse({ name: formData.get("name") });
-  if (!parsed.success) {
-    return { error: (await authTexts()).errNameShort };
-  }
-  await prisma.user.update({
-    where: { id: session.userId },
-    data: { name: parsed.data.name },
-  });
-  await prisma.participant.updateMany({
-    where: { userId: session.userId },
-    data: { fullName: parsed.data.name },
-  });
-  revalidatePath("/panel");
   return { ok: true };
 }
 

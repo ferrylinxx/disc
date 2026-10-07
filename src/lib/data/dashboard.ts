@@ -162,6 +162,7 @@ export async function adminUsers() {
         id: true,
         email: true,
         name: true,
+        image: true,
         globalRole: true,
         createdAt: true,
         lastSeenAt: true,
@@ -197,6 +198,7 @@ export async function adminUsers() {
         id: u.id,
         email: u.email,
         name: u.name,
+        image: u.image,
         globalRole: u.globalRole,
         createdAt: u.createdAt,
         lastSeenAt: u.lastSeenAt,
@@ -305,7 +307,7 @@ export async function adminParticipants(organizationId?: string) {
       organization: { select: { id: true, name: true } },
       teamId: true,
       team: { select: { name: true } },
-      user: { select: { lastSeenAt: true } },
+      user: { select: { lastSeenAt: true, image: true } },
       results: {
         orderBy: { computedAt: "desc" },
         take: 1,
@@ -338,6 +340,7 @@ export async function adminParticipants(organizationId?: string) {
     teamId: p.teamId,
     teamName: p.team?.name ?? null,
     lastSeenAt: p.user?.lastSeenAt ?? null,
+    image: p.user?.image ?? null,
     inviteToken: p.invitations[0]?.token ?? null,
     // ¿Se le ha enviado ya el correo? (Se puede añadir a alguien sin enviárselo.)
     inviteSent: Boolean(p.invitations[0]?.sentAt),
@@ -401,7 +404,7 @@ export async function adminOrganizationDetail(id: string) {
           id: true,
           role: true,
           user: {
-            select: { id: true, name: true, email: true, lastSeenAt: true, globalRole: true },
+            select: { id: true, name: true, email: true, image: true, lastSeenAt: true, globalRole: true },
           },
         },
       },

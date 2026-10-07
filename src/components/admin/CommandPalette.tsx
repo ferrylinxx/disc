@@ -12,6 +12,7 @@ const NAV: { title: string; href: string; hint: string }[] = [
   { title: "Contenido y narrativas", href: "/admin/catalogo", hint: "Plataforma" },
   { title: "Biblioteca (117 bloques)", href: "/admin/catalogo/bloques", hint: "Plataforma" },
   { title: "Sistema", href: "/admin/sistema", hint: "Plataforma" },
+  { title: "Mi perfil", href: "/admin/perfil", hint: "Cuenta" },
 ];
 
 const KIND_LABEL: Record<SearchHit["kind"], string> = {

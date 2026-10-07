@@ -114,31 +114,45 @@ function initialsOf(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+const AVATAR_SIZES = {
+  sm: { px: 28, cls: "h-7 w-7 text-[10px]" },
+  md: { px: 36, cls: "h-9 w-9 text-xs" },
+  lg: { px: 96, cls: "h-24 w-24 text-3xl" },
+} as const;
+
 /**
- * Avatar circular con iniciales y color estable derivado del nombre. Los
- * superadmin llevan aro de oro con tiara, de una sola pieza (RoyalFrame), y
- * ondas que salen hacia fuera (estilos .royal en globals.css).
+ * Avatar circular: la foto de perfil si la hay y, si no, iniciales con un color
+ * estable derivado del nombre. Los superadmin llevan aro de oro con tiara, de
+ * una sola pieza (RoyalFrame), y ondas que salen hacia fuera (estilos .royal en
+ * globals.css).
  */
 export function Avatar({
   name,
+  image,
   superadmin = false,
   size = "md",
 }: {
   name: string;
+  image?: string | null;
   superadmin?: boolean;
-  size?: "sm" | "md";
+  size?: keyof typeof AVATAR_SIZES;
 }) {
   const idx =
     [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) %
     AVATAR_COLORS.length;
   const face = (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white shadow-sm ${
-        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs"
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white shadow-sm ${
+        AVATAR_SIZES[size].cls
       } ${superadmin ? "royal-face" : ""}`}
       style={{ backgroundColor: AVATAR_COLORS[idx] }}
     >
-      {initialsOf(name)}
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+      ) : (
+        initialsOf(name)
+      )}
     </span>
   );
   if (!superadmin) return face;
@@ -147,7 +161,7 @@ export function Avatar({
       <span className="royal-wave" aria-hidden />
       <span className="royal-wave" aria-hidden />
       {face}
-      <RoyalFrame face={size === "sm" ? 28 : 36} />
+      <RoyalFrame face={AVATAR_SIZES[size].px} />
       <span className="sr-only">Superadministrador</span>
     </span>
   );

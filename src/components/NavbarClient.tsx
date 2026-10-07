@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { getDict, type Lang } from "@/lib/i18n/dictionaries";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { Avatar } from "./dashboard/AdminWidgets";
 
 /** Secciones de la landing (ancladas). Solo se muestran en la home. */
 const SECTION_DEFS = [
@@ -17,12 +18,21 @@ const SECTION_DEFS = [
 interface Props {
   authed: boolean;
   displayName: string | null;
+  image: string | null;
   panelHref: string | null;
+  profileHref: string | null;
   lang: Lang;
 }
 
 /** Barra de navegación (cliente): isla flotante al scroll + scroll-spy + móvil. */
-export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
+export function NavbarClient({
+  authed,
+  displayName,
+  image,
+  panelHref,
+  profileHref,
+  lang,
+}: Props) {
   const t = getDict(lang);
   const SECTIONS = SECTION_DEFS.map((s) => ({ ...s, label: t.nav[s.key] }));
   const pathname = usePathname();
@@ -135,10 +145,17 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
               <LanguageSwitcher lang={lang} />
               {authed ? (
                 <>
-                  {displayName && (
-                    <span className="hidden max-w-[12rem] truncate text-xs font-medium text-slate-500 lg:inline">
-                      {displayName}
-                    </span>
+                  {displayName && profileHref && (
+                    <Link
+                      href={profileHref}
+                      title={t.nav.myProfile}
+                      className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 transition hover:bg-slate-100 lg:pr-3"
+                    >
+                      <Avatar name={displayName} image={image} size="sm" />
+                      <span className="hidden max-w-[12rem] truncate text-xs font-medium text-slate-500 lg:inline">
+                        {displayName}
+                      </span>
+                    </Link>
                   )}
                   {panelHref && (
                     <Link
@@ -231,6 +248,19 @@ export function NavbarClient({ authed, displayName, panelHref, lang }: Props) {
                   <LanguageSwitcher lang={lang} />
                   {authed ? (
                     <>
+                      {displayName && profileHref && (
+                        <Link
+                          href={profileHref}
+                          onClick={close}
+                          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5"
+                        >
+                          <Avatar name={displayName} image={image} size="sm" />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-slate-800">{displayName}</span>
+                            <span className="block text-xs text-slate-500">{t.nav.myProfile}</span>
+                          </span>
+                        </Link>
+                      )}
                       {panelHref && (
                         <Link
                           href={panelHref}

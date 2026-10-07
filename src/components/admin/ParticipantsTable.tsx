@@ -587,7 +587,7 @@ export function ParticipantsTable({
                     className="mt-2.5 h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
                     aria-label={`Seleccionar ${p.fullName}`}
                   />
-                  <Avatar name={p.fullName} />
+                  <Avatar name={p.fullName} image={p.image} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-slate-900">{p.fullName}</div>
                     <div className="truncate text-xs text-slate-400">
@@ -653,7 +653,7 @@ export function ParticipantsTable({
                     </td>
                     <td className={tableCls.td}>
                       <div className="flex min-w-0 items-center gap-2.5">
-                        <Avatar name={p.fullName} />
+                        <Avatar name={p.fullName} image={p.image} />
                         <div className="min-w-0">
                           <div className="truncate font-semibold text-slate-900">{p.fullName}</div>
                           <div className="truncate text-xs text-slate-400">{p.email}</div>

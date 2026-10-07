@@ -16,6 +16,8 @@ export async function GET() {
     select: {
       email: true,
       name: true,
+      jobTitle: true,
+      phone: true,
       createdAt: true,
       globalRole: true,
       memberships: {

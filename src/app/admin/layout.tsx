@@ -21,13 +21,18 @@ export default async function AdminLayout({
 }) {
   const session = await requireRole("SUPERADMIN");
   const lang = await getLang();
-  const [organizations, users, participants] = await Promise.all([
+  const [organizations, users, participants, me] = await Promise.all([
     prisma.organization.count(),
     prisma.user.count(),
     prisma.participant.count(),
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { name: true, image: true },
+    }),
   ]);
 
-  const greetName = (session.name ?? session.email).split(" ")[0];
+  const myName = me?.name ?? session.name ?? session.email;
+  const greetName = myName.split(" ")[0];
 
   return (
     <div className="relative min-h-screen bg-slate-50">
@@ -55,18 +60,25 @@ export default async function AdminLayout({
           >
             <LanguageSwitcher lang={lang} />
           </div>
-          {/* Fuera de la pastilla: el aro de oro, el pulso y la corona necesitan aire. */}
-          <span className="mx-1 hidden md:inline-flex">
-            <Avatar name={session.name ?? session.email} superadmin size="sm" />
-          </span>
-          <div className="hidden items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 py-1 pl-3 pr-1 shadow-sm backdrop-blur md:flex">
-            <span className="text-xs font-medium text-slate-500">
-              Hola, <span className="font-semibold text-slate-800">{greetName}</span>
+          {/* Avatar y saludo llevan a "Mi perfil". El avatar va fuera de la
+              pastilla: el aro de oro, el pulso y la corona necesitan aire. */}
+          <Link
+            href="/admin/perfil"
+            title="Mi perfil"
+            className="group hidden items-center gap-3 rounded-full md:flex"
+          >
+            <span className="mx-1 inline-flex transition group-hover:scale-105">
+              <Avatar name={myName} image={me?.image} superadmin size="sm" />
             </span>
-            <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
-              Superadmin
+            <span className="flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 py-1 pl-3 pr-1 shadow-sm backdrop-blur transition group-hover:border-sky-200 group-hover:shadow-md">
+              <span className="text-xs font-medium text-slate-500">
+                Hola, <span className="font-semibold text-slate-800">{greetName}</span>
+              </span>
+              <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
+                Superadmin
+              </span>
             </span>
-          </div>
+          </Link>
           <form action={logout}>
             <button
               type="submit"
