@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { RoyalCrown } from "./RoyalCrown";
 
 /** Widgets presentacionales del panel admin (server-safe, sin estado). */
 
@@ -113,17 +114,41 @@ function initialsOf(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** Avatar circular con iniciales y color estable derivado del nombre. */
-export function Avatar({ name }: { name: string }) {
+/**
+ * Avatar circular con iniciales y color estable derivado del nombre. Los
+ * superadmin llevan aro de oro con pulso y corona (estilos .royal en globals.css).
+ */
+export function Avatar({
+  name,
+  superadmin = false,
+  size = "md",
+}: {
+  name: string;
+  superadmin?: boolean;
+  size?: "sm" | "md";
+}) {
   const idx =
     [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) %
     AVATAR_COLORS.length;
-  return (
+  const face = (
     <span
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm"
+      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white shadow-sm ${
+        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs"
+      } ${superadmin ? "royal-face" : ""}`}
       style={{ backgroundColor: AVATAR_COLORS[idx] }}
     >
       {initialsOf(name)}
+    </span>
+  );
+  if (!superadmin) return face;
+  return (
+    <span className="royal" title="Superadministrador">
+      {face}
+      <RoyalCrown
+        size={size === "sm" ? 17 : 21}
+        className={size === "sm" ? "-right-[8px] -top-[11px] rotate-[18deg]" : "-right-[9px] -top-[13px] rotate-[18deg]"}
+      />
+      <span className="sr-only">Superadministrador</span>
     </span>
   );
 }

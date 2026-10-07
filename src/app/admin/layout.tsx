@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/dashboard/AdminWidgets";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
@@ -54,6 +55,10 @@ export default async function AdminLayout({
           >
             <LanguageSwitcher lang={lang} />
           </div>
+          {/* Fuera de la pastilla: el aro de oro, el pulso y la corona necesitan aire. */}
+          <span className="mx-1 hidden md:inline-flex">
+            <Avatar name={session.name ?? session.email} superadmin size="sm" />
+          </span>
           <div className="hidden items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 py-1 pl-3 pr-1 shadow-sm backdrop-blur md:flex">
             <span className="text-xs font-medium text-slate-500">
               Hola, <span className="font-semibold text-slate-800">{greetName}</span>

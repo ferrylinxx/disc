@@ -326,7 +326,7 @@ export default async function AdminOrgDetailPage({
               {org.members.map((m) => (
                 <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <Avatar name={m.user.name ?? m.user.email} />
+                    <Avatar name={m.user.name ?? m.user.email} superadmin={m.user.globalRole === "SUPERADMIN"} />
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-slate-800">
                         {m.user.name ?? m.user.email}

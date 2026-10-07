@@ -401,7 +401,7 @@ export async function adminOrganizationDetail(id: string) {
           id: true,
           role: true,
           user: {
-            select: { id: true, name: true, email: true, lastSeenAt: true },
+            select: { id: true, name: true, email: true, lastSeenAt: true, globalRole: true },
           },
         },
       },

@@ -485,7 +485,7 @@ function UsersTable({
                   )}
                   <td className={tableCls.td}>
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <Avatar name={user.name || user.email} />
+                      <Avatar name={user.name || user.email} superadmin={user.globalRole === "SUPERADMIN"} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 truncate font-semibold text-slate-900">
                           {user.name || "—"}
