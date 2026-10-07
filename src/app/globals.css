@@ -219,8 +219,8 @@ body {
 }
 
 /*
- * Avatar de superadmin: aro de oro pegado a la cara (sin hueco), ondas doradas
- * que salen hacia fuera y se desvanecen, y la corona (RoyalCrown.tsx).
+ * Avatar de superadmin: aro de oro y tiara dibujados como una sola pieza
+ * (RoyalFrame.tsx) y ondas doradas que salen del aro hacia fuera y se apagan.
  */
 .royal {
   position: relative;
@@ -229,35 +229,23 @@ body {
   border-radius: 9999px;
   isolation: isolate;
 }
-/* Aro: 3 px de oro desde el borde de la cara; medio píxel por debajo de ella
-   para que no asome una línea clara entre ambos. */
-.royal::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  z-index: 0;
-  border-radius: 9999px;
-  background: conic-gradient(
-    from 210deg,
-    #fff6cc,
-    #fcd34d 12%,
-    #b7791f 30%,
-    #fde68a 46%,
-    #eab308 62%,
-    #8a5a0b 80%,
-    #fff6cc
-  );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.1px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.1px));
-}
 .royal-face {
   position: relative;
   z-index: 1;
 }
-/* Ondas: nacen en el aro, crecen hacia fuera y se apagan (dos, desfasadas). */
+.royal-frame {
+  position: absolute;
+  z-index: 2;
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(124, 74, 3, 0.35));
+}
+/* Ondas: nacen en el borde del aro (1/12 de la cara por fuera), crecen y se
+   apagan; dos, desfasadas. */
 .royal-wave {
   position: absolute;
-  inset: -3px;
+  inset: -8.333%;
   z-index: -1;
   border-radius: 9999px;
   border: 2px solid rgba(234, 179, 8, 0.85);
@@ -268,12 +256,6 @@ body {
 }
 .royal-wave + .royal-wave {
   animation-delay: 1.4s;
-}
-.royal-crown {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  filter: drop-shadow(0 1.5px 1.2px rgba(124, 74, 3, 0.45));
 }
 .royal-twinkle {
   /* Oculto por defecto: solo aparece con la animación (no con "reducir movimiento"). */

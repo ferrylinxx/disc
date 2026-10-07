@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { RoyalCrown } from "./RoyalCrown";
+import { RoyalFrame } from "./RoyalFrame";
 
 /** Widgets presentacionales del panel admin (server-safe, sin estado). */
 
@@ -116,8 +116,8 @@ function initialsOf(name: string): string {
 
 /**
  * Avatar circular con iniciales y color estable derivado del nombre. Los
- * superadmin llevan aro de oro, ondas que salen hacia fuera y corona (estilos
- * .royal en globals.css).
+ * superadmin llevan aro de oro con tiara, de una sola pieza (RoyalFrame), y
+ * ondas que salen hacia fuera (estilos .royal en globals.css).
  */
 export function Avatar({
   name,
@@ -147,11 +147,7 @@ export function Avatar({
       <span className="royal-wave" aria-hidden />
       <span className="royal-wave" aria-hidden />
       {face}
-      {/* Recta y centrada encima, con la base apoyada en el aro. */}
-      <RoyalCrown
-        width={size === "sm" ? 20 : 26}
-        className={size === "sm" ? "left-1/2 -top-[11px] -translate-x-1/2" : "left-1/2 -top-[14px] -translate-x-1/2"}
-      />
+      <RoyalFrame face={size === "sm" ? 28 : 36} />
       <span className="sr-only">Superadministrador</span>
     </span>
   );
