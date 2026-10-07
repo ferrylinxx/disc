@@ -525,6 +525,70 @@ export async function bulkInviteParticipants(
 }
 
 /**
+ * Cambia de grupo (equipo) a uno o varios participantes, también si ya han
+ * hecho el test: el resultado es de la persona, no del grupo, así que su
+ * informe no cambia y pasa a contar en el informe del grupo nuevo. `teamId`
+ * vacío = sin grupo. El grupo tiene que ser de la misma organización.
+ */
+export async function moveParticipantsToTeam(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireAuth();
+  const ids = formData.getAll("ids").map(String).filter(Boolean);
+  const teamId = String(formData.get("teamId") ?? "") || null;
+  if (ids.length === 0) return { error: "No hay participantes seleccionados." };
+
+  const people = await prisma.participant.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, organizationId: true, teamId: true, fullName: true },
+  });
+  if (people.length !== ids.length || !people.every((p) => assertOrgAccess(session, p.organizationId))) {
+    return { error: "Sin permiso sobre alguno de los participantes." };
+  }
+
+  let teamName = "Sin grupo";
+  if (teamId) {
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { name: true, project: { select: { organizationId: true } } },
+    });
+    if (!team) return { error: "Ese grupo ya no existe." };
+    if (people.some((p) => p.organizationId !== team.project.organizationId)) {
+      return { error: "El grupo es de otra organización: solo se puede mover dentro de la misma." };
+    }
+    teamName = team.name;
+  }
+
+  const toMove = people.filter((p) => p.teamId !== teamId);
+  if (toMove.length > 0) {
+    await prisma.participant.updateMany({
+      where: { id: { in: toMove.map((p) => p.id) } },
+      data: { teamId },
+    });
+  }
+
+  // Los informes de los grupos de origen y de destino cambian.
+  for (const t of new Set([teamId, ...toMove.map((p) => p.teamId)])) {
+    if (t) revalidatePath(`/cliente/equipos/${t}`);
+  }
+  revalidatePath("/admin", "layout");
+  revalidatePath("/cliente");
+  revalidatePath("/facilitador");
+
+  if (toMove.length === 0) {
+    return { ok: true, message: `Ya ${people.length === 1 ? "estaba" : "estaban"} en ${teamName}.` };
+  }
+  const who = toMove.length === 1 ? toMove[0].fullName : `${toMove.length} participantes`;
+  return {
+    ok: true,
+    message: teamId
+      ? `${who} → ${teamName}. Su resultado cuenta ahora en el informe de este grupo.`
+      : `${who} sin grupo.`,
+  };
+}
+
+/**
  * Acción en lote sobre varios participantes: borrar o reenviar invitación.
  * Opera solo sobre las personas de organizaciones a las que se tiene acceso.
  */

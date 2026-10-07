@@ -197,7 +197,11 @@ export default async function AdminOrgDetailPage({
       <div className="mb-5">
         <InvitePanel organizationId={org.id} teams={teamOptions} />
       </div>
-      <ParticipantsTable participants={participants} showOrg={false} />
+      <ParticipantsTable
+        participants={participants}
+        showOrg={false}
+        teams={teams.map((t) => ({ id: t.id, name: t.name, organizationId: t.project.organizationId }))}
+      />
     </Card>
   );
 

@@ -115,12 +115,14 @@ export default async function ClientePage({
         ) : (
           <ParticipantDirectory
             canManage
+            teams={orgTeams.map((t) => ({ id: t.id, name: t.name }))}
             rows={people.map((p) => ({
               id: p.id,
               fullName: p.fullName,
               email: p.email,
               status: p.status,
               teamName: p.teamName,
+              teamId: p.teamId,
               result: p.result ? { profileCode: p.result.profileCode, eq: p.result.eq } : null,
               inviteToken: p.inviteToken,
               inviteSent: p.inviteSent,

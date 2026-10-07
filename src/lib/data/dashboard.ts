@@ -303,6 +303,7 @@ export async function adminParticipants(organizationId?: string) {
       status: true,
       createdAt: true,
       organization: { select: { id: true, name: true } },
+      teamId: true,
       team: { select: { name: true } },
       user: { select: { lastSeenAt: true } },
       results: {
@@ -334,6 +335,7 @@ export async function adminParticipants(organizationId?: string) {
     createdAt: p.createdAt,
     organizationId: p.organization.id,
     orgName: p.organization.name,
+    teamId: p.teamId,
     teamName: p.team?.name ?? null,
     lastSeenAt: p.user?.lastSeenAt ?? null,
     inviteToken: p.invitations[0]?.token ?? null,
@@ -496,6 +498,7 @@ export async function orgParticipants(organizationIds: string[]) {
       email: true,
       status: true,
       organizationId: true,
+      teamId: true,
       team: { select: { name: true } },
       results: {
         orderBy: { computedAt: "desc" },
@@ -520,6 +523,7 @@ export async function orgParticipants(organizationIds: string[]) {
     email: p.email,
     status: p.status,
     organizationId: p.organizationId,
+    teamId: p.teamId,
     teamName: p.team?.name ?? null,
     result: p.results[0]
       ? {

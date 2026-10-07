@@ -6,6 +6,7 @@ import { sendParticipantReport } from "@/app/actions/reports";
 import {
   resendInvitation,
   bulkParticipantAction,
+  moveParticipantsToTeam,
 } from "@/app/actions/participants";
 import { deleteParticipant } from "@/app/actions/admin";
 import type { ActionState } from "@/app/actions/org";
@@ -17,6 +18,13 @@ import { PresenceBadge } from "./PresenceBadge";
 import { SPEED_WARNING_LABEL, SpeedBadge } from "./SpeedBadge";
 
 const initial: ActionState = {};
+
+/** Grupo (equipo) al que se puede mover a alguien: solo los de su organización. */
+export interface TeamOption {
+  id: string;
+  name: string;
+  organizationId: string;
+}
 const inputCls =
   "rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100";
 const rowBtn =
@@ -205,13 +213,98 @@ function ResultCell({ p }: { p: AdminParticipant }) {
   );
 }
 
+/**
+ * Grupo de una persona, editable: al elegir otro se mueve en el momento,
+ * también si ya ha hecho el test (su resultado pasa al informe del grupo nuevo).
+ */
+function TeamSelect({ p, teams }: { p: AdminParticipant; teams: TeamOption[] }) {
+  const [state, action, pending] = useActionState(moveParticipantsToTeam, initial);
+  useToastOnResult(state, "Grupo cambiado.");
+  const formRef = useRef<HTMLFormElement>(null);
+  const options = teams.filter((t) => t.organizationId === p.organizationId);
+  if (options.length === 0) return <span className="text-slate-500">{p.teamName ?? "—"}</span>;
+  return (
+    <form ref={formRef} action={action}>
+      <input type="hidden" name="ids" value={p.id} />
+      <select
+        // Al volver los datos del servidor, el desplegable arranca con el grupo nuevo.
+        key={p.teamId ?? ""}
+        name="teamId"
+        defaultValue={p.teamId ?? ""}
+        disabled={pending}
+        onChange={() => formRef.current?.requestSubmit()}
+        aria-label={`Grupo de ${p.fullName}`}
+        title={
+          p.status === "COMPLETED"
+            ? "Cambiar de grupo: su resultado pasará a contar en el informe del grupo nuevo"
+            : "Cambiar de grupo"
+        }
+        className="max-w-[12rem] cursor-pointer truncate rounded-lg border border-transparent bg-transparent py-1 pl-1.5 pr-6 text-[13px] text-slate-600 transition hover:border-slate-200 hover:bg-white focus:border-sky-300 focus:outline-none disabled:cursor-wait disabled:opacity-60"
+      >
+        <option value="">Sin grupo</option>
+        {options.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+    </form>
+  );
+}
+
+/** "Mover a grupo" de la barra de selección (todas las personas de una misma organización). */
+function MoveToTeamForm({ ids, teams, onDone }: { ids: string[]; teams: TeamOption[]; onDone: () => void }) {
+  const [state, action, pending] = useActionState(moveParticipantsToTeam, initial);
+  const seen = useRef<ActionState | null>(null);
+  useEffect(() => {
+    if (state === seen.current) return;
+    seen.current = state;
+    if (state.error) toast(state.error, "error");
+    else if (state.ok) {
+      toast(state.message ?? "Grupo cambiado.", "success");
+      onDone();
+    }
+  }, [state, onDone]);
+  return (
+    <form action={action} className="flex items-center gap-1.5">
+      {ids.map((id) => (
+        <input key={id} type="hidden" name="ids" value={id} />
+      ))}
+      <select
+        name="teamId"
+        defaultValue={teams[0]?.id ?? ""}
+        aria-label="Grupo de destino"
+        className="rounded-lg border border-sky-200 bg-white py-1.5 pl-2 pr-7 text-[11px] font-semibold text-slate-700 outline-none focus:border-sky-400"
+      >
+        {teams.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+        <option value="">Sin grupo</option>
+      </select>
+      <button
+        type="submit"
+        disabled={pending}
+        className={`${rowBtn} bg-white text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100`}
+        title="Cambia de grupo a las personas seleccionadas; los resultados se conservan"
+      >
+        {pending ? "Moviendo…" : "⇄ Mover a grupo"}
+      </button>
+    </form>
+  );
+}
+
 /** Barra de acciones en lote (aparece al seleccionar filas). */
 function BulkBar({
   ids,
+  teams,
   onDone,
   onClear,
 }: {
   ids: string[];
+  /** Grupos de la organización de la selección (vacío si mezcla organizaciones). */
+  teams: TeamOption[];
   onDone: () => void;
   onClear: () => void;
 }) {
@@ -264,6 +357,7 @@ function BulkBar({
           ✕ Borrar
         </button>
       </form>
+      {teams.length > 0 && <MoveToTeamForm ids={ids} teams={teams} onDone={onDone} />}
       <button
         type="button"
         onClick={onClear}
@@ -317,10 +411,13 @@ export function ParticipantsTable({
   participants,
   showOrg = true,
   initialFilter = "ALL",
+  teams = [],
 }: {
   participants: AdminParticipant[];
   showOrg?: boolean;
   initialFilter?: ParticipantFilter;
+  /** Grupos de las organizaciones de la lista: permiten cambiar a alguien de grupo. */
+  teams?: TeamOption[];
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ParticipantFilter>(initialFilter);
@@ -333,7 +430,7 @@ export function ParticipantsTable({
 
   const term = query.trim().toLowerCase();
   // La columna Equipo solo se muestra si alguien tiene equipo: vacía era ruido.
-  const showTeam = participants.some((p) => p.teamName);
+  const showTeam = participants.some((p) => p.teamName) || teams.length > 0;
 
   const filtered = useMemo(() => {
     const rows = participants.filter((p) => {
@@ -459,6 +556,10 @@ export function ParticipantsTable({
       {selected.size > 0 && (
         <BulkBar
           ids={[...selected]}
+          teams={(() => {
+            const orgs = new Set(participants.filter((p) => selected.has(p.id)).map((p) => p.organizationId));
+            return orgs.size === 1 ? teams.filter((t) => orgs.has(t.organizationId)) : [];
+          })()}
           onDone={clearSelection}
           onClear={clearSelection}
         />
@@ -498,6 +599,11 @@ export function ParticipantsTable({
                       {isUnsent(p) && <UnsentChip />}
                       <ResultCell p={p} />
                     </div>
+                    {showTeam && (
+                      <div className="mt-1.5 -ml-1.5">
+                        <TeamSelect p={p} teams={teams} />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-50 pt-2">
@@ -555,7 +661,11 @@ export function ParticipantsTable({
                       </div>
                     </td>
                     {showOrg && <td className={`${tableCls.td} text-[13px] text-slate-600`}>{p.orgName}</td>}
-                    {showTeam && <td className={`${tableCls.td} text-slate-500`}>{p.teamName ?? "—"}</td>}
+                    {showTeam && (
+                      <td className={`${tableCls.td} text-slate-500`}>
+                        <TeamSelect p={p} teams={teams} />
+                      </td>
+                    )}
                     <td className={tableCls.td}>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <StatusBadge status={p.status} />

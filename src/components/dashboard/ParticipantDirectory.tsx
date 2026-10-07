@@ -1,10 +1,58 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { moveParticipantsToTeam } from "@/app/actions/participants";
+import type { ActionState } from "@/app/actions/org";
 import { ProfileChip, StatusBadge } from "@/components/admin/ui";
 import { CopyInviteButton } from "./CopyInviteButton";
 import { ResendInviteButton } from "./ResendInviteButton";
+
+const initial: ActionState = {};
+
+/**
+ * Grupo de una persona, editable por el admin de cliente: al elegir otro se
+ * mueve en el momento, también si ya ha hecho el test (su resultado pasa al
+ * informe del grupo nuevo).
+ */
+function TeamPicker({
+  row,
+  teams,
+}: {
+  row: DirectoryRow;
+  teams: { id: string; name: string }[];
+}) {
+  const [state, action, pending] = useActionState(moveParticipantsToTeam, initial);
+  const formRef = useRef<HTMLFormElement>(null);
+  return (
+    <form ref={formRef} action={action} className="flex items-center gap-1.5">
+      <input type="hidden" name="ids" value={row.id} />
+      <select
+        key={row.teamId ?? ""}
+        name="teamId"
+        defaultValue={row.teamId ?? ""}
+        disabled={pending}
+        onChange={() => formRef.current?.requestSubmit()}
+        aria-label={`Grupo de ${row.fullName}`}
+        title={
+          row.status === "COMPLETED"
+            ? "Cambiar de grupo: su resultado pasará a contar en el informe del grupo nuevo"
+            : "Cambiar de grupo"
+        }
+        className="max-w-[11rem] cursor-pointer truncate rounded-lg border border-slate-200 bg-white py-1 pl-2 pr-6 text-xs text-slate-600 outline-none transition hover:border-slate-300 focus:border-sky-400 disabled:cursor-wait disabled:opacity-60"
+      >
+        <option value="">Sin grupo</option>
+        {teams.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+      {state.error && <span className="text-[11px] font-semibold text-rose-600">{state.error}</span>}
+      {state.ok && !pending && <span className="text-[11px] font-semibold text-emerald-600">Cambiado</span>}
+    </form>
+  );
+}
 
 export interface DirectoryRow {
   id: string;
@@ -15,6 +63,8 @@ export interface DirectoryRow {
   orgName?: string;
   result: { profileCode: string; eq: number } | null;
   inviteToken: string | null;
+  /** Grupo actual (para poder cambiarlo). */
+  teamId?: string | null;
   /** ¿Se le ha enviado ya el correo? (Se puede añadir a alguien sin enviárselo.) */
   inviteSent?: boolean;
 }
@@ -30,8 +80,11 @@ export function ParticipantDirectory({
   rows,
   canManage,
   groupByOrg = false,
+  teams = [],
 }: {
   rows: DirectoryRow[];
+  /** Grupos de la organización: con canManage, cada fila deja cambiar de grupo. */
+  teams?: { id: string; name: string }[];
   /** Ver informe y reenviar invitación (admin de cliente). El facilitador solo sigue el progreso. */
   canManage: boolean;
   groupByOrg?: boolean;
@@ -122,9 +175,10 @@ export function ParticipantDirectory({
                       <div className="truncate font-semibold text-slate-900">{p.fullName}</div>
                       <div className="truncate text-xs text-slate-400">
                         {p.email}
-                        {p.teamName ? ` · ${p.teamName}` : ""}
+                        {p.teamName && !(canManage && teams.length > 0) ? ` · ${p.teamName}` : ""}
                       </div>
                     </div>
+                    {canManage && teams.length > 0 && <TeamPicker row={p} teams={teams} />}
                     <div className="flex items-center gap-2 text-xs">
                       {p.result && (
                         <>
