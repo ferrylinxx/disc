@@ -80,6 +80,23 @@ interface OrgOption {
 /** Cada cuánto se refresca el listado para reflejar la presencia (ms). */
 const REFRESH_MS = 15_000;
 const PAGE_SIZE = 20;
+/** Usuarios que se ven de golpe al abrir un grupo (luego, "Ver más"). */
+const GROUP_PAGE = 20;
+/** Con pocos resultados (o al buscar) los grupos se abren solos. */
+const AUTO_OPEN_MAX = 25;
+
+const isOnline = (u: AdminUser, now: number) =>
+  u.lastSeenAt != null && now - new Date(u.lastSeenAt).getTime() < ONLINE_WINDOW_MS;
+
+/** Grupo de la vista por organización. */
+interface UserGroupData {
+  key: string;
+  kind: "super" | "org" | "none";
+  /** Id de la organización (solo en los grupos de tipo "org"). */
+  orgId?: string;
+  name: string;
+  users: AdminUser[];
+}
 
 type GRole = "ALL" | "SUPERADMIN" | "USER";
 type MRole = "ALL" | "ADMIN" | "FACILITATOR" | "NONE";
@@ -127,14 +144,16 @@ export function UserManager({
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
-  const [grouped, setGrouped] = useState(false);
+  // Por defecto, por organización: con muchos usuarios, la lista entera no se gestiona.
+  const [grouped, setGrouped] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
+  // "Ahora" para la presencia: se fija al montar y avanza con cada refresco.
+  const [now, setNow] = useState(() => Date.now());
 
   const term = query.trim().toLowerCase();
 
   const filtered = useMemo(() => {
-    const now = Date.now();
     const rows = users.filter((u) => {
       if (term) {
         const domain = (u.email.split("@")[1] ?? "").toLowerCase();
@@ -176,23 +195,28 @@ export function UserManager({
       return (a.name ?? a.email).localeCompare(b.name ?? b.email, "es") * dir;
     });
     return rows;
-  }, [users, term, gRole, mRole, orgFilter, conn, sortKey, sortDir]);
+  }, [users, term, gRole, mRole, orgFilter, conn, sortKey, sortDir, now]);
 
-  const onlineCount = users.filter(
-    (u) =>
-      u.lastSeenAt && Date.now() - new Date(u.lastSeenAt).getTime() < ONLINE_WINDOW_MS,
-  ).length;
+  const onlineCount = users.filter((u) => isOnline(u, now)).length;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
   const paged = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
-  useEffect(() => setPage(0), [term, gRole, mRole, orgFilter, conn, sortKey, sortDir, grouped]);
+  // Al cambiar filtros, orden o vista, se vuelve a la primera página.
+  const pageKey = [term, gRole, mRole, orgFilter, conn, sortKey, sortDir, grouped].join("|");
+  const [pageFor, setPageFor] = useState(pageKey);
+  if (pageFor !== pageKey) {
+    setPageFor(pageKey);
+    setPage(0);
+  }
 
   // Refresco periódico para reflejar la presencia casi en tiempo real.
   useEffect(() => {
     const id = window.setInterval(() => {
-      if (document.visibilityState === "visible") router.refresh();
+      if (document.visibilityState !== "visible") return;
+      setNow(Date.now());
+      router.refresh();
     }, REFRESH_MS);
     return () => window.clearInterval(id);
   }, [router]);
@@ -215,26 +239,63 @@ export function UserManager({
       return next;
     });
 
-  // Vista agrupada por organización.
-  const groups = useMemo(() => {
-    if (!grouped) return null;
-    const map = new Map<string, { name: string; users: AdminUser[] }>();
+  // Vista por organización: superadmins arriba, una fila plegable por
+  // organización (quien está en varias sale en cada una) y, al final, quien no
+  // tiene ninguna. Si se filtra por una organización, solo sale su grupo.
+  const groups = useMemo<UserGroupData[]>(() => {
+    if (!grouped) return [];
+    const map = new Map<string, UserGroupData>();
+    const supers: AdminUser[] = [];
     const noOrg: AdminUser[] = [];
     for (const u of filtered) {
-      if (u.orgs.length === 0) {
-        noOrg.push(u);
-        continue;
-      }
+      if (u.globalRole === "SUPERADMIN") supers.push(u);
+      if (u.orgs.length === 0 && u.globalRole !== "SUPERADMIN") noOrg.push(u);
       for (const o of u.orgs) {
-        const g = map.get(o.id) ?? { name: o.name, users: [] };
+        if (orgFilter !== "ALL" && o.id !== orgFilter) continue;
+        const g = map.get(o.id) ?? { key: o.id, kind: "org", orgId: o.id, name: o.name, users: [] };
         g.users.push(u);
         map.set(o.id, g);
       }
     }
-    const arr = [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
-    if (noOrg.length) arr.push({ name: "Sin organización", users: noOrg });
-    return arr;
-  }, [grouped, filtered]);
+    const orgs = [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
+    if (orgFilter !== "ALL") return orgs;
+    return [
+      ...(supers.length ? [{ key: "super", kind: "super" as const, name: "Superadmins", users: supers }] : []),
+      ...orgs,
+      ...(noOrg.length ? [{ key: "none", kind: "none" as const, name: "Sin organización", users: noOrg }] : []),
+    ];
+  }, [grouped, filtered, orgFilter]);
+
+  // Grupos abiertos. Al buscar (o con pocos resultados) se abren todos y lo que
+  // se toca es cerrarlos; si no, empiezan cerrados. `flipped` guarda los que el
+  // usuario ha cambiado respecto a eso, y se vacía cuando cambia el modo.
+  const autoOpen =
+    Boolean(term) || orgFilter !== "ALL" || groups.length === 1 || filtered.length <= AUTO_OPEN_MAX;
+  const [flipped, setFlipped] = useState<Set<string>>(new Set());
+  const [flippedFor, setFlippedFor] = useState(autoOpen);
+  if (flippedFor !== autoOpen) {
+    setFlippedFor(autoOpen);
+    setFlipped(new Set());
+  }
+  const isGroupOpen = (key: string) => autoOpen !== flipped.has(key);
+  const toggleGroup = (key: string) =>
+    setFlipped((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  const setAllGroups = (open: boolean) =>
+    setFlipped(open === autoOpen ? new Set() : new Set(groups.map((g) => g.key)));
+  const openCount = groups.filter((g) => isGroupOpen(g.key)).length;
+  const orgGroups = groups.filter((g) => g.kind === "org").length;
+
+  const toggleMany = (ids: string[], on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+      return next;
+    });
 
   const selectedUsers = users.filter((u) => selected.has(u.id));
 
@@ -256,7 +317,7 @@ export function UserManager({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar nombre, email u organización…"
-            className={`${inputCls} min-w-0 flex-1 py-2 sm:w-72 sm:flex-none`}
+            className={`${inputCls} min-w-0 flex-1 basis-full py-2 sm:w-72 sm:flex-none sm:basis-auto`}
           />
           <button
             type="button"
@@ -313,7 +374,7 @@ export function UserManager({
           <option value="ACTIVE">Con actividad</option>
           <option value="NONE">Sin actividad</option>
         </select>
-        <div className="flex items-center gap-1 sm:ml-auto">
+        <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
@@ -333,9 +394,30 @@ export function UserManager({
           >
             {sortDir === "asc" ? "↑" : "↓"}
           </button>
-          <Chip active={grouped} onClick={() => setGrouped((v) => !v)}>
-            {grouped ? "▣ Por organización" : "☰ Lista"}
-          </Chip>
+          <div
+            role="group"
+            aria-label="Vista"
+            className="inline-flex rounded-full bg-slate-100 p-0.5 sm:ml-1"
+          >
+            {[
+              { on: true, label: "Por organización" },
+              { on: false, label: "Lista" },
+            ].map((v) => (
+              <button
+                key={v.label}
+                type="button"
+                onClick={() => setGrouped(v.on)}
+                aria-pressed={grouped === v.on}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  grouped === v.on
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -354,25 +436,49 @@ export function UserManager({
 
       {filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-slate-500">No hay usuarios que coincidan.</p>
-      ) : grouped && groups ? (
-        <div className="space-y-5">
-          {groups.map((g) => (
-            <div key={g.name}>
-              <div className="mb-1 flex items-center gap-2 px-1 text-sm font-bold text-slate-700">
-                {g.name}
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
-                  {g.users.length}
-                </span>
-              </div>
-              <UsersTable
-                users={g.users}
+      ) : grouped ? (
+        <>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>
+              {filtered.length} {filtered.length === 1 ? "usuario" : "usuarios"} en {orgGroups}{" "}
+              {orgGroups === 1 ? "organización" : "organizaciones"}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setAllGroups(true)}
+                disabled={openCount === groups.length}
+                className={btn.ghost}
+              >
+                Abrir todas
+              </button>
+              <button
+                type="button"
+                onClick={() => setAllGroups(false)}
+                disabled={openCount === 0}
+                className={btn.ghost}
+              >
+                Cerrar todas
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {groups.map((g) => (
+              <UserGroup
+                key={g.key}
+                group={g}
+                open={isGroupOpen(g.key)}
+                onToggleOpen={() => toggleGroup(g.key)}
                 organizations={organizations}
                 currentUserId={currentUserId}
-                keyPrefix={g.name}
+                selected={selected}
+                onToggle={toggle}
+                onToggleMany={toggleMany}
+                now={now}
               />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       ) : (
         <>
           <UsersTable
@@ -414,6 +520,173 @@ export function UserManager({
 }
 
 /**
+ * Un grupo de la vista por organización: cabecera plegable con el resumen
+ * (usuarios, gestores, en línea y unas caras) y, abierto, su tabla de 20 en 20.
+ */
+function UserGroup({
+  group,
+  open,
+  onToggleOpen,
+  organizations,
+  currentUserId,
+  selected,
+  onToggle,
+  onToggleMany,
+  now,
+}: {
+  group: UserGroupData;
+  open: boolean;
+  onToggleOpen: () => void;
+  organizations: OrgOption[];
+  currentUserId: string;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+  onToggleMany: (ids: string[], on: boolean) => void;
+  now: number;
+}) {
+  const [limit, setLimit] = useState(GROUP_PAGE);
+  const { users } = group;
+  const online = users.filter((u) => isOnline(u, now)).length;
+  const roleCount = (role: "ADMIN" | "FACILITATOR") =>
+    users.filter((u) =>
+      u.memberships.some((m) => m.organizationId === group.orgId && m.role === role),
+    ).length;
+  const admins = group.kind === "org" ? roleCount("ADMIN") : 0;
+  const facilitators = group.kind === "org" ? roleCount("FACILITATOR") : 0;
+  const ids = users.map((u) => u.id);
+  const allSelected = ids.length > 0 && ids.every((id) => selected.has(id));
+  const someSelected = ids.some((id) => selected.has(id));
+  const rest = users.length - limit;
+  const faces = users.slice(0, 4);
+
+  const summary = [
+    `${users.length} ${users.length === 1 ? "usuario" : "usuarios"}`,
+    admins ? `${admins} admin cliente` : null,
+    facilitators ? `${facilitators} ${facilitators === 1 ? "facilitador" : "facilitadores"}` : null,
+  ].filter(Boolean);
+
+  return (
+    <div
+      className={`overflow-hidden rounded-2xl border transition ${
+        open ? "border-slate-200 shadow-sm shadow-slate-200/50" : "border-slate-200/70 hover:border-slate-300"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onToggleOpen}
+        aria-expanded={open}
+        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
+          open ? "bg-slate-50/80" : "bg-white hover:bg-slate-50/60"
+        }`}
+      >
+        <svg
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden
+          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-90" : ""}`}
+        >
+          <path d="M7.2 4.6a1 1 0 0 1 1.4 0l4.7 4.7a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 1 1-1.4-1.4l4-4-4-4a1 1 0 0 1 0-1.4Z" />
+        </svg>
+        <GroupIcon group={group} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-sm font-bold text-slate-900">{group.name}</span>
+            {someSelected && (
+              <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700">
+                {ids.filter((id) => selected.has(id)).length} sel.
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block truncate text-xs text-slate-500">{summary.join(" · ")}</span>
+        </span>
+        {online > 0 && (
+          <span className="hidden shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            {online} en línea
+          </span>
+        )}
+        <span className="hidden shrink-0 items-center -space-x-1.5 md:flex" aria-hidden>
+          {faces.map((u) => (
+            <span key={u.id} className="inline-flex rounded-full ring-2 ring-white">
+              <Avatar name={u.name || u.email} image={u.image} size="sm" />
+            </span>
+          ))}
+          {users.length > faces.length && (
+            <span className="grid h-7 min-w-7 place-items-center rounded-full bg-slate-100 px-1.5 text-[10px] font-bold text-slate-500 ring-2 ring-white">
+              +{users.length - faces.length}
+            </span>
+          )}
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 px-2 pb-2">
+          <UsersTable
+            users={users.slice(0, limit)}
+            organizations={organizations}
+            currentUserId={currentUserId}
+            selected={selected}
+            onToggle={onToggle}
+            allSelected={allSelected}
+            onToggleAll={() => onToggleMany(ids, !allSelected)}
+            allLabel={`Seleccionar los ${users.length} de ${group.name}`}
+            keyPrefix={`${group.key}-`}
+          />
+          {rest > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setLimit((l) => l + GROUP_PAGE)}
+                className={btn.secondary}
+              >
+                Ver {Math.min(GROUP_PAGE, rest)} más
+              </button>
+              {rest > GROUP_PAGE && (
+                <button type="button" onClick={() => setLimit(users.length)} className={btn.ghost}>
+                  Ver los {users.length}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Icono del grupo: iniciales de la organización, corona o "sin organización". */
+function GroupIcon({ group }: { group: UserGroupData }) {
+  if (group.kind === "org") {
+    return (
+      <span className="shrink-0">
+        <Avatar name={group.name} />
+      </span>
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${
+        group.kind === "super"
+          ? "bg-gradient-to-br from-amber-100 to-yellow-50 text-amber-600 ring-1 ring-amber-200"
+          : "bg-slate-100 text-slate-400"
+      }`}
+    >
+      {group.kind === "super" ? (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+          <path d="M3 8.5 7.5 12 12 5l4.5 7L21 8.5 19 18H5Z" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
+          <circle cx="12" cy="8.5" r="3.5" />
+          <path d="M5.5 19a6.5 6.5 0 0 1 13 0" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+/**
  * Tabla de usuarios (misma presentación que Organizaciones y Participantes).
  * "Gestionar" abre el editor en una fila a todo el ancho, debajo del usuario.
  */
@@ -425,6 +698,7 @@ function UsersTable({
   onToggle,
   allSelected,
   onToggleAll,
+  allLabel = "Seleccionar página",
   keyPrefix = "",
 }: {
   users: AdminUser[];
@@ -434,6 +708,7 @@ function UsersTable({
   onToggle?: (id: string) => void;
   allSelected?: boolean;
   onToggleAll?: () => void;
+  allLabel?: string;
   keyPrefix?: string;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -452,7 +727,8 @@ function UsersTable({
                   checked={allSelected ?? false}
                   onChange={onToggleAll}
                   className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-sky-500"
-                  aria-label="Seleccionar página"
+                  aria-label={allLabel}
+                  title={allLabel}
                 />
               </th>
             )}
